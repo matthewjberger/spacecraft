@@ -338,6 +338,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let aegis_cooldown = game.aegis_cooldown;
     let nova_flash = game.nova_flash;
     let combo = game.combo;
+    let best_combo = game.best_combo;
     let best_score = game.best_score;
     let menu_cursor = game.menu_cursor;
     let settings_cursor = game.settings_cursor;
@@ -464,7 +465,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 settings_overlay(settings_cursor, shake_on, flash_on, starfield_on)
             }
             GameMode::Paused => pause_overlay(menu_cursor),
-            _ => overlay_text(mode, sector_index, score),
+            _ => overlay_text(mode, sector_index, score, best_combo),
         };
         let blinkable = matches!(
             mode,
@@ -482,7 +483,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     ui_mark_render_dirty(world);
 }
 
-fn overlay_text(mode: GameMode, sector_index: usize, score: u32) -> (String, String, String) {
+fn overlay_text(
+    mode: GameMode,
+    sector_index: usize,
+    score: u32,
+    best_combo: u32,
+) -> (String, String, String) {
     match mode {
         GameMode::Title => (
             "SPACECRAFT".to_string(),
@@ -504,12 +510,16 @@ fn overlay_text(mode: GameMode, sector_index: usize, score: u32) -> (String, Str
         ),
         GameMode::GameOver => (
             "SHIELDS DOWN".to_string(),
-            format!("The corridor closes behind you.\nSCORE  {score}"),
+            format!(
+                "The corridor closes behind you.\nSCORE  {score}      BEST COMBO  x{best_combo}"
+            ),
             "SPACE  —  TRY AGAIN".to_string(),
         ),
         GameMode::Victory => (
             "THE DRIFT IS BROKEN".to_string(),
-            format!("The Monarch is dust. The fleet rolls in.\nFINAL SCORE  {score}"),
+            format!(
+                "The Monarch is dust. The fleet rolls in.\nFINAL SCORE  {score}      BEST COMBO  x{best_combo}"
+            ),
             "SPACE  —  FLY AGAIN".to_string(),
         ),
         GameMode::Playing | GameMode::Shop | GameMode::Settings | GameMode::Paused => {

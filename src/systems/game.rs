@@ -175,6 +175,7 @@ fn apply_starfield(world: &mut World, game: &GameState) {
 
 fn start_game(world: &mut World, game: &mut GameState) {
     game.score = 0;
+    game.best_combo = 0;
     game.credits = STARTING_CREDITS;
     game.mods = ShipMods::default();
     game.max_shields = 4;

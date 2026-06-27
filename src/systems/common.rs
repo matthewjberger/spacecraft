@@ -9,6 +9,7 @@ pub fn combo_multiplier(combo: u32) -> u32 {
 
 pub fn award(game: &mut GameState, base: u32) {
     game.combo += 1;
+    game.best_combo = game.best_combo.max(game.combo);
     game.combo_timer = COMBO_WINDOW;
     game.score += base * combo_multiplier(game.combo);
     game.credits += base;
