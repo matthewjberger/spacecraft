@@ -11,6 +11,7 @@ pub mod enemy_mesh;
 pub mod flight;
 pub mod game;
 pub mod hud;
+pub mod pickups;
 pub mod planet_texture;
 pub mod ring_fx;
 pub mod scenery;

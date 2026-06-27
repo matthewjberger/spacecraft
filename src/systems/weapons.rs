@@ -1,4 +1,4 @@
-use crate::ecs::{Projectile, SceneryKind, TemplateWorld};
+use crate::ecs::{PickupKind, Projectile, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -10,9 +10,16 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         return;
     }
 
+    let overdrive = game.effect == Some(PickupKind::Overdrive);
+    let spread = game.effect == Some(PickupKind::Spread);
+
     game.fire_cooldown -= delta;
     if firing && game.fire_cooldown <= 0.0 {
-        game.fire_cooldown = FIRE_INTERVAL;
+        game.fire_cooldown = if overdrive {
+            FIRE_INTERVAL * OVERDRIVE_FIRE_SCALE
+        } else {
+            FIRE_INTERVAL
+        };
         let side = if game.next_turret == 0 { -1.0 } else { 1.0 };
         game.next_turret ^= 1;
         let origin = Vec3::new(
@@ -20,14 +27,21 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             game.ship_position.y + TURRET_OFFSET_Y,
             game.ship_position.z + TURRET_OFFSET_Z,
         );
-        let velocity = Vec3::new(0.0, 0.0, -PROJECTILE_SPEED);
-        let entity = spawn_tracer(world, origin);
-        game.projectiles.push(Projectile {
-            entity,
-            position: origin,
-            velocity,
-            age: 0.0,
-        });
+        let lateral: &[f32] = if spread {
+            &[-SPREAD_ANGLE_VELOCITY, 0.0, SPREAD_ANGLE_VELOCITY]
+        } else {
+            &[0.0]
+        };
+        for offset in lateral {
+            let velocity = Vec3::new(*offset, 0.0, -PROJECTILE_SPEED);
+            let entity = spawn_tracer(world, origin);
+            game.projectiles.push(Projectile {
+                entity,
+                position: origin,
+                velocity,
+                age: 0.0,
+            });
+        }
     }
 
     let mut remove: Vec<usize> = Vec::new();

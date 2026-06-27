@@ -1,4 +1,4 @@
-use crate::ecs::{SceneryKind, TemplateWorld};
+use crate::ecs::{PickupKind, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -13,6 +13,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.invuln -= delta;
     }
 
+    let barrier = game.effect == Some(PickupKind::Barrier);
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
     let mut damage = false;
 
@@ -81,7 +82,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
     }
 
-    if damage && game.invuln <= 0.0 {
+    if damage && game.invuln <= 0.0 && !barrier {
         game.shields -= 1;
         game.invuln = DAMAGE_INVULN;
         game.damage_flash = DAMAGE_FLASH_TIME;

@@ -108,6 +108,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     for shot in game.enemy_shots.drain(..) {
         despawn_recursive_immediate(world, shot.entity);
     }
+    for pickup in game.pickups.drain(..) {
+        despawn_recursive_immediate(world, pickup.entity);
+    }
     for projectile in game.projectiles.drain(..) {
         despawn_recursive_immediate(world, projectile.entity);
     }
@@ -117,6 +120,8 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     if let Some(boss) = game.boss.take() {
         despawn_recursive_immediate(world, boss.entity);
     }
+    game.effect = None;
+    game.effect_timer = 0.0;
     game.barrel = Default::default();
     game.invuln = 0.0;
     game.damage_flash = 0.0;

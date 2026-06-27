@@ -70,6 +70,9 @@ pub const ENEMY_SCORE: u32 = 5;
 pub const BOSS_SPAWN_Z: f32 = -80.0;
 
 pub const COURSE_AHEAD: f32 = 210.0;
+pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
+pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
+pub const SPREAD_ANGLE_VELOCITY: f32 = 20.0;
 
 pub const DAMAGE_INVULN: f32 = 1.1;
 pub const DAMAGE_FLASH_TIME: f32 = 0.35;

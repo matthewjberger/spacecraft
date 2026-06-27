@@ -73,6 +73,63 @@ pub struct Boss {
     pub arrived: bool,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PickupKind {
+    Overdrive,
+    Barrier,
+    Spread,
+}
+
+impl PickupKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            PickupKind::Overdrive => "OVERDRIVE",
+            PickupKind::Barrier => "BARRIER",
+            PickupKind::Spread => "SPREAD SHOT",
+        }
+    }
+
+    pub fn tag(self) -> &'static str {
+        match self {
+            PickupKind::Overdrive => ">>>",
+            PickupKind::Barrier => "( )",
+            PickupKind::Spread => "<|>",
+        }
+    }
+
+    pub fn duration(self) -> f32 {
+        match self {
+            PickupKind::Overdrive => 8.0,
+            PickupKind::Barrier => 7.0,
+            PickupKind::Spread => 9.0,
+        }
+    }
+
+    pub fn color(self) -> Vec4 {
+        match self {
+            PickupKind::Overdrive => vec4(1.0, 0.78, 0.2, 1.0),
+            PickupKind::Barrier => vec4(0.4, 0.9, 1.0, 1.0),
+            PickupKind::Spread => vec4(1.0, 0.4, 0.9, 1.0),
+        }
+    }
+
+    pub fn emissive(self) -> [f32; 3] {
+        match self {
+            PickupKind::Overdrive => [1.0, 0.6, 0.1],
+            PickupKind::Barrier => [0.2, 0.7, 1.0],
+            PickupKind::Spread => [0.9, 0.2, 0.8],
+        }
+    }
+}
+
+pub struct Pickup {
+    pub entity: Entity,
+    pub kind: PickupKind,
+    pub position: Vec3,
+    pub spin: f32,
+    pub resolved: bool,
+}
+
 pub struct Backdrop {
     pub entity: Entity,
     pub position: Vec3,
@@ -97,11 +154,17 @@ pub struct Moon {
 pub struct HudHandles {
     pub gameplay_panel: Option<Entity>,
     pub sector: Option<Entity>,
-    pub shields: Option<Entity>,
     pub score: Option<Entity>,
-    pub thrust: Option<Entity>,
-    pub progress: Option<Entity>,
-    pub boss: Option<Entity>,
+    pub shields_bar: Option<Entity>,
+    pub thrust_bar: Option<Entity>,
+    pub approach_bar: Option<Entity>,
+    pub boss_panel: Option<Entity>,
+    pub boss_label: Option<Entity>,
+    pub boss_bar: Option<Entity>,
+    pub pickup_panel: Option<Entity>,
+    pub pickup_label: Option<Entity>,
+    pub pickup_time: Option<Entity>,
+    pub pickup_bar: Option<Entity>,
     pub overlay_panel: Option<Entity>,
     pub overlay_heading: Option<Entity>,
     pub overlay_body: Option<Entity>,
@@ -127,6 +190,10 @@ pub struct GameState {
     pub projectiles: Vec<Projectile>,
     pub enemies: Vec<Enemy>,
     pub enemy_shots: Vec<Projectile>,
+    pub pickups: Vec<Pickup>,
+    pub effect: Option<PickupKind>,
+    pub effect_timer: f32,
+    pub effect_duration: f32,
     pub boss: Option<Boss>,
     pub mode: GameMode,
     pub mode_timer: f32,
@@ -168,6 +235,10 @@ impl Default for GameState {
             projectiles: Vec::new(),
             enemies: Vec::new(),
             enemy_shots: Vec::new(),
+            pickups: Vec::new(),
+            effect: None,
+            effect_timer: 0.0,
+            effect_duration: 0.0,
             boss: None,
             mode: GameMode::Title,
             mode_timer: 0.0,

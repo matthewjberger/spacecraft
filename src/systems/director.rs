@@ -1,7 +1,7 @@
 use crate::content::{Beat, SECTORS};
 use crate::ecs::{GameState, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::{boss, enemies, scenery};
+use crate::systems::{boss, enemies, pickups, scenery};
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -30,7 +30,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
 fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat_index: usize) {
     match &SECTORS[sector_index].beats[beat_index] {
-        Beat::Field { length, count } => scenery::spawn_field(world, game, *length, *count),
+        Beat::Field { length, count } => {
+            scenery::spawn_field(world, game, *length, *count);
+            spawn_pickup(world, game, *length);
+        }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
             let mut slot = 0usize;
@@ -47,8 +50,16 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
             }
         }
         Beat::MiniBoss(kind) | Beat::Boss(kind) => boss::spawn(world, game, *kind),
-        Beat::Breather { .. } => {}
+        Beat::Breather { length } => spawn_pickup(world, game, *length),
     }
+}
+
+fn spawn_pickup(world: &mut World, game: &mut GameState, length: f32) {
+    let kind = pickups::random_kind(&mut game.random_state);
+    let x = random_range(&mut game.random_state, -5.0, 5.0);
+    let y = BASE_HEIGHT + random_range(&mut game.random_state, -3.0, 3.0);
+    let z = -COURSE_AHEAD - random_range(&mut game.random_state, 30.0, length.max(60.0));
+    pickups::spawn(world, game, kind, Vec3::new(x, y, z));
 }
 
 fn beat_complete(game: &GameState, beat: &Beat) -> bool {
