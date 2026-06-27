@@ -16,6 +16,7 @@ pub mod hud;
 pub mod laser;
 pub mod pickups;
 pub mod planet_texture;
+pub mod reticle;
 pub mod ring_fx;
 pub mod scenery;
 pub mod setup;
