@@ -1,0 +1,49 @@
+[package]
+name = "template_core"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "template"
+path = "src/main.rs"
+
+[dependencies]
+nightshade = { version = "0.48.0", features = ["gamepad"] }
+bytemuck = { version = "1", features = ["derive"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+
+[features]
+default = ["tracing"]
+steam = ["nightshade/steam"]
+tracing = ["nightshade/tracing"]
+
+[profile.wasm-release]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
+# For very small final binary size,
+# uncomment the following release profile and build with it
+
+# [profile.release]
+# codegen-units = 1 # Reduce parallel code generation units
+# strip = true      # Automatically strip symbols from the binary.
+# opt-level = "z"   # Optimize for size
+# lto = true        # Link time optimization
+# panic = "abort"   # On panic, abort immediately rather than unwinding. Don't use this if you want backtraces.
+
+# Then compress the final executable further with:
+# upx --best --lzma ./target/release/app
+#
+# Or on windows,
+# upx --best --lzma ./target/release/app.exe
