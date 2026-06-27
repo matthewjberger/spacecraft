@@ -94,7 +94,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if nav_down(world) {
                 game.shop_cursor = (game.shop_cursor + 1).min(SHOP_ITEMS.len() - 1);
             }
-            if confirm(world) {
+            if buy_pressed(world) {
                 shop::buy(game, game.shop_cursor);
             }
             for (index, key) in DIGIT_KEYS.iter().enumerate().take(SHOP_ITEMS.len()) {
@@ -102,7 +102,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                     shop::buy(game, index);
                 }
             }
-            if leave(world) {
+            if launch_pressed(world) {
                 enter_briefing(world, game, game.sector);
             }
         }
@@ -275,8 +275,8 @@ fn nav_down(world: &World) -> bool {
             .just_pressed(gilrs::Button::DPadDown)
 }
 
-fn confirm(world: &World) -> bool {
-    world.resources.input.keyboard.just_pressed(KeyCode::Space)
+fn buy_pressed(world: &World) -> bool {
+    world.resources.input.keyboard.just_pressed(KeyCode::Enter)
         || world
             .resources
             .input
@@ -284,8 +284,8 @@ fn confirm(world: &World) -> bool {
             .just_pressed(gilrs::Button::South)
 }
 
-fn leave(world: &World) -> bool {
-    world.resources.input.keyboard.just_pressed(KeyCode::Enter)
+fn launch_pressed(world: &World) -> bool {
+    world.resources.input.keyboard.just_pressed(KeyCode::Space)
         || world
             .resources
             .input

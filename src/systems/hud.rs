@@ -7,6 +7,7 @@ use nightshade::prelude::*;
 pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     world.resources.user_interface.enabled = true;
     world.resources.retained_ui.enabled = true;
+    world.resources.retained_ui.gamepad_nav.enabled = false;
     let root = UiTreeBuilder::new(world).finish();
 
     let border = vec4(0.35, 0.9, 1.0, 0.6);
@@ -132,7 +133,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     let shop_prompt = centered_line(
         world,
         shop_panel,
-        "UP / DOWN  SELECT      SPACE  BUY      ENTER  LAUNCH",
+        "UP / DOWN  SELECT      ENTER  BUY      SPACE  LAUNCH",
         15.0,
         vec4(1.0, 0.95, 0.6, 1.0),
         30.0,
