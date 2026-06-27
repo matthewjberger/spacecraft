@@ -78,6 +78,19 @@ impl State for Spacecraft {
         setup::shine_ship(&mut self.template_world, world);
         let mode = self.template_world.resources.game.mode;
 
+        if mode == GameMode::Cinematic {
+            advance_cutscene_system(world);
+            let _ = take_cutscene_markers(world);
+            if cutscene_finished(world) {
+                let game = &mut self.template_world.resources.game;
+                if let Some(camera) = game.camera {
+                    world.resources.active_camera = Some(camera);
+                }
+                game.mode = game.cinematic_return;
+                game.mode_timer = 0.0;
+            }
+        }
+
         let frozen = {
             let game = &mut self.template_world.resources.game;
             if game.hitstop > 0.0 {

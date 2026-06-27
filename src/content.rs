@@ -187,6 +187,10 @@ pub enum Beat {
         length: f32,
         count: usize,
     },
+    Belt {
+        length: f32,
+        density: usize,
+    },
     Rings {
         count: usize,
     },
@@ -204,6 +208,7 @@ pub struct Sector {
     pub name: &'static str,
     pub subtitle: &'static str,
     pub briefing: &'static str,
+    pub debrief: &'static str,
     pub beats: &'static [Beat],
 }
 
@@ -297,19 +302,19 @@ pub const SHOP_ITEMS: &[ShopItem] = &[
     },
 ];
 
-pub const TAGLINE: &str =
-    "The Drift swarm has overrun the belt.\nFly the corridor. Break the Monarch.";
+pub const TAGLINE: &str = "The Drift swarm grew from our own dead colonies.\nTen thousand souls wait behind it — six hours of air.\nFly the last corridor. Break the Monarch. Let the fleet through.";
 
 pub const SECTORS: &[Sector] = &[
     Sector {
         name: "SECTOR I",
         subtitle: "THE VERGE",
-        briefing: "The Drift has swallowed the outer belt.\nThread the debris, splash their scouts,\nand cut a corridor for the fleet.",
+        briefing: "WREN: Scout nodes swarm the Verge — the corridor's closing.\nTALON: On your wing, Ranger. Mind the rocks and the crossfire.\nWREN: Punch through to the Harvester and put it down.",
+        debrief: "WREN: Harvester's scrap. The corridor's holding, barely.\nTALON: It was stripping hulls for mass. Our hulls, Wren.\nWREN: Re-arm at the cache. The Maw runs deeper and meaner.",
         beats: &[
             Beat::Breather { length: 130.0 },
-            Beat::Field {
-                length: 220.0,
-                count: 15,
+            Beat::Belt {
+                length: 300.0,
+                density: 52,
             },
             Beat::Rings { count: 5 },
             Beat::Wave {
@@ -317,7 +322,7 @@ pub const SECTORS: &[Sector] = &[
             },
             Beat::Field {
                 length: 200.0,
-                count: 13,
+                count: 32,
             },
             Beat::Wave {
                 groups: &[(EnemyKind::Fighter, 3), (EnemyKind::Drone, 3)],
@@ -329,11 +334,12 @@ pub const SECTORS: &[Sector] = &[
     Sector {
         name: "SECTOR II",
         subtitle: "THE MAW",
-        briefing: "Deeper in, the swarm packs the rock tight.\nThe old gates still hold a charge.\nPunch the line. The interceptors hit harder here.",
+        briefing: "WREN: The swarm packs the rock solid through the Maw.\nTALON: Ranger, this wreckage — these are Tesse colony hulls.\nWREN: Cut the chatter. The Warden anchors this stretch. Break it.",
+        debrief: "TALON: That signal under the static is a Tesse distress loop. Still live.\nWREN: The Monarch is the old colony core. It never stopped calling.\nWREN: Order stands. End the loop — clean.",
         beats: &[
-            Beat::Field {
-                length: 240.0,
-                count: 22,
+            Beat::Belt {
+                length: 360.0,
+                density: 64,
             },
             Beat::Wave {
                 groups: &[(EnemyKind::Fighter, 4), (EnemyKind::Gunship, 1)],
@@ -341,7 +347,7 @@ pub const SECTORS: &[Sector] = &[
             Beat::Rings { count: 6 },
             Beat::Field {
                 length: 220.0,
-                count: 24,
+                count: 40,
             },
             Beat::Wave {
                 groups: &[
@@ -357,8 +363,9 @@ pub const SECTORS: &[Sector] = &[
     },
     Sector {
         name: "SECTOR III",
-        subtitle: "MONARCH'S APPROACH",
-        briefing: "The Monarch coordinates the whole swarm.\nBurn through its escort, then break the core.\nThis is where it ends.",
+        subtitle: "THE CROWN",
+        briefing: "WREN: The Crown. The Monarch runs the entire Drift from here.\nTALON: Whatever it was, it's the swarm's heart now. Burn the escort.\nWREN: Then break the core. For the fleet. For Tesse. Go, Ranger.",
+        debrief: "WREN: Core's coming apart. Hold the line, Ranger.\nTALON: Almost through — stay on it!\nWREN: All wings, the gap is opening.",
         beats: &[
             Beat::Wave {
                 groups: &[
@@ -367,9 +374,9 @@ pub const SECTORS: &[Sector] = &[
                     (EnemyKind::Gunship, 2),
                 ],
             },
-            Beat::Field {
-                length: 180.0,
-                count: 16,
+            Beat::Belt {
+                length: 260.0,
+                density: 50,
             },
             Beat::Wave {
                 groups: &[

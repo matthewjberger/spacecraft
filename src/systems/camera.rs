@@ -74,7 +74,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(component) = world.core.get_camera_mut(camera)
         && let Projection::Perspective(ref mut perspective) = component.projection
     {
-        let target_fov = BASE_FOV_DEGREES + (speed_scale - 1.0) * BOOST_FOV_DEGREES + fov_pop;
-        perspective.y_fov_rad = target_fov.to_radians();
+        let target_fov =
+            (BASE_FOV_DEGREES + (speed_scale - 1.0) * BOOST_FOV_DEGREES + fov_pop).to_radians();
+        perspective.y_fov_rad = approach(perspective.y_fov_rad, target_fov, FOV_RESPONSE * delta);
     }
 }

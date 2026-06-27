@@ -50,7 +50,8 @@ pub const CAMERA_DISTANCE: f32 = 9.0;
 pub const CAMERA_HEIGHT: f32 = 1.4;
 pub const CAMERA_FOLLOW_X: f32 = 0.3;
 pub const CAMERA_FOLLOW_Y: f32 = 0.25;
-pub const CAMERA_RESPONSE: f32 = 5.0;
+pub const CAMERA_RESPONSE: f32 = 3.8;
+pub const FOV_RESPONSE: f32 = 9.0;
 pub const CAMERA_PITCH: f32 = -0.155;
 pub const CAMERA_ROLL: f32 = 0.30;
 pub const BASE_FOV_DEGREES: f32 = 60.0;
@@ -67,6 +68,7 @@ pub const RING_GROW: f32 = 1.8;
 pub const RING_BOOST_TIME: f32 = 1.5;
 pub const RING_BOOST_GAIN: f32 = 0.8;
 pub const PATTERN_GAP: f32 = 30.0;
+pub const BELT_MAX_ROCKS: usize = 165;
 pub const ASTEROID_FIELD_X: f32 = 46.0;
 pub const ASTEROID_FIELD_Y: f32 = 28.0;
 

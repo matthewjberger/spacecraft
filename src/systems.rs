@@ -7,6 +7,7 @@ pub mod camera;
 pub mod combat;
 pub mod common;
 pub mod crt;
+pub mod cutscene;
 pub mod director;
 pub mod enemies;
 pub mod enemy_mesh;

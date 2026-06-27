@@ -69,6 +69,18 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     mark_local_transform_dirty(world, camera);
     world.resources.active_camera = Some(camera);
 
+    let cutscene_camera = spawn_camera(
+        world,
+        Vec3::new(0.0, CAMERA_HEIGHT, CAMERA_DISTANCE),
+        "Cutscene Camera".to_string(),
+    );
+    if let Some(component) = world.core.get_camera_mut(cutscene_camera) {
+        component.smoothing = None;
+        if let Projection::Perspective(ref mut perspective) = component.projection {
+            perspective.z_far = Some(2000.0);
+        }
+    }
+
     let ship = load_ship(world);
     if let Some(entity) = ship {
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
@@ -90,6 +102,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &mut game_world.resources.game;
     game.random_state ^= uptime | 1;
     game.camera = Some(camera);
+    game.cutscene_camera = Some(cutscene_camera);
     game.ship = ship;
     game.exhaust = Some(exhaust);
     game.corner_thrusters = corner_thrusters;

@@ -11,7 +11,10 @@ pub struct SynthState {
 
 pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
     let mut state = shared.lock().unwrap();
-    state.enabled = matches!(game.mode, GameMode::Playing | GameMode::Paused);
+    state.enabled = matches!(
+        game.mode,
+        GameMode::Playing | GameMode::Paused | GameMode::Cinematic
+    );
 }
 
 #[repr(C)]

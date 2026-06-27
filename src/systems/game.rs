@@ -1,6 +1,7 @@
 use crate::content::{SECTORS, SHOP_ITEMS, STARTING_CREDITS};
 use crate::ecs::{GameMode, GameState, ModeKind, ShipMods, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::cutscene;
 use crate::systems::shop;
 use nightshade::prelude::*;
 
@@ -111,6 +112,16 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::Playing);
             }
         }
+        GameMode::Cinematic => {
+            if advance || pause {
+                stop_cutscene(world);
+                if let Some(camera) = game.camera {
+                    world.resources.active_camera = Some(camera);
+                }
+                let next = game.cinematic_return;
+                enter_mode(game, next);
+            }
+        }
         GameMode::Playing => {
             if pause {
                 game.menu_cursor = 0;
@@ -120,8 +131,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::GameOver);
             } else if game.beat_index >= SECTORS[game.sector].beats.len() {
                 if game.sector + 1 >= SECTORS.len() {
-                    game.best_score = game.best_score.max(game.score);
-                    enter_mode(game, GameMode::Victory);
+                    enter_victory(world, game);
                 } else {
                     enter_mode(game, GameMode::SectorClear);
                 }
@@ -217,10 +227,34 @@ fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
     game.sector = sector;
     begin_sector(world, game);
     if game.run_mode == ModeKind::Story {
-        enter_mode(game, GameMode::Briefing);
+        game.cinematic_return = GameMode::Playing;
+        start_cinematic(
+            world,
+            game,
+            cutscene::sector_cutscene(&SECTORS[sector], game.ship_position),
+        );
     } else {
         enter_mode(game, GameMode::Playing);
     }
+}
+
+fn enter_victory(world: &mut World, game: &mut GameState) {
+    game.best_score = game.best_score.max(game.score);
+    if game.run_mode == ModeKind::Story {
+        game.cinematic_return = GameMode::Victory;
+        start_cinematic(world, game, cutscene::finale_cutscene(game.ship_position));
+    } else {
+        enter_mode(game, GameMode::Victory);
+    }
+}
+
+fn start_cinematic(world: &mut World, game: &mut GameState, scene: nightshade::prelude::Cutscene) {
+    if let Some(camera) = game.cutscene_camera {
+        set_cutscene_camera(world, camera);
+        world.resources.active_camera = Some(camera);
+    }
+    play_cutscene(world, scene);
+    enter_mode(game, GameMode::Cinematic);
 }
 
 fn begin_sector(world: &mut World, game: &mut GameState) {

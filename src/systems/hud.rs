@@ -20,7 +20,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         world,
         root,
         Ab(vec2(28.0, 24.0)),
-        Ab(vec2(300.0, 292.0)),
+        Ab(vec2(330.0, 316.0)),
         Anchor::TopLeft,
         border,
         panel_bg,
@@ -357,7 +357,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let has_ability = mods.lance > 0 || mods.nova_max > 0 || mods.aegis > 0;
 
     set_visible(world, hud.gameplay_panel, playing);
-    set_visible(world, hud.overlay_panel, !playing && !shopping);
+    set_visible(
+        world,
+        hud.overlay_panel,
+        !playing && !shopping && mode != GameMode::Cinematic,
+    );
     set_visible(world, hud.shop_panel, shopping);
     let low_shield_warn = shields <= 1.0 && (mode_timer * 3.0).sin() > 0.0;
     set_visible(
@@ -526,26 +530,28 @@ fn overlay_text(
         }
         GameMode::SectorClear => (
             "SECTOR CLEAR".to_string(),
-            format!("Corridor held.\nSCORE  {score}"),
+            format!("{}\n\nSCORE  {score}", SECTORS[sector_index].debrief),
             "SPACE  —  PRESS ON".to_string(),
         ),
         GameMode::GameOver => (
             "SHIELDS DOWN".to_string(),
             format!(
-                "The corridor closes behind you.\nSCORE  {score}      BEST COMBO  x{best_combo}"
+                "The corridor closes behind you, and the swarm never slows.\nBack there, the Lantern Fleet's air runs thin.\nSCORE  {score}      BEST COMBO  x{best_combo}"
             ),
             "SPACE  —  TRY AGAIN".to_string(),
         ),
         GameMode::Victory => (
-            "THE DRIFT IS BROKEN".to_string(),
+            "THE LOOP IS BROKEN".to_string(),
             format!(
-                "The Monarch falls — but the swarm regroups, fiercer.\nSCORE  {score}      BEST COMBO  x{best_combo}"
+                "The Monarch goes dark and the swarm forgets how to move.\nThe Lantern Fleet runs the gap — every last lantern home.\nTALON: Tesse can rest now, Ranger.\nSCORE  {score}      BEST COMBO  x{best_combo}"
             ),
             "SPACE  —  PRESS ON".to_string(),
         ),
-        GameMode::Playing | GameMode::Shop | GameMode::Settings | GameMode::Paused => {
-            (String::new(), String::new(), String::new())
-        }
+        GameMode::Playing
+        | GameMode::Shop
+        | GameMode::Settings
+        | GameMode::Paused
+        | GameMode::Cinematic => (String::new(), String::new(), String::new()),
     }
 }
 

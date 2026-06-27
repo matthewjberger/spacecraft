@@ -14,6 +14,22 @@ pub fn spawn_field(world: &mut World, game: &mut GameState, length: f32, count: 
     }
 }
 
+pub fn spawn_belt_rock(world: &mut World, game: &mut GameState) {
+    let x = random_range(&mut game.random_state, -ASTEROID_FIELD_X, ASTEROID_FIELD_X);
+    let y = BASE_HEIGHT + random_range(&mut game.random_state, -ASTEROID_FIELD_Y, ASTEROID_FIELD_Y);
+    let z = -COURSE_AHEAD - random_range(&mut game.random_state, 0.0, 60.0);
+    let roll = next_random(&mut game.random_state);
+    let (size_min, size_max) = if roll < 0.6 {
+        (0.4, 1.2)
+    } else if roll < 0.92 {
+        (1.4, 3.2)
+    } else {
+        (3.6, 6.0)
+    };
+    let scenery = spawn_asteroid(world, game, Vec3::new(x, y, z), size_min, size_max);
+    game.scenery.push(scenery);
+}
+
 pub fn spawn_rings(world: &mut World, game: &mut GameState, count: usize) {
     let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
     let amplitude_x = 3.4 + next_random(&mut game.random_state) * 1.6;

@@ -20,7 +20,24 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         return;
     }
 
-    game.beat_distance += RAIL_SPEED * game.speed_scale * delta;
+    let advanced = RAIL_SPEED * game.speed_scale * delta;
+    game.beat_distance += advanced;
+
+    if let Beat::Belt { density, .. } = &beats[game.beat_index] {
+        game.belt_accumulator += advanced * (*density as f32) / 100.0;
+        let live_rocks = game
+            .scenery
+            .iter()
+            .filter(|scenery| scenery.kind == SceneryKind::Asteroid)
+            .count();
+        let mut budget = BELT_MAX_ROCKS.saturating_sub(live_rocks);
+        while game.belt_accumulator >= 1.0 && budget > 0 {
+            scenery::spawn_belt_rock(world, game);
+            game.belt_accumulator -= 1.0;
+            budget -= 1;
+        }
+        game.belt_accumulator = game.belt_accumulator.min(2.0);
+    }
 
     if beat_complete(game, &beats[game.beat_index]) {
         game.beat_index += 1;
@@ -32,6 +49,9 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
     match &SECTORS[sector_index].beats[beat_index] {
         Beat::Field { length, count } => {
             scenery::spawn_field(world, game, *length, *count);
+        }
+        Beat::Belt { .. } => {
+            game.belt_accumulator = 0.0;
         }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
@@ -101,6 +121,7 @@ fn spawn_pickup(world: &mut World, game: &mut GameState, length: f32) {
 fn beat_complete(game: &GameState, beat: &Beat) -> bool {
     match beat {
         Beat::Field { length, .. } => game.beat_distance >= *length + PATTERN_GAP,
+        Beat::Belt { length, .. } => game.beat_distance >= *length + PATTERN_GAP,
         Beat::Rings { count } => game.beat_distance >= *count as f32 * RING_SPACING + PATTERN_GAP,
         Beat::Breather { length } => game.beat_distance >= *length,
         Beat::Wave { .. } => game.enemies.is_empty(),
