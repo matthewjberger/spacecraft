@@ -346,6 +346,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let shake_on = game.shake_enabled;
     let flash_on = game.flash_enabled;
     let starfield_on = game.starfield_enabled;
+    let hard_on = game.hard_mode;
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
@@ -355,10 +356,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     set_visible(world, hud.gameplay_panel, playing);
     set_visible(world, hud.overlay_panel, !playing && !shopping);
     set_visible(world, hud.shop_panel, shopping);
+    let low_shield_warn = shields <= 1.0 && (mode_timer * 3.0).sin() > 0.0;
     set_visible(
         world,
         hud.damage_flash,
-        playing && damage_flash > 0.0 && flash_on,
+        playing && flash_on && (damage_flash > 0.0 || low_shield_warn),
     );
     set_visible(
         world,
@@ -464,7 +466,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let (heading, body, prompt) = match mode {
             GameMode::Title => title_overlay(menu_cursor, best_score),
             GameMode::Settings => {
-                settings_overlay(settings_cursor, shake_on, flash_on, starfield_on)
+                settings_overlay(settings_cursor, shake_on, flash_on, starfield_on, hard_on)
             }
             GameMode::Paused => pause_overlay(menu_cursor),
             _ => overlay_text(mode, sector_index, score, best_combo),
@@ -573,12 +575,14 @@ fn settings_overlay(
     shake: bool,
     flash: bool,
     starfield: bool,
+    hard: bool,
 ) -> (String, String, String) {
     let on = |value: bool| if value { "ON" } else { "OFF" };
     let items = [
         format!("SCREEN SHAKE     {}", on(shake)),
         format!("DAMAGE FLASH     {}", on(flash)),
         format!("STARFIELD        {}", on(starfield)),
+        format!("DIFFICULTY       {}", if hard { "HARD" } else { "NORMAL" }),
         "BACK".to_string(),
     ];
     (

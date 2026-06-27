@@ -220,7 +220,7 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
         false,
     );
     let scaled_health =
-        ((stats.health as f32) * (1.0 + game.loop_count as f32 * 0.4)).round() as i32;
+        ((stats.health as f32) * (1.0 + difficulty(game) as f32 * 0.4)).round() as i32;
     game.boss = Some(Boss {
         entity,
         kind,

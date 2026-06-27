@@ -16,6 +16,10 @@ pub fn award(game: &mut GameState, base: u32) {
     game.credits += base;
 }
 
+pub fn difficulty(game: &GameState) -> u32 {
+    game.loop_count + if game.hard_mode { 1 } else { 0 }
+}
+
 pub fn aim_lead(game: &GameState) -> (f32, f32) {
     (-game.roll / MAX_BANK, game.pitch / MAX_PITCH)
 }

@@ -56,7 +56,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 game.settings_cursor = game.settings_cursor.saturating_sub(1);
             }
             if nav_down(world) {
-                game.settings_cursor = (game.settings_cursor + 1).min(3);
+                game.settings_cursor = (game.settings_cursor + 1).min(4);
             }
             if advance {
                 match game.settings_cursor {
@@ -66,6 +66,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                         game.starfield_enabled = !game.starfield_enabled;
                         apply_starfield(world, game);
                     }
+                    3 => game.hard_mode = !game.hard_mode,
                     _ => {
                         game.menu_cursor = 0;
                         enter_mode(game, GameMode::Title);

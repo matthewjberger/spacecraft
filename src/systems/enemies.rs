@@ -87,12 +87,13 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
     } else {
         1.5
     };
+    let diff = difficulty(game);
     game.enemies.push(Enemy {
         entity,
         position,
-        health: stats.health + game.loop_count as i32,
+        health: stats.health + diff as i32,
         radius: stats.radius,
-        closing_speed: stats.closing_speed + game.loop_count as f32 * 1.5,
+        closing_speed: stats.closing_speed + diff as f32 * 1.5,
         fires: stats.fires,
         fire_interval,
         lane_x: position.x,
