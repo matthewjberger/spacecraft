@@ -14,7 +14,7 @@ pub const IDLE_BOB: f32 = 0.12;
 pub const LATERAL_ACCEL: f32 = 9.0;
 pub const MAX_LATERAL_SPEED: f32 = 12.0;
 pub const BANK_IN_RESPONSE: f32 = 13.0;
-pub const BANK_OUT_RESPONSE: f32 = 5.5;
+pub const BANK_OUT_RESPONSE: f32 = 3.2;
 pub const EDGE_SHAKE: f32 = 0.3;
 
 pub const CAMERA_BOOST_DOLLY: f32 = 2.2;

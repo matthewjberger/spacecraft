@@ -188,18 +188,52 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
             .entity()
     };
 
-    let comms = {
+    let comms_panel = {
         let mut tree = UiTreeBuilder::from_parent(world, root);
         tree.add_node()
             .window(
-                Rl(vec2(50.0, 100.0)) + Ab(vec2(0.0, -152.0)),
-                Ab(vec2(960.0, 40.0)),
-                Anchor::BottomCenter,
+                Rl(vec2(0.0, 100.0)) + Ab(vec2(28.0, -188.0)),
+                Ab(vec2(420.0, 92.0)),
+                Anchor::BottomLeft,
             )
-            .with_text("", 21.0)
-            .text_center()
-            .color_raw::<UiBase>(vec4(0.62, 0.92, 1.0, 1.0))
+            .with_rect(3.0, 1.5, vec4(0.4, 0.9, 1.0, 0.85))
+            .color_raw::<UiBase>(vec4(0.03, 0.06, 0.13, 0.9))
             .with_visible(false)
+            .entity()
+    };
+    let comms_avatar = {
+        let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
+        tree.add_node()
+            .window(Ab(vec2(12.0, 12.0)), Ab(vec2(68.0, 68.0)), Anchor::TopLeft)
+            .with_rect(2.0, 1.0, vec4(0.5, 0.95, 1.0, 1.0))
+            .color_raw::<UiBase>(vec4(0.07, 0.16, 0.27, 1.0))
+            .entity()
+    };
+    let comms_initial = {
+        let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
+        tree.add_node()
+            .window(Ab(vec2(12.0, 18.0)), Ab(vec2(68.0, 56.0)), Anchor::TopLeft)
+            .with_text("W", 34.0)
+            .text_center()
+            .color_raw::<UiBase>(vec4(0.7, 0.95, 1.0, 1.0))
+            .entity()
+    };
+    let comms_name = {
+        let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
+        tree.add_node()
+            .window(Ab(vec2(92.0, 14.0)), Ab(vec2(312.0, 22.0)), Anchor::TopLeft)
+            .with_text("", 15.0)
+            .text_left()
+            .color_raw::<UiBase>(vec4(0.5, 0.95, 1.0, 1.0))
+            .entity()
+    };
+    let comms_text = {
+        let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
+        tree.add_node()
+            .window(Ab(vec2(92.0, 38.0)), Ab(vec2(316.0, 46.0)), Anchor::TopLeft)
+            .with_text("", 17.0)
+            .text_left()
+            .color_raw::<UiBase>(vec4(0.92, 0.96, 1.0, 1.0))
             .entity()
     };
 
@@ -236,7 +270,11 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.aegis_label = Some(aegis_label);
     hud.aegis_bar = Some(aegis_bar);
     hud.nova_flash = Some(nova_flash);
-    hud.comms = Some(comms);
+    hud.comms_panel = Some(comms_panel);
+    hud.comms_avatar = Some(comms_avatar);
+    hud.comms_initial = Some(comms_initial);
+    hud.comms_name = Some(comms_name);
+    hud.comms_text = Some(comms_text);
 }
 
 fn window_panel(
@@ -393,11 +431,22 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         playing && nova_flash > 0.0 && flash_on,
     );
     let comms_on = playing && comms_timer > 0.0 && !comms_line.is_empty();
-    set_visible(world, hud.comms, comms_on);
+    set_visible(world, hud.comms_panel, comms_on);
     if comms_on {
-        set_text(world, hud.comms, &comms_line);
-        let alpha = (comms_timer / 0.8).clamp(0.0, 1.0);
-        tint_node(world, hud.comms, vec4(0.62, 0.92, 1.0, alpha));
+        let (speaker, text) = comms_line
+            .split_once(": ")
+            .unwrap_or(("", comms_line.as_str()));
+        let accent = match speaker {
+            "WREN" => vec4(0.5, 0.95, 1.0, 1.0),
+            "TALON" => vec4(1.0, 0.78, 0.4, 1.0),
+            _ => vec4(0.62, 0.92, 1.0, 1.0),
+        };
+        let initial = speaker.chars().next().map(String::from).unwrap_or_default();
+        set_text(world, hud.comms_name, speaker);
+        set_text(world, hud.comms_text, text);
+        set_text(world, hud.comms_initial, &initial);
+        tint_node(world, hud.comms_name, accent);
+        tint_node(world, hud.comms_initial, accent);
     }
     set_visible(world, hud.boss_panel, playing && boss.is_some());
     set_visible(world, hud.pickup_panel, playing && effect.is_some());

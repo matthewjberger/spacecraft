@@ -225,7 +225,11 @@ pub struct HudHandles {
     pub aegis_label: Option<Entity>,
     pub aegis_bar: Option<Entity>,
     pub nova_flash: Option<Entity>,
-    pub comms: Option<Entity>,
+    pub comms_panel: Option<Entity>,
+    pub comms_avatar: Option<Entity>,
+    pub comms_initial: Option<Entity>,
+    pub comms_name: Option<Entity>,
+    pub comms_text: Option<Entity>,
 }
 
 pub struct GameState {
