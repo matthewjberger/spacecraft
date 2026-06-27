@@ -84,10 +84,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     mark_local_transform_dirty(world, ship);
 
     let speed_scale = game.speed_scale;
+    let exhaust_dir = nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, 0.0, -1.0));
     if let Some(exhaust) = game.exhaust {
-        let tail = Vec3::new(position.x, position.y - 0.1, position.z + 1.4);
+        let tail =
+            position + nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, -0.1, -1.4));
         if let Some(emitter) = world.core.get_particle_emitter_mut(exhaust) {
             emitter.position = tail;
+            emitter.direction = exhaust_dir;
             emitter.spawn_rate = 520.0 + speed_scale * 360.0;
         }
     }
@@ -101,12 +104,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         Vec3::new(1.9, -0.18, -1.25),
     ];
     for (slot, offset) in corner_offsets.iter().enumerate() {
-        if let Some(&thruster) = game.corner_thrusters.get(slot) {
-            let port = position + nalgebra_glm::quat_rotate_vec3(&rotation, offset);
-            if let Some(emitter) = world.core.get_particle_emitter_mut(thruster) {
-                emitter.position = port;
-                emitter.spawn_rate = corner_rate;
-            }
+        let port = position + nalgebra_glm::quat_rotate_vec3(&rotation, offset);
+        game.blaster_ports[slot] = port;
+        if let Some(&thruster) = game.corner_thrusters.get(slot)
+            && let Some(emitter) = world.core.get_particle_emitter_mut(thruster)
+        {
+            emitter.position = port;
+            emitter.direction = exhaust_dir;
+            emitter.spawn_rate = corner_rate;
         }
     }
 }

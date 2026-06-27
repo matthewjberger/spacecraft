@@ -56,9 +56,6 @@ pub const BURST_LIFETIME: f32 = 2.5;
 pub const FIRE_INTERVAL: f32 = 0.11;
 pub const PROJECTILE_SPEED: f32 = 95.0;
 pub const PROJECTILE_RANGE: f32 = 175.0;
-pub const TURRET_OFFSET_X: f32 = 1.05;
-pub const TURRET_OFFSET_Y: f32 = -0.05;
-pub const TURRET_OFFSET_Z: f32 = -0.9;
 pub const PROJECTILE_HIT_RADIUS: f32 = 0.7;
 
 pub const PLAYER_HIT_RADIUS: f32 = 0.6;
@@ -72,7 +69,6 @@ pub const BOSS_SPAWN_Z: f32 = -80.0;
 pub const COURSE_AHEAD: f32 = 210.0;
 pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
-pub const SPREAD_ANGLE_VELOCITY: f32 = 20.0;
 
 pub const RETICLE_NEAR_Z: f32 = 16.0;
 pub const RETICLE_FAR_Z: f32 = 44.0;

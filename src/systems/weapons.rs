@@ -23,22 +23,18 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         } else {
             base_interval
         };
-        let side = if game.next_turret == 0 { -1.0 } else { 1.0 };
-        game.next_turret ^= 1;
-        let origin = Vec3::new(
-            game.ship_position.x + side * TURRET_OFFSET_X,
-            game.ship_position.y + TURRET_OFFSET_Y,
-            game.ship_position.z + TURRET_OFFSET_Z,
-        );
         let aim = aim_point(game);
-        let converge = (aim - origin).normalize() * PROJECTILE_SPEED;
-        let lateral: &[f32] = if spread {
-            &[-SPREAD_ANGLE_VELOCITY, 0.0, SPREAD_ANGLE_VELOCITY]
+        let ports: &[usize] = if spread {
+            &[0, 1, 2, 3]
+        } else if game.next_turret == 0 {
+            &[0, 2]
         } else {
-            &[0.0]
+            &[1, 3]
         };
-        for offset in lateral {
-            let velocity = converge + Vec3::new(*offset, 0.0, 0.0);
+        game.next_turret ^= 1;
+        for &port in ports {
+            let origin = game.blaster_ports[port];
+            let velocity = (aim - origin).normalize() * PROJECTILE_SPEED;
             let entity = spawn_tracer(world, origin);
             game.projectiles.push(Projectile {
                 entity,
