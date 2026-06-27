@@ -89,6 +89,26 @@ pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 pub const SPREAD_ANGLE_VELOCITY: f32 = 20.0;
 
+pub const RETICLE_NEAR_Z: f32 = 16.0;
+pub const RETICLE_FAR_Z: f32 = 44.0;
+pub const AIM_NEAR_LEAD_X: f32 = 1.4;
+pub const AIM_NEAR_LEAD_Y: f32 = 1.2;
+pub const AIM_FAR_LEAD_X: f32 = 3.6;
+pub const AIM_FAR_LEAD_Y: f32 = 3.0;
+
+pub fn aim_lead(game: &GameState) -> (f32, f32) {
+    (-game.roll / MAX_BANK, game.pitch / MAX_PITCH)
+}
+
+pub fn aim_point(game: &GameState) -> Vec3 {
+    let (lead_x, lead_y) = aim_lead(game);
+    Vec3::new(
+        game.ship_position.x + lead_x * AIM_FAR_LEAD_X,
+        game.ship_position.y + lead_y * AIM_FAR_LEAD_Y,
+        game.ship_position.z - RETICLE_FAR_Z,
+    )
+}
+
 pub const LASER_DURATION: f32 = 1.1;
 pub const LASER_COOLDOWN: f32 = 0.7;
 pub const LASER_LENGTH: f32 = 135.0;

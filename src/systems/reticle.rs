@@ -32,25 +32,22 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &game_world.resources.game;
     let visible = game.mode == GameMode::Playing;
     let ship = game.ship_position;
-    let lead_x = -game.roll / MAX_BANK;
-    let lead_y = game.pitch / MAX_PITCH;
+    let (lead_x, lead_y) = aim_lead(game);
     let near = game.reticle_near;
     let far = game.reticle_far;
 
     place(
         world,
         near,
-        Vec3::new(ship.x + lead_x * 1.4, ship.y + lead_y * 1.2, ship.z - 16.0),
+        Vec3::new(
+            ship.x + lead_x * AIM_NEAR_LEAD_X,
+            ship.y + lead_y * AIM_NEAR_LEAD_Y,
+            ship.z - RETICLE_NEAR_Z,
+        ),
         0.55,
         visible,
     );
-    place(
-        world,
-        far,
-        Vec3::new(ship.x + lead_x * 3.6, ship.y + lead_y * 3.0, ship.z - 44.0),
-        1.2,
-        visible,
-    );
+    place(world, far, aim_point(game), 1.2, visible);
 }
 
 fn place(world: &mut World, entity: Option<Entity>, position: Vec3, scale: f32, visible: bool) {

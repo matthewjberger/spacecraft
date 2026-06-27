@@ -13,6 +13,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     let ship = game.ship_position;
     let lance = game.mods.lance as f32;
+    let nose = Vec3::new(ship.x, ship.y, ship.z - 1.6);
+    let aim_dir = (aim_point(game) - nose).normalize();
 
     if game.laser_cooldown > 0.0 {
         game.laser_cooldown -= delta;
@@ -40,8 +42,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(beam_entity) = game.beam
         && let Some(beam) = world.core.get_beam_mut(beam_entity)
     {
-        beam.start = Vec3::new(ship.x, ship.y, ship.z - 1.6);
-        beam.end = Vec3::new(ship.x, ship.y, ship.z - LASER_LENGTH);
+        beam.start = nose;
+        beam.end = nose + aim_dir * LASER_LENGTH;
         beam.width = strength * (0.85 + lance * 0.3);
         beam.alpha = (strength * 1.4).min(1.0);
         beam.intensity = 3.5 + strength * 7.0;
@@ -57,8 +59,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     if strength > LASER_SLICE_STRENGTH {
         let radius = LASER_SLICE_RADIUS + lance * 0.5;
-        slice_asteroids(world, game, ship, radius);
-        vaporize_enemies(world, game, ship, radius);
+        slice_asteroids(world, game, nose, aim_dir, radius);
+        vaporize_enemies(world, game, nose, aim_dir, radius);
     }
 
     update_fragments(world, game, delta);
@@ -86,19 +88,23 @@ fn ensure_beam(world: &mut World, game: &mut GameState) {
     game.beam = beam_entity;
 }
 
-fn slice_asteroids(world: &mut World, game: &mut GameState, ship: Vec3, radius: f32) {
+fn ray_hits(nose: Vec3, direction: Vec3, point: Vec3, radius: f32) -> bool {
+    let to_point = point - nose;
+    let along = to_point.dot(&direction);
+    if along < 2.0 || along > LASER_LENGTH {
+        return false;
+    }
+    (to_point - direction * along).magnitude() < radius
+}
+
+fn slice_asteroids(world: &mut World, game: &mut GameState, nose: Vec3, aim: Vec3, radius: f32) {
     let mut sliced: Vec<usize> = Vec::new();
     for index in 0..game.scenery.len() {
         if game.scenery[index].kind != SceneryKind::Asteroid {
             continue;
         }
-        let position = game.scenery[index].position;
         let rock = game.scenery[index].radius;
-        if position.z < ship.z - 2.0
-            && position.z > ship.z - LASER_LENGTH
-            && (position.x - ship.x).abs() < radius + rock
-            && (position.y - ship.y).abs() < radius + rock
-        {
+        if ray_hits(nose, aim, game.scenery[index].position, radius + rock) {
             sliced.push(index);
         }
     }
@@ -113,16 +119,11 @@ fn slice_asteroids(world: &mut World, game: &mut GameState, ship: Vec3, radius: 
     }
 }
 
-fn vaporize_enemies(world: &mut World, game: &mut GameState, ship: Vec3, radius: f32) {
+fn vaporize_enemies(world: &mut World, game: &mut GameState, nose: Vec3, aim: Vec3, radius: f32) {
     let mut killed: Vec<usize> = Vec::new();
     for index in 0..game.enemies.len() {
-        let position = game.enemies[index].position;
         let body = game.enemies[index].radius;
-        if position.z < ship.z - 1.0
-            && position.z > ship.z - LASER_LENGTH
-            && (position.x - ship.x).abs() < radius + body
-            && (position.y - ship.y).abs() < radius + body
-        {
+        if ray_hits(nose, aim, game.enemies[index].position, radius + body) {
             killed.push(index);
         }
     }

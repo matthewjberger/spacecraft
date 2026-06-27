@@ -30,13 +30,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             game.ship_position.y + TURRET_OFFSET_Y,
             game.ship_position.z + TURRET_OFFSET_Z,
         );
+        let aim = aim_point(game);
+        let converge = (aim - origin).normalize() * PROJECTILE_SPEED;
         let lateral: &[f32] = if spread {
             &[-SPREAD_ANGLE_VELOCITY, 0.0, SPREAD_ANGLE_VELOCITY]
         } else {
             &[0.0]
         };
         for offset in lateral {
-            let velocity = Vec3::new(*offset, 0.0, -PROJECTILE_SPEED);
+            let velocity = converge + Vec3::new(*offset, 0.0, 0.0);
             let entity = spawn_tracer(world, origin);
             game.projectiles.push(Projectile {
                 entity,
