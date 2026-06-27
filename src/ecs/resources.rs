@@ -96,7 +96,6 @@ pub struct HudHandles {
     pub shields: Option<Entity>,
     pub score: Option<Entity>,
     pub thrust: Option<Entity>,
-    pub top_panel: Option<Entity>,
     pub progress: Option<Entity>,
     pub boss: Option<Entity>,
     pub overlay_panel: Option<Entity>,

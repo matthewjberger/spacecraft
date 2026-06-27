@@ -78,13 +78,13 @@ pub fn spawn_fighter(world: &mut World, game: &mut crate::ecs::GameState, health
     let lane_x = random_range(&mut game.random_state, -5.0, 5.0);
     let lane_y = BASE_HEIGHT + random_range(&mut game.random_state, -2.6, 2.6);
     let position = Vec3::new(lane_x, lane_y, game.ship_position.z - ENEMY_SPAWN_AHEAD);
-    let entity = spawn_mesh(world, FIGHTER_MESH, position, Vec3::new(0.85, 0.85, 0.85));
+    let entity = spawn_mesh(world, FIGHTER_MESH, position, Vec3::new(1.05, 1.05, 1.05));
     apply_material(
         world,
         entity,
         "drift",
-        [0.14, 0.15, 0.2, 1.0],
-        [0.9, 0.08, 0.12],
+        [0.22, 0.13, 0.16, 1.0],
+        [0.55, 0.05, 0.07],
         false,
         false,
     );

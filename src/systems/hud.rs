@@ -17,7 +17,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         tree.add_node()
             .window(
                 Ab(vec2(28.0, 24.0)),
-                Ab(vec2(300.0, 132.0)),
+                Ab(vec2(310.0, 196.0)),
                 Anchor::TopLeft,
             )
             .with_rect(4.0, 1.5, border)
@@ -29,34 +29,27 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     let shields = text_line(world, gameplay_panel, "SHIELDS  ####", 16.0, dim, 22.0);
     let score = text_line(world, gameplay_panel, "SCORE  0", 16.0, dim, 22.0);
     let thrust = text_line(world, gameplay_panel, "THRUST  [    ]", 14.0, dim, 20.0);
-
-    let top_panel = {
-        let mut tree = UiTreeBuilder::from_parent(world, root);
-        tree.add_node()
-            .window(
-                Ab(vec2(0.0, 22.0)),
-                Ab(vec2(440.0, 70.0)),
-                Anchor::TopCenter,
-            )
-            .with_rect(4.0, 1.5, border)
-            .color_raw::<UiBase>(panel_bg)
-            .flow(FlowDirection::Vertical, 10.0, 6.0)
-            .entity()
-    };
-    let progress = centered_line(
+    let progress = text_line(
         world,
-        top_panel,
+        gameplay_panel,
         "APPROACH  [            ]",
-        15.0,
+        14.0,
         cyan,
-        22.0,
+        20.0,
     );
-    let boss = centered_line(world, top_panel, "", 15.0, vec4(1.0, 0.4, 0.35, 1.0), 22.0);
+    let boss = text_line(
+        world,
+        gameplay_panel,
+        "",
+        14.0,
+        vec4(1.0, 0.5, 0.45, 1.0),
+        20.0,
+    );
 
     let overlay_panel = {
         let mut tree = UiTreeBuilder::from_parent(world, root);
         tree.add_node()
-            .window(Ab(vec2(0.0, 0.0)), Ab(vec2(760.0, 380.0)), Anchor::Center)
+            .window(Rl(vec2(50.0, 50.0)), Ab(vec2(760.0, 380.0)), Anchor::Center)
             .with_rect(6.0, 2.0, border)
             .color_raw::<UiBase>(vec4(0.02, 0.06, 0.12, 0.78))
             .flow(FlowDirection::Vertical, 30.0, 18.0)
@@ -91,7 +84,6 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.shields = Some(shields);
     hud.score = Some(score);
     hud.thrust = Some(thrust);
-    hud.top_panel = Some(top_panel);
     hud.progress = Some(progress);
     hud.boss = Some(boss);
     hud.overlay_panel = Some(overlay_panel);
@@ -156,7 +148,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let playing = mode == GameMode::Playing;
 
     set_visible(world, hud.gameplay_panel, playing);
-    set_visible(world, hud.top_panel, playing);
     set_visible(world, hud.overlay_panel, !playing);
     set_visible(world, hud.damage_flash, playing && damage_flash > 0.0);
 

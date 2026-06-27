@@ -41,8 +41,8 @@ fn build_fighter() -> (Vec<Vertex>, Vec<u32>) {
     let tail = Vec3::new(0.0, 0.0, 0.9);
     let left = Vec3::new(-1.35, 0.0, 0.2);
     let right = Vec3::new(1.35, 0.0, 0.2);
-    let top = Vec3::new(0.0, 0.5, 0.2);
-    let bottom = Vec3::new(0.0, -0.5, 0.2);
+    let top = Vec3::new(0.0, 0.78, 0.1);
+    let bottom = Vec3::new(0.0, -0.78, 0.1);
 
     let faces = [
         [nose, top, right],

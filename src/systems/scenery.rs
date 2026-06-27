@@ -46,8 +46,8 @@ fn ring_slalom(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
 }
 
 fn asteroid_field(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
-    let length = 90.0 + next_random(&mut game.random_state) * 80.0;
-    let count = 16 + (next_random(&mut game.random_state) * 18.0) as usize;
+    let length = 100.0 + next_random(&mut game.random_state) * 80.0;
+    let count = 11 + (next_random(&mut game.random_state) * 12.0) as usize;
     for _ in 0..count {
         let x = random_range(&mut game.random_state, -ASTEROID_FIELD_X, ASTEROID_FIELD_X);
         let y =
