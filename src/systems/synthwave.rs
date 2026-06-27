@@ -82,10 +82,7 @@ const GROUND_Y: f32 = -9.0;
 const MAX_HEIGHT: f32 = 9.0;
 
 fn sky(rd: vec3<f32>) -> vec3<f32> {
-    let top_color = vec3<f32>(0.03, 0.02, 0.12);
-    let horizon_color = vec3<f32>(0.55, 0.10, 0.45);
-    var color = mix(horizon_color, top_color, pow(clamp(rd.y, 0.0, 1.0), 0.45));
-
+    // Output only the sun on black so the Max blend keeps the real space sky.
     let sun_dir = normalize(vec3<f32>(0.0, 0.07, -1.0));
     let delta = distance(rd, sun_dir);
     let disc = smoothstep(0.36, 0.345, delta);
@@ -93,8 +90,8 @@ fn sky(rd: vec3<f32>) -> vec3<f32> {
     let stripes = step(0.45, fract(band * 90.0));
     let cut = select(1.0, stripes, band < 0.0);
     let sun_color = mix(vec3<f32>(1.0, 0.2, 0.5), vec3<f32>(1.0, 0.78, 0.3), smoothstep(-0.04, 0.1, rd.y));
-    color = color + sun_color * disc * cut * 2.6;
-    color = color + vec3<f32>(1.0, 0.3, 0.55) * smoothstep(0.75, 0.0, delta) * 0.16;
+    var color = sun_color * disc * cut * 2.6;
+    color = color + vec3<f32>(1.0, 0.3, 0.55) * smoothstep(0.58, 0.0, delta) * 0.14;
 
     return color;
 }

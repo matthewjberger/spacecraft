@@ -107,16 +107,53 @@ fn build_gunship() -> (Vec<Vertex>, Vec<u32>) {
     flat_faces(&faces)
 }
 
-fn spike(direction: Vec3, seed: f32, scale: f32) -> f32 {
-    let base = (direction.x * 4.0 + seed).sin() * (direction.y * 3.0 - seed).cos() * 0.22;
-    let ridge = (direction.z * 6.0 + seed * 1.7).sin() * 0.16;
-    let crown = (direction.y - 0.4).max(0.0) * 0.7;
-    (base + ridge) * scale + crown * scale
+const BOSS_HORNS: [Vec3; 8] = [
+    Vec3::new(0.0, 0.15, -1.0),
+    Vec3::new(0.6, 0.55, -0.6),
+    Vec3::new(-0.6, 0.55, -0.6),
+    Vec3::new(0.95, -0.1, 0.1),
+    Vec3::new(-0.95, -0.1, 0.1),
+    Vec3::new(0.0, -0.8, -0.2),
+    Vec3::new(0.0, 0.95, 0.2),
+    Vec3::new(0.0, 0.1, 1.0),
+];
+
+fn boss_displacement(direction: Vec3, seed: f32, spike_scale: f32) -> f32 {
+    let lobe_a = (direction.x * 5.0 + seed).sin();
+    let lobe_b = (direction.y * 4.0 - seed * 0.6).sin();
+    let lobe_c = (direction.z * 6.0 + seed * 1.4).sin();
+    let ridged = (1.0 - (lobe_a * lobe_b * lobe_c).abs()) * 0.3;
+
+    let unit = direction.normalize();
+    let mut horn = 0.0;
+    for (index, spike) in BOSS_HORNS.iter().enumerate() {
+        let bias = ((seed * 0.7 + index as f32).sin() * 0.5 + 0.5) * 0.7 + 0.35;
+        let aim = unit.dot(&spike.normalize()).max(0.0);
+        horn += aim.powf(16.0) * bias;
+    }
+
+    ridged * spike_scale + horn * (0.85 + spike_scale * 0.7)
+}
+
+fn push_face(vertices: &mut Vec<Vertex>, indices: &mut Vec<u32>, corners: [Vec3; 3]) {
+    let mut normal = (corners[1] - corners[0])
+        .cross(&(corners[2] - corners[0]))
+        .normalize();
+    let centroid = (corners[0] + corners[1] + corners[2]) / 3.0;
+    if normal.dot(&centroid) < 0.0 {
+        normal = -normal;
+    }
+    for corner in corners {
+        let base = vertices.len() as u32;
+        let uv = [0.5 + corner.x * 0.2, 0.5 + corner.y * 0.2];
+        vertices.push(Vertex::with_tex_coords(corner, normal, uv));
+        indices.push(base);
+    }
 }
 
 fn build_hulk(seed: f32, y_squash: f32, spike_scale: f32) -> (Vec<Vertex>, Vec<u32>) {
-    let stacks = 22usize;
-    let sectors = 30usize;
+    let stacks = 26usize;
+    let sectors = 34usize;
     let stride = sectors + 1;
 
     let mut positions: Vec<Vec3> = Vec::with_capacity((stacks + 1) * stride);
@@ -125,52 +162,30 @@ fn build_hulk(seed: f32, y_squash: f32, spike_scale: f32) -> (Vec<Vertex>, Vec<u
         for sector in 0..=sectors {
             let theta = std::f32::consts::TAU * sector as f32 / sectors as f32;
             let direction = Vec3::new(phi.sin() * theta.cos(), phi.cos(), phi.sin() * theta.sin());
-            let radius = (1.0 + spike(direction, seed, spike_scale)).max(0.55);
+            let radius = (1.0 + boss_displacement(direction, seed, spike_scale)).max(0.5);
             positions.push(Vec3::new(direction.x, direction.y * y_squash, direction.z) * radius);
         }
     }
 
+    let mut vertices: Vec<Vertex> = Vec::new();
     let mut indices: Vec<u32> = Vec::new();
     for stack in 0..stacks {
         for sector in 0..sectors {
-            let top_left = (stack * stride + sector) as u32;
-            let top_right = (stack * stride + sector + 1) as u32;
-            let bottom_left = ((stack + 1) * stride + sector) as u32;
-            let bottom_right = ((stack + 1) * stride + sector + 1) as u32;
-            indices.push(top_left);
-            indices.push(bottom_left);
-            indices.push(top_right);
-            indices.push(top_right);
-            indices.push(bottom_left);
-            indices.push(bottom_right);
+            let top_left = positions[stack * stride + sector];
+            let top_right = positions[stack * stride + sector + 1];
+            let bottom_left = positions[(stack + 1) * stride + sector];
+            let bottom_right = positions[(stack + 1) * stride + sector + 1];
+            push_face(
+                &mut vertices,
+                &mut indices,
+                [top_left, bottom_left, top_right],
+            );
+            push_face(
+                &mut vertices,
+                &mut indices,
+                [top_right, bottom_left, bottom_right],
+            );
         }
-    }
-
-    let mut normals = vec![Vec3::zeros(); positions.len()];
-    for triangle in indices.chunks_exact(3) {
-        let index0 = triangle[0] as usize;
-        let index1 = triangle[1] as usize;
-        let index2 = triangle[2] as usize;
-        let edge_one = positions[index1] - positions[index0];
-        let edge_two = positions[index2] - positions[index0];
-        let face_normal = edge_one.cross(&edge_two);
-        normals[index0] += face_normal;
-        normals[index1] += face_normal;
-        normals[index2] += face_normal;
-    }
-
-    let mut vertices: Vec<Vertex> = Vec::with_capacity(positions.len());
-    for (index, position) in positions.iter().enumerate() {
-        let mut normal = if normals[index].magnitude() > 1.0e-5 {
-            normals[index].normalize()
-        } else {
-            position.normalize()
-        };
-        if normal.dot(position) < 0.0 {
-            normal = -normal;
-        }
-        let uv = [0.5 + position.x * 0.2, 0.5 + position.y * 0.2];
-        vertices.push(Vertex::with_tex_coords(*position, normal, uv));
     }
 
     (vertices, indices)
