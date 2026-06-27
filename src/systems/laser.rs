@@ -91,7 +91,7 @@ fn ensure_beam(world: &mut World, game: &mut GameState) {
 fn ray_hits(nose: Vec3, direction: Vec3, point: Vec3, radius: f32) -> bool {
     let to_point = point - nose;
     let along = to_point.dot(&direction);
-    if along < 2.0 || along > LASER_LENGTH {
+    if !(2.0..=LASER_LENGTH).contains(&along) {
         return false;
     }
     (to_point - direction * along).magnitude() < radius
