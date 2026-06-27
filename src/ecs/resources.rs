@@ -14,6 +14,13 @@ pub enum GameMode {
     Victory,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ModeKind {
+    Story,
+    Arcade,
+    Endless,
+}
+
 #[derive(Default, Clone, Copy)]
 pub struct ShipMods {
     pub hull: u8,
@@ -231,6 +238,7 @@ pub struct GameState {
     pub roll: f32,
     pub pitch: f32,
     pub speed_scale: f32,
+    pub ring_boost: f32,
     pub elapsed: f32,
     pub barrel: BarrelRoll,
     pub scenery: Vec<Scenery>,
@@ -259,6 +267,7 @@ pub struct GameState {
     pub sector: usize,
     pub credits: u32,
     pub mods: ShipMods,
+    pub run_mode: ModeKind,
     pub loop_count: u32,
     pub shop_cursor: usize,
     pub menu_cursor: usize,
@@ -308,6 +317,7 @@ impl Default for GameState {
             roll: 0.0,
             pitch: 0.0,
             speed_scale: 1.0,
+            ring_boost: 0.0,
             elapsed: 0.0,
             barrel: BarrelRoll::default(),
             scenery: Vec::new(),
@@ -336,6 +346,7 @@ impl Default for GameState {
             sector: 0,
             credits: 0,
             mods: ShipMods::default(),
+            run_mode: ModeKind::Story,
             loop_count: 0,
             shop_cursor: 0,
             menu_cursor: 0,

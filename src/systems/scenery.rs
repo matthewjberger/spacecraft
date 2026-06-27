@@ -127,6 +127,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 .sqrt();
                 if planar < radius {
                     award(game, 1);
+                    game.ring_boost = RING_BOOST_TIME;
                     game.scenery[index].collected = true;
                     bursts.push((position, Vec3::new(0.4, 0.9, 1.0), 30));
                 }

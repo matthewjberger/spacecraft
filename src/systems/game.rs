@@ -1,5 +1,5 @@
 use crate::content::{SECTORS, SHOP_ITEMS, STARTING_CREDITS};
-use crate::ecs::{GameMode, GameState, ShipMods, TemplateWorld};
+use crate::ecs::{GameMode, GameState, ModeKind, ShipMods, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::shop;
 use nightshade::prelude::*;
@@ -43,14 +43,17 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 game.menu_cursor = game.menu_cursor.saturating_sub(1);
             }
             if nav_down(world) {
-                game.menu_cursor = (game.menu_cursor + 1).min(1);
+                game.menu_cursor = (game.menu_cursor + 1).min(3);
             }
             if advance {
-                if game.menu_cursor == 0 {
-                    start_game(world, game);
-                } else {
-                    game.settings_cursor = 0;
-                    enter_mode(game, GameMode::Settings);
+                match game.menu_cursor {
+                    0 => start_game(world, game, ModeKind::Story),
+                    1 => start_game(world, game, ModeKind::Arcade),
+                    2 => start_game(world, game, ModeKind::Endless),
+                    _ => {
+                        game.settings_cursor = 0;
+                        enter_mode(game, GameMode::Settings);
+                    }
                 }
             }
         }
@@ -153,8 +156,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
         GameMode::Victory => {
             if advance {
-                game.loop_count += 1;
-                enter_shop(world, game, 0);
+                if game.run_mode == ModeKind::Endless {
+                    game.loop_count += 1;
+                    enter_shop(world, game, 0);
+                } else {
+                    to_title(world, game);
+                }
             }
         }
     }
@@ -178,10 +185,11 @@ fn apply_starfield(world: &mut World, game: &GameState) {
     }
 }
 
-fn start_game(world: &mut World, game: &mut GameState) {
+fn start_game(world: &mut World, game: &mut GameState, mode: ModeKind) {
+    game.run_mode = mode;
     game.score = 0;
     game.best_combo = 0;
-    game.credits = STARTING_CREDITS;
+    game.credits = STARTING_CREDITS + if mode == ModeKind::Arcade { 40 } else { 0 };
     game.mods = ShipMods::default();
     game.loop_count = 0;
     game.max_shields = 4;
@@ -201,7 +209,11 @@ fn enter_shop(world: &mut World, game: &mut GameState, sector: usize) {
 fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
     game.sector = sector;
     begin_sector(world, game);
-    enter_mode(game, GameMode::Briefing);
+    if game.run_mode == ModeKind::Story {
+        enter_mode(game, GameMode::Briefing);
+    } else {
+        enter_mode(game, GameMode::Playing);
+    }
 }
 
 fn begin_sector(world: &mut World, game: &mut GameState) {

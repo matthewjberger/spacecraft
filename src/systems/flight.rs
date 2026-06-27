@@ -59,7 +59,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         ORIENT_RESPONSE * delta,
     );
 
-    let target_speed = 1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN;
+    if game.ring_boost > 0.0 {
+        game.ring_boost -= delta;
+    }
+    let ring_boost = RING_BOOST_GAIN * (game.ring_boost / RING_BOOST_TIME).clamp(0.0, 1.0);
+    let target_speed = 1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN + ring_boost;
     game.speed_scale = approach(game.speed_scale, target_speed, SPEED_RESPONSE * delta);
 
     let bob = (game.elapsed * 1.7).sin() * IDLE_BOB;

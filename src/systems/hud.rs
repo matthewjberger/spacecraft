@@ -567,7 +567,12 @@ fn menu_body(items: &[String], cursor: usize) -> String {
 }
 
 fn title_overlay(cursor: usize, best: u32) -> (String, String, String) {
-    let items = ["LAUNCH".to_string(), "SETTINGS".to_string()];
+    let items = [
+        "STORY".to_string(),
+        "ARCADE".to_string(),
+        "ENDLESS".to_string(),
+        "SETTINGS".to_string(),
+    ];
     let body = if best > 0 {
         format!("BEST  {best}\n\n{}", menu_body(&items, cursor))
     } else {
