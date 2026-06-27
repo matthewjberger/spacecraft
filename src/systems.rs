@@ -6,6 +6,7 @@ pub mod boss;
 pub mod camera;
 pub mod combat;
 pub mod common;
+pub mod crt;
 pub mod director;
 pub mod enemies;
 pub mod enemy_mesh;

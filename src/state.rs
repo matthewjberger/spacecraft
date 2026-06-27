@@ -1,9 +1,10 @@
 use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::atmosphere::AtmosphereState;
+use crate::systems::crt::CrtState;
 use crate::systems::ring_fx::RingState;
 use crate::systems::{
-    abilities, atmosphere, backdrop, boss, camera, combat, director, enemies, flight, game, hangar,
-    hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, weapons,
+    abilities, atmosphere, backdrop, boss, camera, combat, crt, director, enemies, flight, game,
+    hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, weapons,
 };
 use nightshade::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -13,6 +14,7 @@ pub struct Spacecraft {
     pub template_world: TemplateWorld,
     pub atmosphere: Arc<Mutex<AtmosphereState>>,
     pub rings: Arc<Mutex<RingState>>,
+    pub crt: Arc<Mutex<CrtState>>,
 }
 
 impl State for Spacecraft {
@@ -38,6 +40,27 @@ impl State for Spacecraft {
         let _ = render_graph_pass(graph, Box::new(ring_pass))
             .read("depth", resources.depth)
             .slot("hdr", resources.scene_color)
+            .add();
+
+        let crt_buffer = render_graph_add_color_texture(graph, "crt_buffer")
+            .format(wgpu::TextureFormat::Rgba16Float)
+            .size(
+                resources.surface_width.max(1),
+                resources.surface_height.max(1),
+            )
+            .usage(wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING)
+            .transient();
+
+        let crt_warp = crt::CrtPass::new(device, false, self.crt.clone());
+        let _ = render_graph_pass(graph, Box::new(crt_warp))
+            .read("input", resources.scene_color)
+            .write("output", crt_buffer)
+            .add();
+
+        let crt_resolve = crt::CrtPass::new(device, true, self.crt.clone());
+        let _ = render_graph_pass(graph, Box::new(crt_resolve))
+            .read("input", crt_buffer)
+            .slot("output", resources.scene_color)
             .add();
     }
 
@@ -79,5 +102,6 @@ impl State for Spacecraft {
 
         atmosphere::sync(&self.template_world.resources.game, &self.atmosphere);
         ring_fx::sync(&self.template_world.resources.game, &self.rings);
+        crt::sync(&self.template_world.resources.game, &self.crt);
     }
 }

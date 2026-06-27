@@ -348,6 +348,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let flash_on = game.flash_enabled;
     let starfield_on = game.starfield_enabled;
     let hard_on = game.hard_mode;
+    let crt_on = game.crt_enabled;
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
@@ -475,9 +476,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let blink = (mode_timer * 1.6).fract() < 0.62;
         let (heading, body, prompt) = match mode {
             GameMode::Title => title_overlay(menu_cursor, best_score),
-            GameMode::Settings => {
-                settings_overlay(settings_cursor, shake_on, flash_on, starfield_on, hard_on)
-            }
+            GameMode::Settings => settings_overlay(
+                settings_cursor,
+                shake_on,
+                flash_on,
+                starfield_on,
+                hard_on,
+                crt_on,
+            ),
             GameMode::Paused => pause_overlay(menu_cursor),
             _ => overlay_text(mode, sector_index, score, best_combo),
         };
@@ -591,6 +597,7 @@ fn settings_overlay(
     flash: bool,
     starfield: bool,
     hard: bool,
+    crt: bool,
 ) -> (String, String, String) {
     let on = |value: bool| if value { "ON" } else { "OFF" };
     let items = [
@@ -598,6 +605,7 @@ fn settings_overlay(
         format!("DAMAGE FLASH     {}", on(flash)),
         format!("STARFIELD        {}", on(starfield)),
         format!("DIFFICULTY       {}", if hard { "HARD" } else { "NORMAL" }),
+        format!("CRT FILTER       {}", on(crt)),
         "BACK".to_string(),
     ];
     (
