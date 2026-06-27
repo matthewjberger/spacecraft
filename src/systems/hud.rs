@@ -338,6 +338,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let aegis_cooldown = game.aegis_cooldown;
     let nova_flash = game.nova_flash;
     let combo = game.combo;
+    let score_flash = game.score_flash;
     let best_combo = game.best_combo;
     let best_score = game.best_score;
     let loop_count = game.loop_count;
@@ -429,6 +430,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         };
         set_text(world, hud.sector, &sector_text);
         set_text(world, hud.score, &format!("SCORE  {score}"));
+        tint_node(
+            world,
+            hud.score,
+            if score_flash > 0.0 {
+                vec4(1.0, 0.92, 0.4, 1.0)
+            } else {
+                vec4(0.45, 0.8, 1.0, 0.85)
+            },
+        );
         if combo > 1 {
             set_text(
                 world,

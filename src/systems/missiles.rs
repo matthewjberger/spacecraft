@@ -142,7 +142,7 @@ fn spawn_missile(world: &mut World, game: &mut GameState, origin: Vec3) {
                 (1.0, vec4(0.8, 0.25, 0.0, 0.0)),
             ],
         },
-        emissive_strength: 8.0,
+        emissive_strength: 4.0,
         enabled: true,
         ..Default::default()
     };

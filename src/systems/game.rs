@@ -30,6 +30,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.shake > 0.0 {
         game.shake = (game.shake - delta * 1.4).max(0.0);
     }
+    if game.score_flash > 0.0 {
+        game.score_flash -= delta;
+    }
 
     match game.mode {
         GameMode::Title => {

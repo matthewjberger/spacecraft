@@ -186,7 +186,7 @@ fn spawn_tracer(world: &mut World, origin: Vec3) -> Entity {
         size_start: 0.16,
         size_end: 0.02,
         color_gradient: tracer_gradient(),
-        emissive_strength: 9.0,
+        emissive_strength: 4.5,
         enabled: true,
         ..Default::default()
     };

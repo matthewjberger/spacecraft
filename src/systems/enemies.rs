@@ -124,7 +124,7 @@ pub fn spawn_enemy_shot(world: &mut World, game: &mut GameState, origin: Vec3, t
         size_start: 0.18,
         size_end: 0.02,
         color_gradient: enemy_shot_gradient(),
-        emissive_strength: 8.0,
+        emissive_strength: 4.0,
         enabled: true,
         ..Default::default()
     };

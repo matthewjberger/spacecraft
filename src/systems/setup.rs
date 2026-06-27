@@ -14,7 +14,8 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     world.resources.window.title = "Spacecraft".to_string();
     world.resources.render_settings.atmosphere = Atmosphere::Space;
     world.resources.render_settings.bloom_enabled = true;
-    world.resources.render_settings.bloom_intensity = 0.85;
+    world.resources.render_settings.bloom_intensity = 0.4;
+    world.resources.render_settings.bloom_threshold = 1.25;
     world.resources.render_settings.ambient_light = [0.05, 0.07, 0.13, 1.0];
     world.resources.debug_draw.show_grid = false;
 
@@ -129,7 +130,7 @@ fn spawn_exhaust(world: &mut World) -> Entity {
         size_start: 0.32,
         size_end: 0.02,
         color_gradient: engine_flame_gradient(),
-        emissive_strength: 6.0,
+        emissive_strength: 3.0,
         enabled: true,
         ..Default::default()
     };
@@ -159,7 +160,7 @@ fn spawn_starfield(world: &mut World) -> Entity {
         size_start: STAR_SIZE,
         size_end: STAR_SIZE,
         color_gradient: star_gradient(),
-        emissive_strength: 2.5,
+        emissive_strength: 1.1,
         enabled: true,
         ..Default::default()
     };
@@ -186,7 +187,7 @@ fn spawn_corner_thruster(world: &mut World) -> Entity {
         size_start: 0.13,
         size_end: 0.01,
         color_gradient: yellow_thruster_gradient(),
-        emissive_strength: 5.5,
+        emissive_strength: 2.8,
         enabled: true,
         ..Default::default()
     };

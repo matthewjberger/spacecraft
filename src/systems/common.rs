@@ -14,6 +14,7 @@ pub fn award(game: &mut GameState, base: u32) {
     game.combo_timer = COMBO_WINDOW;
     game.score += base * combo_multiplier(game.combo);
     game.credits += base;
+    game.score_flash = 0.3;
 }
 
 pub fn difficulty(game: &GameState) -> u32 {

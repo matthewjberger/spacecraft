@@ -46,7 +46,7 @@ pub fn spawn_burst(world: &mut World, position: Vec3, color: Vec3, count: u32) -
                 (1.0, vec4(color.x * 0.4, color.y * 0.4, color.z * 0.4, 0.0)),
             ],
         },
-        emissive_strength: 3.0,
+        emissive_strength: 2.2,
         one_shot: true,
         enabled: true,
         ..Default::default()
