@@ -21,7 +21,7 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<AtmosphereState>>) {
     let mut instances = Vec::new();
     for backdrop in &game.backdrop {
         if let Some(atmosphere) = backdrop.atmosphere {
-            let radius = backdrop.radius * 1.5;
+            let radius = backdrop.radius * 1.18;
             let position = backdrop.position;
             let model = [
                 [radius, 0.0, 0.0, 0.0],
@@ -31,7 +31,7 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<AtmosphereState>>) {
             ];
             instances.push(AtmosphereInstance {
                 model,
-                color: [atmosphere[0], atmosphere[1], atmosphere[2], 0.7],
+                color: [atmosphere[0], atmosphere[1], atmosphere[2], 0.45],
             });
         }
     }
@@ -56,6 +56,7 @@ struct GpuVertex {
 
 const MAX_INSTANCES: usize = 16;
 const HDR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba16Float;
+const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
 const SHADER: &str = r#"
 struct Uniforms {
@@ -105,11 +106,14 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let impact = length(input.center - closest);
 
     let shell = input.shell_radius;
-    let surface = shell / 1.5;
+    let surface = shell / 1.18;
 
-    let outward = smoothstep(shell, surface, impact);
-    let limb = smoothstep(surface * 0.9, surface * 1.03, impact);
-    let density = pow(outward, 1.6) * limb;
+    let peak = sqrt(max(shell * shell - surface * surface, 0.0));
+    let outer = sqrt(max(shell * shell - impact * impact, 0.0));
+    let inner = sqrt(max(surface * surface - impact * impact, 0.0));
+    let halo = (outer - inner) / peak;
+    let exterior = smoothstep(surface * 0.8, surface, impact);
+    let density = halo * mix(0.18, 1.0, exterior);
 
     let glow = input.color.rgb * density * input.color.a;
     return vec4<f32>(glow, density);
@@ -254,7 +258,13 @@ impl AtmospherePass {
                 front_face: wgpu::FrontFace::Ccw,
                 ..Default::default()
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: DEPTH_FORMAT,
+                depth_write_enabled: Some(false),
+                depth_compare: Some(wgpu::CompareFunction::GreaterEqual),
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState::default(),
             fragment: Some(wgpu::FragmentState {
                 module: &shader_module,
@@ -301,7 +311,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for AtmospherePass {
     }
 
     fn reads(&self) -> Vec<&str> {
-        vec![]
+        vec!["depth"]
     }
 
     fn writes(&self) -> Vec<&str> {
@@ -350,6 +360,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for AtmospherePass {
         }
 
         let (hdr_view, load_op, store_op) = context.get_color_attachment("hdr")?;
+        let depth_view = context.get_texture_view("depth")?;
 
         let mut render_pass = context
             .encoder
@@ -364,7 +375,14 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for AtmospherePass {
                     },
                     depth_slice: None,
                 })],
-                depth_stencil_attachment: None,
+                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    view: depth_view,
+                    depth_ops: Some(wgpu::Operations {
+                        load: wgpu::LoadOp::Load,
+                        store: wgpu::StoreOp::Store,
+                    }),
+                    stencil_ops: None,
+                }),
                 timestamp_writes: None,
                 occlusion_query_set: None,
                 multiview_mask: None,

@@ -24,6 +24,7 @@ impl State for Spacecraft {
     ) {
         let pass = atmosphere::AtmospherePass::new(device, self.atmosphere.clone());
         let _ = render_graph_pass(graph, Box::new(pass))
+            .read("depth", resources.depth)
             .slot("hdr", resources.scene_color)
             .add();
     }
