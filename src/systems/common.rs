@@ -1,7 +1,8 @@
 use crate::ecs::GameState;
 use nightshade::prelude::*;
 
-pub const COMBO_WINDOW: f32 = 2.6;
+pub use crate::systems::spawn::*;
+pub use crate::systems::tuning::*;
 
 pub fn combo_multiplier(combo: u32) -> u32 {
     1 + (combo / 8).min(4)
@@ -15,87 +16,6 @@ pub fn award(game: &mut GameState, base: u32) {
     game.credits += base;
 }
 
-pub const SHIP_SCALE: f32 = 0.42;
-pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
-pub const SHIP_STEER_SPEED: f32 = 9.0;
-pub const BOUND_X: f32 = 6.5;
-pub const BOUND_Y: f32 = 3.8;
-pub const BASE_HEIGHT: f32 = 0.0;
-
-pub const MAX_BANK: f32 = 0.85;
-pub const MAX_PITCH: f32 = 0.40;
-pub const MAX_LEAD_YAW: f32 = 0.25;
-pub const ORIENT_RESPONSE: f32 = 9.0;
-pub const IDLE_BOB: f32 = 0.12;
-
-pub const BARREL_DURATION: f32 = 0.55;
-
-pub const BOOST_GAIN: f32 = 1.4;
-pub const BRAKE_GAIN: f32 = 0.5;
-pub const SPEED_RESPONSE: f32 = 4.0;
-
-pub const STICK_DEADZONE: f32 = 0.15;
-
-pub const CAMERA_DISTANCE: f32 = 9.0;
-pub const CAMERA_HEIGHT: f32 = 1.4;
-pub const CAMERA_FOLLOW_X: f32 = 0.3;
-pub const CAMERA_FOLLOW_Y: f32 = 0.25;
-pub const CAMERA_RESPONSE: f32 = 5.0;
-pub const CAMERA_PITCH: f32 = -0.155;
-pub const CAMERA_ROLL: f32 = 0.30;
-pub const BASE_FOV_DEGREES: f32 = 60.0;
-pub const BOOST_FOV_DEGREES: f32 = 18.0;
-
-pub const RAIL_SPEED: f32 = 38.0;
-pub const SCENERY_DESPAWN_Z: f32 = 16.0;
-pub const RING_RADIUS: f32 = 3.6;
-pub const RING_SPACING: f32 = 34.0;
-pub const RING_PULSE_AMOUNT: f32 = 0.07;
-pub const RING_PULSE_SPEED: f32 = 1.7;
-pub const RING_COLLECT_TIME: f32 = 0.45;
-pub const RING_GROW: f32 = 1.8;
-pub const PATTERN_GAP: f32 = 30.0;
-pub const ASTEROID_FIELD_X: f32 = 46.0;
-pub const ASTEROID_FIELD_Y: f32 = 28.0;
-
-pub const STAR_SPEED: f32 = 68.0;
-pub const STARFIELD_CENTER_Z: f32 = -70.0;
-pub const STARFIELD_HALF_X: f32 = 38.0;
-pub const STARFIELD_HALF_Y: f32 = 24.0;
-pub const STARFIELD_HALF_Z: f32 = 95.0;
-pub const STARFIELD_RATE: f32 = 720.0;
-pub const STAR_SIZE: f32 = 0.05;
-
-pub const BURST_LIFETIME: f32 = 2.5;
-
-pub const FIRE_INTERVAL: f32 = 0.11;
-pub const PROJECTILE_SPEED: f32 = 95.0;
-pub const PROJECTILE_RANGE: f32 = 175.0;
-pub const TURRET_OFFSET_X: f32 = 1.05;
-pub const TURRET_OFFSET_Y: f32 = -0.05;
-pub const TURRET_OFFSET_Z: f32 = -0.9;
-pub const PROJECTILE_HIT_RADIUS: f32 = 0.7;
-
-pub const PLAYER_HIT_RADIUS: f32 = 0.6;
-pub const ENEMY_SPAWN_AHEAD: f32 = 120.0;
-pub const ENEMY_DESPAWN_Z: f32 = 16.0;
-pub const ENEMY_SHOT_SPEED: f32 = 52.0;
-pub const ENEMY_SCORE: u32 = 5;
-
-pub const BOSS_SPAWN_Z: f32 = -80.0;
-
-pub const COURSE_AHEAD: f32 = 210.0;
-pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
-pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
-pub const SPREAD_ANGLE_VELOCITY: f32 = 20.0;
-
-pub const RETICLE_NEAR_Z: f32 = 16.0;
-pub const RETICLE_FAR_Z: f32 = 44.0;
-pub const AIM_NEAR_LEAD_X: f32 = 1.4;
-pub const AIM_NEAR_LEAD_Y: f32 = 1.2;
-pub const AIM_FAR_LEAD_X: f32 = 3.6;
-pub const AIM_FAR_LEAD_Y: f32 = 3.0;
-
 pub fn aim_lead(game: &GameState) -> (f32, f32) {
     (-game.roll / MAX_BANK, game.pitch / MAX_PITCH)
 }
@@ -108,34 +28,6 @@ pub fn aim_point(game: &GameState) -> Vec3 {
         game.ship_position.z - RETICLE_FAR_Z,
     )
 }
-
-pub const LASER_DURATION: f32 = 1.1;
-pub const LASER_COOLDOWN: f32 = 0.7;
-pub const LASER_LENGTH: f32 = 135.0;
-pub const LASER_SLICE_STRENGTH: f32 = 0.3;
-pub const LASER_SLICE_RADIUS: f32 = 2.2;
-pub const FRAGMENT_LIFE: f32 = 1.7;
-
-pub const NOVA_RADIUS: f32 = 24.0;
-pub const NOVA_RANGE_Z: f32 = 165.0;
-pub const NOVA_FLASH_TIME: f32 = 0.32;
-pub const NOVA_BOSS_DAMAGE: i32 = 12;
-pub const AEGIS_DURATION: f32 = 2.6;
-pub const AEGIS_COOLDOWN: f32 = 7.5;
-
-pub const MAGNET_BASE_RANGE: f32 = 4.5;
-pub const MAGNET_RANGE_PER: f32 = 4.5;
-pub const MAGNET_PULL_SPEED: f32 = 18.0;
-pub const ASTEROID_DROP_CHANCE: f32 = 0.18;
-
-pub const BOSS_BEAM_INTERVAL: f32 = 5.5;
-pub const BOSS_BEAM_DURATION: f32 = 1.4;
-pub const BOSS_BEAM_CHARGE: f32 = 0.75;
-pub const BOSS_BEAM_RADIUS: f32 = 1.9;
-
-pub const DAMAGE_INVULN: f32 = 1.1;
-pub const DAMAGE_FLASH_TIME: f32 = 0.35;
-pub const DAMAGE_SHAKE: f32 = 0.9;
 
 pub fn approach(current: f32, target: f32, rate: f32) -> f32 {
     current + (target - current) * rate.clamp(0.0, 1.0)
@@ -156,59 +48,4 @@ pub fn next_random(state: &mut u64) -> f32 {
 
 pub fn random_range(state: &mut u64, low: f32, high: f32) -> f32 {
     low + (high - low) * next_random(state)
-}
-
-pub fn apply_material(
-    world: &mut World,
-    entity: Entity,
-    name: &str,
-    base_color: [f32; 4],
-    emissive_factor: [f32; 3],
-    unlit: bool,
-    double_sided: bool,
-) {
-    let material = Material {
-        base_color,
-        emissive_factor,
-        unlit,
-        double_sided,
-        metallic: 0.2,
-        roughness: 0.85,
-        ..Default::default()
-    };
-    register_material(world, entity, name.to_string(), material);
-}
-
-pub fn spawn_burst(world: &mut World, position: Vec3, color: Vec3, count: u32) -> Entity {
-    let entity = spawn_entities(world, PARTICLE_EMITTER | NAME, 1)[0];
-    let emitter = ParticleEmitter {
-        emitter_type: EmitterType::Sparks,
-        shape: EmitterShape::Sphere { radius: 0.25 },
-        position,
-        direction: Vec3::new(0.0, 1.0, 0.0),
-        spawn_rate: 0.0,
-        burst_count: count,
-        particle_lifetime_min: 0.35,
-        particle_lifetime_max: 0.8,
-        initial_velocity_min: 2.5,
-        initial_velocity_max: 7.0,
-        velocity_spread: std::f32::consts::PI,
-        gravity: Vec3::zeros(),
-        drag: 0.35,
-        size_start: 0.12,
-        size_end: 0.01,
-        color_gradient: ColorGradient {
-            colors: vec![
-                (0.0, vec4(color.x, color.y, color.z, 1.0)),
-                (0.5, vec4(color.x, color.y, color.z, 0.7)),
-                (1.0, vec4(color.x * 0.4, color.y * 0.4, color.z * 0.4, 0.0)),
-            ],
-        },
-        emissive_strength: 3.0,
-        one_shot: true,
-        enabled: true,
-        ..Default::default()
-    };
-    world.core.set_particle_emitter(entity, emitter);
-    entity
 }

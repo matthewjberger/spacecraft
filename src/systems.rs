@@ -21,4 +21,6 @@ pub mod ring_fx;
 pub mod scenery;
 pub mod setup;
 pub mod shop;
+pub mod spawn;
+pub mod tuning;
 pub mod weapons;
