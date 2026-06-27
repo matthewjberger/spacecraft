@@ -57,8 +57,7 @@ fn detonate_nova(world: &mut World, game: &mut GameState) {
         let enemy = game.enemies.remove(index);
         let burst = spawn_burst(world, enemy.position, Vec3::new(1.0, 0.7, 0.3), 26);
         game.bursts.push((burst, 0.0));
-        game.score += ENEMY_SCORE;
-        game.credits += ENEMY_SCORE;
+        award(game, ENEMY_SCORE);
         despawn_recursive_immediate(world, enemy.entity);
     }
 
@@ -76,8 +75,7 @@ fn detonate_nova(world: &mut World, game: &mut GameState) {
     for index in sliced.into_iter().rev() {
         let item = game.scenery.remove(index);
         laser::spawn_fragments(world, game, item.position, item.radius);
-        game.score += 1;
-        game.credits += 1;
+        award(game, 1);
         despawn_recursive_immediate(world, item.entity);
     }
 

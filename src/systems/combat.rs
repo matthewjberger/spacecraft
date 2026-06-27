@@ -12,6 +12,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.invuln > 0.0 {
         game.invuln -= delta;
     }
+    if game.combo_timer > 0.0 {
+        game.combo_timer -= delta;
+        if game.combo_timer <= 0.0 {
+            game.combo = 0;
+        }
+    }
 
     let barrier = game.effect == Some(PickupKind::Barrier) || game.aegis_timer > 0.0;
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();

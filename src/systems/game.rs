@@ -102,9 +102,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 game.menu_cursor = 0;
                 enter_mode(game, GameMode::Paused);
             } else if game.shields <= 0 {
+                game.best_score = game.best_score.max(game.score);
                 enter_mode(game, GameMode::GameOver);
             } else if game.beat_index >= SECTORS[game.sector].beats.len() {
                 if game.sector + 1 >= SECTORS.len() {
+                    game.best_score = game.best_score.max(game.score);
                     enter_mode(game, GameMode::Victory);
                 } else {
                     enter_mode(game, GameMode::SectorClear);
@@ -205,6 +207,8 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.nova_charges = game.mods.nova_max;
     game.aegis_cooldown = 0.0;
     game.aegis_timer = 0.0;
+    game.combo = 0;
+    game.combo_timer = 0.0;
 }
 
 fn to_title(world: &mut World, game: &mut GameState) {

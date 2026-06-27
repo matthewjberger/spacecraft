@@ -26,6 +26,14 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     );
     let sector = text_line(world, gameplay_panel, "SECTOR I", 19.0, cyan, 24.0);
     let score = text_line(world, gameplay_panel, "SCORE  0", 16.0, dim, 22.0);
+    let combo = text_line(
+        world,
+        gameplay_panel,
+        "",
+        15.0,
+        vec4(1.0, 0.85, 0.35, 1.0),
+        18.0,
+    );
     label_line(world, gameplay_panel, "SHIELDS", dim);
     let shields_bar = bar(world, gameplay_panel, vec4(0.4, 0.95, 1.0, 1.0));
     label_line(world, gameplay_panel, "THRUST", dim);
@@ -185,6 +193,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.gameplay_panel = Some(gameplay_panel);
     hud.sector = Some(sector);
     hud.score = Some(score);
+    hud.combo = Some(combo);
     hud.shields_bar = Some(shields_bar);
     hud.thrust_bar = Some(thrust_bar);
     hud.approach_bar = Some(approach_bar);
@@ -328,6 +337,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let aegis_timer = game.aegis_timer;
     let aegis_cooldown = game.aegis_cooldown;
     let nova_flash = game.nova_flash;
+    let combo = game.combo;
+    let best_score = game.best_score;
     let menu_cursor = game.menu_cursor;
     let settings_cursor = game.settings_cursor;
     let shake_on = game.shake_enabled;
@@ -413,6 +424,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             &format!("{}  {}", sector.name, sector.subtitle),
         );
         set_text(world, hud.score, &format!("SCORE  {score}"));
+        if combo > 1 {
+            set_text(
+                world,
+                hud.combo,
+                &format!("COMBO  x{}   ({combo})", combo_multiplier(combo)),
+            );
+        } else {
+            set_text(world, hud.combo, " ");
+        }
         set_bar(world, hud.shields_bar, shields / max_shields);
         set_bar(
             world,
@@ -439,7 +459,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     } else if !shopping {
         let blink = (mode_timer * 1.6).fract() < 0.62;
         let (heading, body, prompt) = match mode {
-            GameMode::Title => title_overlay(menu_cursor),
+            GameMode::Title => title_overlay(menu_cursor, best_score),
             GameMode::Settings => {
                 settings_overlay(settings_cursor, shake_on, flash_on, starfield_on)
             }
@@ -522,11 +542,16 @@ fn menu_body(items: &[String], cursor: usize) -> String {
         .join("\n")
 }
 
-fn title_overlay(cursor: usize) -> (String, String, String) {
+fn title_overlay(cursor: usize, best: u32) -> (String, String, String) {
     let items = ["LAUNCH".to_string(), "SETTINGS".to_string()];
+    let body = if best > 0 {
+        format!("BEST  {best}\n\n{}", menu_body(&items, cursor))
+    } else {
+        menu_body(&items, cursor)
+    };
     (
         "SPACECRAFT".to_string(),
-        menu_body(&items, cursor),
+        body,
         "UP / DOWN  SELECT       SPACE  CONFIRM".to_string(),
     )
 }

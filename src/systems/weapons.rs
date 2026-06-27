@@ -51,7 +51,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let mut asteroid_hits: Vec<usize> = Vec::new();
     let mut enemy_deaths: Vec<usize> = Vec::new();
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
-    let mut score_gain: u32 = 0;
 
     for index in 0..game.projectiles.len() {
         let step = game.projectiles[index].velocity * delta;
@@ -127,7 +126,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let enemy = game.enemies.remove(enemy_index);
         bursts.push((enemy.position, Vec3::new(1.0, 0.45, 0.2), 30));
         despawn_recursive_immediate(world, enemy.entity);
-        score_gain += ENEMY_SCORE;
+        award(game, ENEMY_SCORE);
     }
 
     asteroid_hits.sort_unstable();
@@ -136,11 +135,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let scenery_item = game.scenery.remove(scenery_index);
         despawn_recursive_immediate(world, scenery_item.entity);
         pickups::maybe_drop(world, game, scenery_item.position);
-        score_gain += 1;
+        award(game, 1);
     }
-
-    game.score += score_gain;
-    game.credits += score_gain;
 
     remove.sort_unstable();
     remove.dedup();

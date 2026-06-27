@@ -105,8 +105,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             beam.alpha = 0.0;
             beam.width = 0.0;
         }
-        game.score += stats.score;
-        game.credits += stats.score;
+        award(game, stats.score);
     }
 }
 

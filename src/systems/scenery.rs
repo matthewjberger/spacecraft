@@ -126,8 +126,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                     + (position.y - ship_position.y).powi(2))
                 .sqrt();
                 if planar < radius {
-                    game.score += 1;
-                    game.credits += 1;
+                    award(game, 1);
                     game.scenery[index].collected = true;
                     bursts.push((position, Vec3::new(0.4, 0.9, 1.0), 30));
                 }

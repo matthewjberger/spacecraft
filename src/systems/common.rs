@@ -1,4 +1,18 @@
+use crate::ecs::GameState;
 use nightshade::prelude::*;
+
+pub const COMBO_WINDOW: f32 = 2.6;
+
+pub fn combo_multiplier(combo: u32) -> u32 {
+    1 + (combo / 8).min(4)
+}
+
+pub fn award(game: &mut GameState, base: u32) {
+    game.combo += 1;
+    game.combo_timer = COMBO_WINDOW;
+    game.score += base * combo_multiplier(game.combo);
+    game.credits += base;
+}
 
 pub const SHIP_SCALE: f32 = 0.42;
 pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
