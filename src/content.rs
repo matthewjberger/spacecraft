@@ -26,15 +26,15 @@ impl EnemyKind {
         match self {
             EnemyKind::Drone => EnemyStats {
                 mesh: enemy_mesh::DRONE_MESH,
-                scale: 0.62,
-                radius: 0.85,
+                scale: 0.8,
+                radius: 1.0,
                 health: 1,
                 closing_speed: 34.0,
                 fires: false,
                 fire_interval: 0.0,
                 sway: 1.0,
-                base_color: [0.26, 0.1, 0.3, 1.0],
-                emissive: [0.5, 0.1, 0.65],
+                base_color: [0.4, 0.08, 0.08, 1.0],
+                emissive: [1.5, 0.22, 0.16],
             },
             EnemyKind::Fighter => EnemyStats {
                 mesh: enemy_mesh::FIGHTER_MESH,
@@ -45,8 +45,8 @@ impl EnemyKind {
                 fires: true,
                 fire_interval: 1.7,
                 sway: 1.0,
-                base_color: [0.22, 0.13, 0.16, 1.0],
-                emissive: [0.55, 0.05, 0.07],
+                base_color: [0.42, 0.1, 0.1, 1.0],
+                emissive: [1.6, 0.18, 0.12],
             },
             EnemyKind::Gunship => EnemyStats {
                 mesh: enemy_mesh::GUNSHIP_MESH,
@@ -57,8 +57,8 @@ impl EnemyKind {
                 fires: true,
                 fire_interval: 1.25,
                 sway: 0.7,
-                base_color: [0.2, 0.16, 0.1, 1.0],
-                emissive: [0.7, 0.35, 0.05],
+                base_color: [0.45, 0.2, 0.06, 1.0],
+                emissive: [1.8, 0.5, 0.06],
             },
             EnemyKind::Weaver => EnemyStats {
                 mesh: enemy_mesh::FIGHTER_MESH,
@@ -69,8 +69,8 @@ impl EnemyKind {
                 fires: true,
                 fire_interval: 1.9,
                 sway: 2.6,
-                base_color: [0.32, 0.12, 0.34, 1.0],
-                emissive: [0.85, 0.2, 0.95],
+                base_color: [0.42, 0.1, 0.34, 1.0],
+                emissive: [1.6, 0.2, 0.85],
             },
         }
     }

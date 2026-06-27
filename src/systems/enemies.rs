@@ -17,7 +17,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     for index in 0..game.enemies.len() {
         game.enemies[index].position.z += game.enemies[index].closing_speed * delta;
-        game.enemies[index].spin += delta * 2.6;
 
         let phase = game.enemies[index].sway_phase;
         let amount = game.enemies[index].sway_amount;
@@ -26,17 +25,17 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let target_x = lane_x + (elapsed * 1.7 + phase).sin() * amount + (ship.x - lane_x) * 0.16;
         let target_y =
             lane_y + (elapsed * 1.3 + phase).cos() * amount * 0.5 + (ship.y - lane_y) * 0.12;
-        game.enemies[index].position.x =
-            approach(game.enemies[index].position.x, target_x, 3.0 * delta);
+        let previous_x = game.enemies[index].position.x;
+        game.enemies[index].position.x = approach(previous_x, target_x, 3.0 * delta);
         game.enemies[index].position.y =
             approach(game.enemies[index].position.y, target_y, 3.0 * delta);
 
         let position = game.enemies[index].position;
-        let spin = game.enemies[index].spin;
         let entity = game.enemies[index].entity;
+        let bank = ((target_x - position.x) * 0.5).clamp(-0.6, 0.6);
 
         let face = nalgebra_glm::quat_angle_axis(std::f32::consts::PI, &Vec3::new(0.0, 1.0, 0.0));
-        let roll = nalgebra_glm::quat_angle_axis(spin, &Vec3::new(0.0, 0.0, 1.0));
+        let roll = nalgebra_glm::quat_angle_axis(bank, &Vec3::new(0.0, 0.0, 1.0));
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.translation = position;
             transform.rotation = roll * face;
@@ -101,7 +100,6 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
         sway_phase: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
         sway_amount: random_range(&mut game.random_state, 1.0, 2.6) * stats.sway,
         fire_timer: random_range(&mut game.random_state, 0.5, fire_interval),
-        spin: 0.0,
     });
 }
 

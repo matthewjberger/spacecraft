@@ -82,7 +82,6 @@ pub struct Enemy {
     pub sway_phase: f32,
     pub sway_amount: f32,
     pub fire_timer: f32,
-    pub spin: f32,
 }
 
 pub struct Boss {
