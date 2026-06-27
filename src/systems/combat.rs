@@ -1,5 +1,6 @@
 use crate::ecs::{PickupKind, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::comms;
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -107,5 +108,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     for (position, color, count) in bursts {
         let entity = spawn_burst(world, position, color, count);
         game.bursts.push((entity, 0.0));
+    }
+
+    if game.shields <= 1 && !game.comms_low_warned {
+        comms::low_shields(game);
+        game.comms_low_warned = true;
+    } else if game.shields > 1 {
+        game.comms_low_warned = false;
     }
 }

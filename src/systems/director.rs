@@ -1,7 +1,7 @@
 use crate::content::{Beat, EnemyKind, SECTORS};
 use crate::ecs::{GameState, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::{boss, enemies, pickups, scenery};
+use crate::systems::{boss, comms, enemies, pickups, scenery};
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -52,9 +52,11 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
         }
         Beat::Belt { .. } => {
             game.belt_accumulator = 0.0;
+            comms::belt(game);
         }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
+            comms::wave(game);
             let mut kinds: Vec<EnemyKind> = Vec::new();
             for (kind, amount) in groups.iter() {
                 for _ in 0..*amount {
@@ -73,8 +75,14 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
                 enemies::spawn(world, game, kind, position);
             }
         }
-        Beat::MiniBoss(kind) | Beat::Boss(kind) => {
+        Beat::MiniBoss(kind) => {
             clear_rings(world, game);
+            comms::mini_boss(game);
+            boss::spawn(world, game, *kind);
+        }
+        Beat::Boss(kind) => {
+            clear_rings(world, game);
+            comms::boss(game);
             boss::spawn(world, game, *kind);
         }
         Beat::Breather { length } => spawn_pickup(world, game, *length),

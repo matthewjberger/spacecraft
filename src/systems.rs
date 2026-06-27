@@ -6,6 +6,7 @@ pub mod boss;
 pub mod camera;
 pub mod combat;
 pub mod common;
+pub mod comms;
 pub mod crt;
 pub mod cutscene;
 pub mod director;

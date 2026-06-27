@@ -1,5 +1,13 @@
 use crate::content::Sector;
+use crate::systems::tuning::{BASE_FOV_DEGREES, CAMERA_DISTANCE, CAMERA_HEIGHT, CAMERA_PITCH};
 use nightshade::prelude::*;
+
+fn chase_shot(ship: Vec3) -> CutsceneShot {
+    let eye = ship + Vec3::new(0.0, CAMERA_HEIGHT, CAMERA_DISTANCE);
+    let forward = Vec3::new(0.0, CAMERA_PITCH.sin(), -CAMERA_PITCH.cos());
+    let target = eye + forward * 12.0;
+    CutsceneShot::new(eye, target).with_field_of_view(BASE_FOV_DEGREES)
+}
 
 fn split_speaker(line: &str) -> (Option<&str>, &str) {
     if let Some((speaker, text)) = line.split_once(": ") {
@@ -13,12 +21,8 @@ pub fn sector_cutscene(sector: &Sector, ship: Vec3) -> Cutscene {
     let focus = ship + Vec3::new(0.0, 0.2, 0.0);
     let shot_a =
         CutsceneShot::new(ship + Vec3::new(-6.5, 2.6, 7.5), focus).with_field_of_view(50.0);
-    let shot_b = CutsceneShot::new(ship + Vec3::new(5.5, 1.4, 6.0), focus).with_field_of_view(46.0);
-    let shot_c = CutsceneShot::new(
-        ship + Vec3::new(0.6, 1.0, 5.0),
-        focus + Vec3::new(0.0, 0.5, -7.0),
-    )
-    .with_field_of_view(56.0);
+    let shot_b = CutsceneShot::new(ship + Vec3::new(5.5, 1.6, 6.5), focus).with_field_of_view(48.0);
+    let chase = chase_shot(ship);
 
     let mut scene = Cutscene::new(sector.name).letterbox_in(0.0, 0.6).title(
         0.4,
@@ -34,18 +38,15 @@ pub fn sector_cutscene(sector: &Sector, ship: Vec3) -> Cutscene {
         time += duration + 0.3;
     }
 
-    let half = (time * 0.5).max(0.5);
+    let orbit = time.max(0.5);
+    let settle = 1.6;
+    let hold = 1.6;
     scene
-        .camera(0.0, half, EasingFunction::SineInOut, shot_a, shot_b)
-        .camera(
-            half,
-            (time - half).max(0.5),
-            EasingFunction::SineInOut,
-            shot_b,
-            shot_c,
-        )
-        .handheld(0.0, time, 0.05, 0.035, 1.2)
-        .letterbox_out(time, 0.6)
+        .camera(0.0, orbit, EasingFunction::SineInOut, shot_a, shot_b)
+        .handheld(0.0, orbit, 0.05, 0.035, 1.2)
+        .camera(orbit, settle, EasingFunction::CubicInOut, shot_b, chase)
+        .camera(orbit + settle, hold, EasingFunction::Linear, chase, chase)
+        .letterbox_out(orbit + settle, hold)
 }
 
 pub fn finale_cutscene(ship: Vec3) -> Cutscene {

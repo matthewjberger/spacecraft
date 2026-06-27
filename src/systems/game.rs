@@ -34,6 +34,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.score_flash > 0.0 {
         game.score_flash -= delta;
     }
+    if game.comms_timer > 0.0 {
+        game.comms_timer -= delta;
+    }
     if game.cam_kick > 0.0 {
         game.cam_kick = approach(game.cam_kick, 0.0, CAMERA_KICK_DECAY * delta);
     }
@@ -112,16 +115,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::Playing);
             }
         }
-        GameMode::Cinematic => {
-            if advance || pause {
-                stop_cutscene(world);
-                if let Some(camera) = game.camera {
-                    world.resources.active_camera = Some(camera);
-                }
-                let next = game.cinematic_return;
-                enter_mode(game, next);
-            }
-        }
+        GameMode::Cinematic => {}
         GameMode::Playing => {
             if pause {
                 game.menu_cursor = 0;
@@ -392,6 +386,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     game.invuln = 0.0;
     game.damage_flash = 0.0;
     game.shake = 0.0;
+    game.comms_timer = 0.0;
+    game.comms_line.clear();
+    game.comms_low_warned = false;
 }
 
 fn read_advance(world: &mut World) -> bool {

@@ -188,6 +188,21 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
             .entity()
     };
 
+    let comms = {
+        let mut tree = UiTreeBuilder::from_parent(world, root);
+        tree.add_node()
+            .window(
+                Rl(vec2(50.0, 100.0)) + Ab(vec2(0.0, -152.0)),
+                Ab(vec2(960.0, 40.0)),
+                Anchor::BottomCenter,
+            )
+            .with_text("", 21.0)
+            .text_center()
+            .color_raw::<UiBase>(vec4(0.62, 0.92, 1.0, 1.0))
+            .with_visible(false)
+            .entity()
+    };
+
     ui_mark_render_dirty(world);
 
     let hud = &mut game_world.resources.game.hud;
@@ -221,6 +236,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.aegis_label = Some(aegis_label);
     hud.aegis_bar = Some(aegis_bar);
     hud.nova_flash = Some(nova_flash);
+    hud.comms = Some(comms);
 }
 
 fn window_panel(
@@ -342,6 +358,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let score_flash = game.score_flash;
     let best_combo = game.best_combo;
     let best_score = game.best_score;
+    let comms_line = game.comms_line.clone();
+    let comms_timer = game.comms_timer;
     let loop_count = game.loop_count;
     let menu_cursor = game.menu_cursor;
     let settings_cursor = game.settings_cursor;
@@ -374,6 +392,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         hud.nova_flash,
         playing && nova_flash > 0.0 && flash_on,
     );
+    let comms_on = playing && comms_timer > 0.0 && !comms_line.is_empty();
+    set_visible(world, hud.comms, comms_on);
+    if comms_on {
+        set_text(world, hud.comms, &comms_line);
+        let alpha = (comms_timer / 0.8).clamp(0.0, 1.0);
+        tint_node(world, hud.comms, vec4(0.62, 0.92, 1.0, alpha));
+    }
     set_visible(world, hud.boss_panel, playing && boss.is_some());
     set_visible(world, hud.pickup_panel, playing && effect.is_some());
     set_visible(world, hud.ability_panel, playing && has_ability);

@@ -225,6 +225,7 @@ pub struct HudHandles {
     pub aegis_label: Option<Entity>,
     pub aegis_bar: Option<Entity>,
     pub nova_flash: Option<Entity>,
+    pub comms: Option<Entity>,
 }
 
 pub struct GameState {
@@ -307,6 +308,9 @@ pub struct GameState {
     pub best_combo: u32,
     pub best_score: u32,
     pub score_flash: f32,
+    pub comms_line: String,
+    pub comms_timer: f32,
+    pub comms_low_warned: bool,
     pub hud: HudHandles,
     pub fire_cooldown: f32,
     pub next_turret: u8,
@@ -397,6 +401,9 @@ impl Default for GameState {
             best_combo: 0,
             best_score: 0,
             score_flash: 0.0,
+            comms_line: String::new(),
+            comms_timer: 0.0,
+            comms_low_warned: false,
             hud: HudHandles::default(),
             fire_cooldown: 0.0,
             next_turret: 0,
