@@ -29,6 +29,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     {
         game.laser_timer = LASER_DURATION;
         game.laser_cooldown = LASER_DURATION + LASER_COOLDOWN;
+        game.cam_kick += LASER_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_LASER);
     }
 
     let active = game.laser_timer > 0.0;

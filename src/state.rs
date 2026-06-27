@@ -3,7 +3,7 @@ use crate::systems::atmosphere::AtmosphereState;
 use crate::systems::ring_fx::RingState;
 use crate::systems::{
     abilities, atmosphere, backdrop, boss, camera, combat, director, enemies, flight, game, hangar,
-    hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, weapons,
+    hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, weapons,
 };
 use nightshade::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -45,9 +45,22 @@ impl State for Spacecraft {
         game::update(&mut self.template_world, world);
         let mode = self.template_world.resources.game.mode;
 
-        flight::update(&mut self.template_world, world);
+        let frozen = {
+            let game = &mut self.template_world.resources.game;
+            if game.hitstop > 0.0 {
+                game.hitstop -= world.resources.window.timing.delta_time;
+                true
+            } else {
+                false
+            }
+        };
+
+        if !frozen {
+            flight::update(&mut self.template_world, world);
+        }
         reticle::update(&mut self.template_world, world);
-        if mode == GameMode::Playing {
+        shield::update(&mut self.template_world, world);
+        if mode == GameMode::Playing && !frozen {
             director::update(&mut self.template_world, world);
             scenery::update(&mut self.template_world, world);
             enemies::update(&mut self.template_world, world);

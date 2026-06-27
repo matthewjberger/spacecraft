@@ -14,6 +14,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let speed_scale = game.speed_scale;
     let shake = if game.shake_enabled { game.shake } else { 0.0 };
     let elapsed = game.elapsed;
+    let cam_kick = game.cam_kick;
+    let fov_pop = game.cam_fov_pop;
+    let steer_lead = -game.roll / MAX_BANK;
 
     if matches!(mode, GameMode::Title | GameMode::Settings) {
         let orbit = game.menu_orbit;
@@ -53,9 +56,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         0.0,
     );
     let target = Vec3::new(
-        ship.x * CAMERA_FOLLOW_X,
+        ship.x * CAMERA_FOLLOW_X + steer_lead * CAMERA_LEAD,
         BASE_HEIGHT + CAMERA_HEIGHT + ship.y * CAMERA_FOLLOW_Y,
-        ship.z + CAMERA_DISTANCE,
+        ship.z + CAMERA_DISTANCE + (speed_scale - 1.0) * CAMERA_BOOST_DOLLY + cam_kick,
     ) + shake_offset;
 
     if let Some(transform) = world.core.get_local_transform_mut(camera) {
@@ -71,7 +74,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(component) = world.core.get_camera_mut(camera)
         && let Projection::Perspective(ref mut perspective) = component.projection
     {
-        let target_fov = BASE_FOV_DEGREES + (speed_scale - 1.0) * BOOST_FOV_DEGREES;
+        let target_fov = BASE_FOV_DEGREES + (speed_scale - 1.0) * BOOST_FOV_DEGREES + fov_pop;
         perspective.y_fov_rad = target_fov.to_radians();
     }
 }

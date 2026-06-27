@@ -39,6 +39,9 @@ fn detonate_nova(world: &mut World, game: &mut GameState) {
     let ship = game.ship_position;
     game.nova_flash = NOVA_FLASH_TIME;
     game.shake = DAMAGE_SHAKE;
+    game.cam_kick += NOVA_KICK;
+    game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_DAMAGE);
+    game.hitstop = game.hitstop.max(HITSTOP_BIG);
 
     for ring in 0..10 {
         let angle = ring as f32 * 0.63;

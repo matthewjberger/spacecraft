@@ -42,7 +42,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 velocity,
                 age: 0.0,
             });
+            let flash = spawn_burst(world, origin, Vec3::new(1.0, 0.92, 0.55), 5);
+            game.bursts.push((flash, 0.0));
         }
+        game.cam_kick += FIRE_KICK;
+        game.recoil += RECOIL_IMPULSE;
     }
 
     let mut remove: Vec<usize> = Vec::new();

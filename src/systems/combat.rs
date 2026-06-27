@@ -20,6 +20,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 
     let barrier = game.effect == Some(PickupKind::Barrier) || game.aegis_timer > 0.0;
+    let deflecting = game.barrel.timer > 0.0;
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
     let mut damage = false;
 
@@ -35,7 +36,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         {
             emitter.position = position;
         }
-        if (position - ship).magnitude() < PLAYER_HIT_RADIUS + 0.5 {
+        if deflecting && (position - ship).magnitude() < PLAYER_HIT_RADIUS + 1.6 {
+            bursts.push((position, Vec3::new(0.5, 1.0, 1.0), 20));
+            shot_remove.push(index);
+        } else if (position - ship).magnitude() < PLAYER_HIT_RADIUS + 0.5 {
             damage = true;
             bursts.push((position, Vec3::new(1.0, 0.4, 0.2), 16));
             shot_remove.push(index);
@@ -93,6 +97,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.invuln = DAMAGE_INVULN;
         game.damage_flash = DAMAGE_FLASH_TIME;
         game.shake = DAMAGE_SHAKE;
+        game.cam_kick += DAMAGE_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_DAMAGE);
+        game.hitstop = game.hitstop.max(HITSTOP_BIG);
     } else if damage {
         game.damage_flash = game.damage_flash.max(0.12);
     }

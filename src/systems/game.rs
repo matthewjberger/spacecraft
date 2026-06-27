@@ -33,6 +33,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.score_flash > 0.0 {
         game.score_flash -= delta;
     }
+    if game.cam_kick > 0.0 {
+        game.cam_kick = approach(game.cam_kick, 0.0, CAMERA_KICK_DECAY * delta);
+    }
+    if game.cam_fov_pop != 0.0 {
+        game.cam_fov_pop = approach(game.cam_fov_pop, 0.0, FOV_POP_DECAY * delta);
+    }
 
     match game.mode {
         GameMode::Title => {
@@ -320,6 +326,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     if let Some(boss) = game.boss.take() {
         despawn_recursive_immediate(world, boss.entity);
+    }
+    if let Some(shield) = game.shield.take() {
+        despawn_recursive_immediate(world, shield);
     }
     for fragment in game.fragments.drain(..) {
         despawn_recursive_immediate(world, fragment.entity);

@@ -21,6 +21,7 @@ pub mod reticle;
 pub mod ring_fx;
 pub mod scenery;
 pub mod setup;
+pub mod shield;
 pub mod shop;
 pub mod spawn;
 pub mod tuning;

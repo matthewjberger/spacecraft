@@ -106,6 +106,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             beam.width = 0.0;
         }
         award(game, stats.score);
+        game.hitstop = HITSTOP_BIG * 2.0;
+        game.cam_kick += NOVA_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_LASER);
     }
 }
 
@@ -176,6 +179,8 @@ fn run_boss_beam(world: &mut World, game: &mut GameState, delta: f32) {
         game.invuln = DAMAGE_INVULN;
         game.damage_flash = DAMAGE_FLASH_TIME;
         game.shake = DAMAGE_SHAKE;
+        game.cam_kick += DAMAGE_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_DAMAGE);
     }
 }
 

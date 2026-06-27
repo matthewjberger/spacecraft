@@ -31,9 +31,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         if frame.roll_left {
             game.barrel.timer = BARREL_DURATION;
             game.barrel.direction = 1.0;
+            game.invuln = game.invuln.max(BARREL_DURATION);
         } else if frame.roll_right {
             game.barrel.timer = BARREL_DURATION;
             game.barrel.direction = -1.0;
+            game.invuln = game.invuln.max(BARREL_DURATION);
         }
     }
     let mut barrel_angle = 0.0;
@@ -43,21 +45,41 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         barrel_angle = game.barrel.direction * std::f32::consts::TAU * progress;
     }
 
-    game.ship_position.x =
-        (game.ship_position.x + frame.steer_x * SHIP_STEER_SPEED * delta).clamp(-BOUND_X, BOUND_X);
-    game.ship_position.y = (game.ship_position.y + frame.steer_y * SHIP_STEER_SPEED * delta)
-        .clamp(BASE_HEIGHT - BOUND_Y, BASE_HEIGHT + BOUND_Y);
+    let target_vx = frame.steer_x * MAX_LATERAL_SPEED;
+    let target_vy = frame.steer_y * MAX_LATERAL_SPEED;
+    game.ship_vel.x = approach(game.ship_vel.x, target_vx, LATERAL_ACCEL * delta);
+    game.ship_vel.y = approach(game.ship_vel.y, target_vy, LATERAL_ACCEL * delta);
+    let new_x = game.ship_position.x + game.ship_vel.x * delta;
+    let new_y = game.ship_position.y + game.ship_vel.y * delta;
+    if !(-BOUND_X..=BOUND_X).contains(&new_x) {
+        if game.ship_vel.x.abs() > 4.0 {
+            game.shake = game.shake.max(EDGE_SHAKE);
+        }
+        game.ship_vel.x = 0.0;
+    }
+    if !(BASE_HEIGHT - BOUND_Y..=BASE_HEIGHT + BOUND_Y).contains(&new_y) {
+        if game.ship_vel.y.abs() > 4.0 {
+            game.shake = game.shake.max(EDGE_SHAKE);
+        }
+        game.ship_vel.y = 0.0;
+    }
+    game.ship_position.x = new_x.clamp(-BOUND_X, BOUND_X);
+    game.ship_position.y = new_y.clamp(BASE_HEIGHT - BOUND_Y, BASE_HEIGHT + BOUND_Y);
 
-    game.roll = approach(
-        game.roll,
-        -frame.steer_x * MAX_BANK,
-        ORIENT_RESPONSE * delta,
-    );
-    game.pitch = approach(
-        game.pitch,
-        frame.steer_y * MAX_PITCH,
-        ORIENT_RESPONSE * delta,
-    );
+    let bank_target = -frame.steer_x * MAX_BANK;
+    let bank_rate = if bank_target.abs() > game.roll.abs() {
+        BANK_IN_RESPONSE
+    } else {
+        BANK_OUT_RESPONSE
+    };
+    game.roll = approach(game.roll, bank_target, bank_rate * delta);
+    let pitch_target = frame.steer_y * MAX_PITCH;
+    let pitch_rate = if pitch_target.abs() > game.pitch.abs() {
+        BANK_IN_RESPONSE
+    } else {
+        BANK_OUT_RESPONSE
+    };
+    game.pitch = approach(game.pitch, pitch_target, pitch_rate * delta);
 
     if game.ring_boost > 0.0 {
         game.ring_boost -= delta;
@@ -66,12 +88,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let target_speed = 1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN + ring_boost;
     game.speed_scale = approach(game.speed_scale, target_speed, SPEED_RESPONSE * delta);
 
+    game.recoil = approach(game.recoil, 0.0, RECOIL_DECAY * delta);
     let bob = (game.elapsed * 1.7).sin() * IDLE_BOB;
     let lead_yaw = frame.steer_x * MAX_LEAD_YAW;
     let position = Vec3::new(
         game.ship_position.x,
         game.ship_position.y + bob,
-        game.ship_position.z,
+        game.ship_position.z + game.recoil,
     );
 
     let base = nalgebra_glm::quat_angle_axis(SHIP_BASE_YAW, &Vec3::new(0.0, 1.0, 0.0));
@@ -117,6 +140,17 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             emitter.direction = exhaust_dir;
             emitter.spawn_rate = corner_rate;
         }
+    }
+
+    if game.starfield_enabled
+        && let Some(starfield) = game.starfield
+        && let Some(emitter) = world.core.get_particle_emitter_mut(starfield)
+    {
+        let warp = (speed_scale - 1.0).max(0.0);
+        emitter.initial_velocity_min = STAR_SPEED * (1.0 + warp * 1.6);
+        emitter.initial_velocity_max = STAR_SPEED * (1.0 + warp * 2.4);
+        emitter.size_start = STAR_SIZE * (1.0 + warp * 2.6);
+        emitter.spawn_rate = STARFIELD_RATE * (1.0 + warp * 0.8);
     }
 }
 

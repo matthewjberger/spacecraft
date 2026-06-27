@@ -2,7 +2,6 @@ pub const COMBO_WINDOW: f32 = 2.6;
 
 pub const SHIP_SCALE: f32 = 0.42;
 pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
-pub const SHIP_STEER_SPEED: f32 = 9.0;
 pub const BOUND_X: f32 = 6.5;
 pub const BOUND_Y: f32 = 3.8;
 pub const BASE_HEIGHT: f32 = 0.0;
@@ -10,8 +9,34 @@ pub const BASE_HEIGHT: f32 = 0.0;
 pub const MAX_BANK: f32 = 0.85;
 pub const MAX_PITCH: f32 = 0.40;
 pub const MAX_LEAD_YAW: f32 = 0.25;
-pub const ORIENT_RESPONSE: f32 = 9.0;
 pub const IDLE_BOB: f32 = 0.12;
+
+pub const LATERAL_ACCEL: f32 = 9.0;
+pub const MAX_LATERAL_SPEED: f32 = 12.0;
+pub const BANK_IN_RESPONSE: f32 = 13.0;
+pub const BANK_OUT_RESPONSE: f32 = 5.5;
+pub const EDGE_SHAKE: f32 = 0.3;
+
+pub const CAMERA_BOOST_DOLLY: f32 = 2.2;
+pub const CAMERA_LEAD: f32 = 0.6;
+pub const CAMERA_KICK_DECAY: f32 = 7.0;
+pub const FOV_POP_DECAY: f32 = 5.0;
+
+pub const FIRE_KICK: f32 = 0.04;
+pub const DAMAGE_KICK: f32 = 0.5;
+pub const LASER_KICK: f32 = 0.35;
+pub const NOVA_KICK: f32 = 0.6;
+pub const FOV_POP_LASER: f32 = 5.0;
+pub const FOV_POP_DAMAGE: f32 = 7.0;
+
+pub const RECOIL_IMPULSE: f32 = 0.09;
+pub const RECOIL_DECAY: f32 = 14.0;
+
+pub const HITSTOP_BIG: f32 = 0.05;
+
+pub const SHIELD_RADIUS: f32 = 1.85;
+pub const SHIELD_PULSE: f32 = 0.05;
+pub const SHIELD_SPIN: f32 = 0.5;
 
 pub const BARREL_DURATION: f32 = 0.55;
 
