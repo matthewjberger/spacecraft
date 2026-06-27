@@ -1,7 +1,17 @@
-use crate::content::SECTORS;
-use crate::ecs::{GameMode, GameState, TemplateWorld};
+use crate::content::{SECTORS, SHOP_ITEMS, STARTING_CREDITS};
+use crate::ecs::{GameMode, GameState, ShipMods, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::shop;
 use nightshade::prelude::*;
+
+const DIGIT_KEYS: [KeyCode; 6] = [
+    KeyCode::Digit1,
+    KeyCode::Digit2,
+    KeyCode::Digit3,
+    KeyCode::Digit4,
+    KeyCode::Digit5,
+    KeyCode::Digit6,
+];
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
@@ -19,6 +29,25 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         GameMode::Title => {
             if advance {
                 start_game(world, game);
+            }
+        }
+        GameMode::Shop => {
+            if nav_up(world) {
+                game.shop_cursor = game.shop_cursor.saturating_sub(1);
+            }
+            if nav_down(world) {
+                game.shop_cursor = (game.shop_cursor + 1).min(SHOP_ITEMS.len() - 1);
+            }
+            if confirm(world) {
+                shop::buy(game, game.shop_cursor);
+            }
+            for (index, key) in DIGIT_KEYS.iter().enumerate().take(SHOP_ITEMS.len()) {
+                if world.resources.input.keyboard.just_pressed(*key) {
+                    shop::buy(game, index);
+                }
+            }
+            if leave(world) {
+                enter_briefing(world, game, game.sector);
             }
         }
         GameMode::Briefing => {
@@ -41,7 +70,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if advance {
                 let next = game.sector + 1;
                 if next < SECTORS.len() {
-                    enter_briefing(world, game, next);
+                    enter_shop(world, game, next);
                 } else {
                     enter_mode(game, GameMode::Victory);
                 }
@@ -67,8 +96,20 @@ fn enter_mode(game: &mut GameState, mode: GameMode) {
 
 fn start_game(world: &mut World, game: &mut GameState) {
     game.score = 0;
-    game.shields = game.max_shields;
-    enter_briefing(world, game, 0);
+    game.credits = STARTING_CREDITS;
+    game.mods = ShipMods::default();
+    game.max_shields = 4;
+    game.shields = 4;
+    enter_shop(world, game, 0);
+}
+
+fn enter_shop(world: &mut World, game: &mut GameState, sector: usize) {
+    clear_world(world, game);
+    game.sector = sector;
+    game.shop_cursor = 0;
+    game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
+    game.speed_scale = 1.0;
+    enter_mode(game, GameMode::Shop);
 }
 
 fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
@@ -91,11 +132,54 @@ fn to_title(world: &mut World, game: &mut GameState) {
     enter_mode(game, GameMode::Title);
     game.sector = 0;
     game.score = 0;
-    game.shields = game.max_shields;
+    game.credits = 0;
+    game.mods = ShipMods::default();
+    game.max_shields = 4;
+    game.shields = 4;
     game.beat_index = 0;
     game.beat_started = false;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
+}
+
+fn nav_up(world: &World) -> bool {
+    let keyboard = &world.resources.input.keyboard;
+    keyboard.just_pressed(KeyCode::ArrowUp)
+        || keyboard.just_pressed(KeyCode::KeyW)
+        || world
+            .resources
+            .input
+            .gamepad
+            .just_pressed(gilrs::Button::DPadUp)
+}
+
+fn nav_down(world: &World) -> bool {
+    let keyboard = &world.resources.input.keyboard;
+    keyboard.just_pressed(KeyCode::ArrowDown)
+        || keyboard.just_pressed(KeyCode::KeyS)
+        || world
+            .resources
+            .input
+            .gamepad
+            .just_pressed(gilrs::Button::DPadDown)
+}
+
+fn confirm(world: &World) -> bool {
+    world.resources.input.keyboard.just_pressed(KeyCode::Space)
+        || world
+            .resources
+            .input
+            .gamepad
+            .just_pressed(gilrs::Button::South)
+}
+
+fn leave(world: &World) -> bool {
+    world.resources.input.keyboard.just_pressed(KeyCode::Enter)
+        || world
+            .resources
+            .input
+            .gamepad
+            .just_pressed(gilrs::Button::Start)
 }
 
 fn clear_world(world: &mut World, game: &mut GameState) {
@@ -119,6 +203,17 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     if let Some(boss) = game.boss.take() {
         despawn_recursive_immediate(world, boss.entity);
+    }
+    for fragment in game.fragments.drain(..) {
+        despawn_recursive_immediate(world, fragment.entity);
+    }
+    game.laser_timer = 0.0;
+    game.laser_cooldown = 0.0;
+    if let Some(beam) = game.beam
+        && let Some(beam_component) = world.core.get_beam_mut(beam)
+    {
+        beam_component.alpha = 0.0;
+        beam_component.width = 0.0;
     }
     game.effect = None;
     game.effect_timer = 0.0;

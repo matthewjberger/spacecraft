@@ -4,11 +4,32 @@ use nightshade::prelude::*;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {
     Title,
+    Shop,
     Briefing,
     Playing,
     SectorClear,
     GameOver,
     Victory,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct ShipMods {
+    pub hull: u8,
+    pub rapid: u8,
+    pub damage: u8,
+    pub magnet: u8,
+    pub lance: u8,
+}
+
+pub struct Fragment {
+    pub entity: Entity,
+    pub position: Vec3,
+    pub velocity: Vec3,
+    pub spin_axis: Vec3,
+    pub angle: f32,
+    pub spin_speed: f32,
+    pub life: f32,
+    pub scale: f32,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -170,6 +191,10 @@ pub struct HudHandles {
     pub overlay_body: Option<Entity>,
     pub overlay_prompt: Option<Entity>,
     pub damage_flash: Option<Entity>,
+    pub shop_panel: Option<Entity>,
+    pub shop_credits: Option<Entity>,
+    pub shop_lines: [Option<Entity>; 6],
+    pub shop_prompt: Option<Entity>,
 }
 
 pub struct GameState {
@@ -194,10 +219,17 @@ pub struct GameState {
     pub effect: Option<PickupKind>,
     pub effect_timer: f32,
     pub effect_duration: f32,
+    pub fragments: Vec<Fragment>,
+    pub beam: Option<Entity>,
+    pub laser_timer: f32,
+    pub laser_cooldown: f32,
     pub boss: Option<Boss>,
     pub mode: GameMode,
     pub mode_timer: f32,
     pub sector: usize,
+    pub credits: u32,
+    pub mods: ShipMods,
+    pub shop_cursor: usize,
     pub beat_index: usize,
     pub beat_started: bool,
     pub beat_distance: f32,
@@ -239,10 +271,17 @@ impl Default for GameState {
             effect: None,
             effect_timer: 0.0,
             effect_duration: 0.0,
+            fragments: Vec::new(),
+            beam: None,
+            laser_timer: 0.0,
+            laser_cooldown: 0.0,
             boss: None,
             mode: GameMode::Title,
             mode_timer: 0.0,
             sector: 0,
+            credits: 0,
+            mods: ShipMods::default(),
+            shop_cursor: 0,
             beat_index: 0,
             beat_started: false,
             beat_distance: 0.0,

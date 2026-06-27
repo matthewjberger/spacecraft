@@ -96,6 +96,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             despawn_recursive_immediate(world, boss.entity);
         }
         game.score += stats.score;
+        game.credits += stats.score;
     }
 }
 

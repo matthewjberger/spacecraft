@@ -12,13 +12,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     let overdrive = game.effect == Some(PickupKind::Overdrive);
     let spread = game.effect == Some(PickupKind::Spread);
+    let damage_amount = 1 + game.mods.damage as i32;
+    let base_interval = FIRE_INTERVAL * 0.82_f32.powi(game.mods.rapid as i32);
 
     game.fire_cooldown -= delta;
     if firing && game.fire_cooldown <= 0.0 {
         game.fire_cooldown = if overdrive {
-            FIRE_INTERVAL * OVERDRIVE_FIRE_SCALE
+            base_interval * OVERDRIVE_FIRE_SCALE
         } else {
-            FIRE_INTERVAL
+            base_interval
         };
         let side = if game.next_turret == 0 { -1.0 } else { 1.0 };
         game.next_turret ^= 1;
@@ -72,7 +74,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         for enemy_index in 0..game.enemies.len() {
             let separation = (game.enemies[enemy_index].position - position).magnitude();
             if separation < game.enemies[enemy_index].radius + PROJECTILE_HIT_RADIUS {
-                game.enemies[enemy_index].health -= 1;
+                game.enemies[enemy_index].health -= damage_amount;
                 bursts.push((position, Vec3::new(1.0, 0.6, 0.3), 14));
                 remove.push(index);
                 if game.enemies[enemy_index].health <= 0 {
@@ -90,7 +92,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             && (boss.position - position).magnitude()
                 < boss.kind.stats().radius + PROJECTILE_HIT_RADIUS
         {
-            boss.health -= 1;
+            boss.health -= damage_amount;
             bursts.push((position, Vec3::new(1.0, 0.5, 0.25), 12));
             remove.push(index);
             continue;
@@ -136,6 +138,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 
     game.score += score_gain;
+    game.credits += score_gain;
 
     remove.sort_unstable();
     remove.dedup();

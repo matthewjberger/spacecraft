@@ -74,6 +74,13 @@ pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 pub const SPREAD_ANGLE_VELOCITY: f32 = 20.0;
 
+pub const LASER_DURATION: f32 = 1.1;
+pub const LASER_COOLDOWN: f32 = 0.7;
+pub const LASER_LENGTH: f32 = 135.0;
+pub const LASER_SLICE_STRENGTH: f32 = 0.3;
+pub const LASER_SLICE_RADIUS: f32 = 1.7;
+pub const FRAGMENT_LIFE: f32 = 1.7;
+
 pub const DAMAGE_INVULN: f32 = 1.1;
 pub const DAMAGE_FLASH_TIME: f32 = 0.35;
 pub const DAMAGE_SHAKE: f32 = 0.9;

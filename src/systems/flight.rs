@@ -88,12 +88,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let tail = Vec3::new(position.x, position.y - 0.1, position.z + 1.4);
         if let Some(emitter) = world.core.get_particle_emitter_mut(exhaust) {
             emitter.position = tail;
-            emitter.spawn_rate = 140.0 + speed_scale * 120.0;
+            emitter.spawn_rate = 520.0 + speed_scale * 360.0;
         }
     }
 
     let thrust = (speed_scale - 1.0).max(0.0);
-    let corner_rate = 55.0 + thrust * 360.0;
+    let corner_rate = 240.0 + thrust * 420.0;
     let corner_offsets = [
         Vec3::new(-1.9, 0.4, -1.25),
         Vec3::new(-1.9, -0.18, -1.25),

@@ -74,7 +74,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         if !game.pickups[index].resolved && position.z >= ship.z {
             game.pickups[index].resolved = true;
             let planar = ((position.x - ship.x).powi(2) + (position.y - ship.y).powi(2)).sqrt();
-            if planar < PICKUP_COLLECT_RADIUS {
+            if planar < PICKUP_COLLECT_RADIUS + game.mods.magnet as f32 * 0.8 {
                 let kind = game.pickups[index].kind;
                 let color = kind.color();
                 collected = Some(kind);

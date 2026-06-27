@@ -167,6 +167,78 @@ pub struct Sector {
     pub beats: &'static [Beat],
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ModKind {
+    Hull,
+    Rapid,
+    Damage,
+    Magnet,
+    Lance,
+    Repair,
+}
+
+pub struct ShopItem {
+    pub name: &'static str,
+    pub desc: &'static str,
+    pub kind: ModKind,
+    pub base_cost: u32,
+    pub cost_step: u32,
+    pub max_level: u8,
+}
+
+pub const STARTING_CREDITS: u32 = 70;
+
+pub const SHOP_ITEMS: &[ShopItem] = &[
+    ShopItem {
+        name: "HULL PLATING",
+        desc: "+1 max shield",
+        kind: ModKind::Hull,
+        base_cost: 40,
+        cost_step: 25,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "RAPID COILS",
+        desc: "faster cannon fire",
+        kind: ModKind::Rapid,
+        base_cost: 35,
+        cost_step: 25,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "OVERCHARGE",
+        desc: "+1 cannon damage",
+        kind: ModKind::Damage,
+        base_cost: 45,
+        cost_step: 30,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "TRACTOR COIL",
+        desc: "wider pickup reach",
+        kind: ModKind::Magnet,
+        base_cost: 25,
+        cost_step: 20,
+        max_level: 2,
+    },
+    ShopItem {
+        name: "PRISM LANCE",
+        desc: "stronger slicing laser",
+        kind: ModKind::Lance,
+        base_cost: 55,
+        cost_step: 35,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "FIELD REPAIR",
+        desc: "refill shields now",
+        kind: ModKind::Repair,
+        base_cost: 20,
+        cost_step: 0,
+        max_level: 9,
+    },
+];
+
 pub const TAGLINE: &str =
     "The Drift swarm has overrun the belt.\nFly the corridor. Break the Monarch.";
 
