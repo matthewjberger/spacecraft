@@ -76,7 +76,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         spawn_corner_thruster(world),
         spawn_corner_thruster(world),
     ];
-    spawn_starfield(world);
+    let starfield = spawn_starfield(world);
 
     let uptime = world.resources.window.timing.uptime_milliseconds;
     let game = &mut game_world.resources.game;
@@ -85,6 +85,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.ship = ship;
     game.exhaust = Some(exhaust);
     game.corner_thrusters = corner_thrusters;
+    game.starfield = Some(starfield);
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
 
     backdrop::spawn_backdrop(world, game);
@@ -129,7 +130,7 @@ fn spawn_exhaust(world: &mut World) -> Entity {
     entity
 }
 
-fn spawn_starfield(world: &mut World) {
+fn spawn_starfield(world: &mut World) -> Entity {
     let entity = spawn_entities(world, PARTICLE_EMITTER | NAME, 1)[0];
     let lifetime = (STARFIELD_HALF_Z * 2.0 + CAMERA_DISTANCE) / STAR_SPEED;
     let emitter = ParticleEmitter {
@@ -156,6 +157,7 @@ fn spawn_starfield(world: &mut World) {
         ..Default::default()
     };
     world.core.set_particle_emitter(entity, emitter);
+    entity
 }
 
 fn spawn_corner_thruster(world: &mut World) -> Entity {

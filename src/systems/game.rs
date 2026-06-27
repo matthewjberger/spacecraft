@@ -20,6 +20,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let advance = read_advance(world);
     let game = &mut game_world.resources.game;
     game.mode_timer += delta;
+    if matches!(game.mode, GameMode::Title | GameMode::Settings) {
+        game.menu_orbit += delta * 0.15;
+    }
     if game.damage_flash > 0.0 {
         game.damage_flash -= delta;
     }
@@ -29,8 +32,41 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     match game.mode {
         GameMode::Title => {
+            if nav_up(world) {
+                game.menu_cursor = game.menu_cursor.saturating_sub(1);
+            }
+            if nav_down(world) {
+                game.menu_cursor = (game.menu_cursor + 1).min(1);
+            }
             if advance {
-                start_game(world, game);
+                if game.menu_cursor == 0 {
+                    start_game(world, game);
+                } else {
+                    game.settings_cursor = 0;
+                    enter_mode(game, GameMode::Settings);
+                }
+            }
+        }
+        GameMode::Settings => {
+            if nav_up(world) {
+                game.settings_cursor = game.settings_cursor.saturating_sub(1);
+            }
+            if nav_down(world) {
+                game.settings_cursor = (game.settings_cursor + 1).min(3);
+            }
+            if advance {
+                match game.settings_cursor {
+                    0 => game.shake_enabled = !game.shake_enabled,
+                    1 => game.flash_enabled = !game.flash_enabled,
+                    2 => {
+                        game.starfield_enabled = !game.starfield_enabled;
+                        apply_starfield(world, game);
+                    }
+                    _ => {
+                        game.menu_cursor = 0;
+                        enter_mode(game, GameMode::Title);
+                    }
+                }
             }
         }
         GameMode::Shop => {
@@ -94,6 +130,19 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 fn enter_mode(game: &mut GameState, mode: GameMode) {
     game.mode = mode;
     game.mode_timer = 0.0;
+}
+
+fn apply_starfield(world: &mut World, game: &GameState) {
+    if let Some(entity) = game.starfield
+        && let Some(emitter) = world.core.get_particle_emitter_mut(entity)
+    {
+        emitter.enabled = game.starfield_enabled;
+        emitter.spawn_rate = if game.starfield_enabled {
+            STARFIELD_RATE
+        } else {
+            0.0
+        };
+    }
 }
 
 fn start_game(world: &mut World, game: &mut GameState) {

@@ -1,4 +1,4 @@
-use crate::ecs::TemplateWorld;
+use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -8,11 +8,44 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let Some(camera) = game.camera else {
         return;
     };
+    let mode = game.mode;
     let ship = game.ship_position;
     let roll = game.roll;
     let speed_scale = game.speed_scale;
-    let shake = game.shake;
+    let shake = if game.shake_enabled { game.shake } else { 0.0 };
     let elapsed = game.elapsed;
+
+    if matches!(mode, GameMode::Title | GameMode::Settings) {
+        let orbit = game.menu_orbit;
+        let focus = Vec3::new(0.0, BASE_HEIGHT + 0.4, ship.z - 5.5);
+        let (radius, height) = if mode == GameMode::Settings {
+            (6.6, 1.5)
+        } else {
+            (8.6, 2.7)
+        };
+        let target = Vec3::new(
+            focus.x + radius * orbit.cos(),
+            focus.y + height,
+            focus.z + radius * orbit.sin(),
+        );
+        if let Some(transform) = world.core.get_local_transform_mut(camera) {
+            transform.translation = approach_vec3(
+                transform.translation,
+                target,
+                CAMERA_RESPONSE * delta * 0.55,
+            );
+            let forward = (focus - transform.translation).normalize();
+            let view = nalgebra_glm::quat_look_at_rh(&forward, &Vec3::new(0.0, 1.0, 0.0));
+            transform.rotation = nalgebra_glm::quat_inverse(&view);
+        }
+        mark_local_transform_dirty(world, camera);
+        if let Some(component) = world.core.get_camera_mut(camera)
+            && let Projection::Perspective(ref mut perspective) = component.projection
+        {
+            perspective.y_fov_rad = BASE_FOV_DEGREES.to_radians();
+        }
+        return;
+    }
 
     let shake_offset = Vec3::new(
         (elapsed * 92.0).sin() * shake * 0.16,

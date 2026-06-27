@@ -328,6 +328,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let aegis_timer = game.aegis_timer;
     let aegis_cooldown = game.aegis_cooldown;
     let nova_flash = game.nova_flash;
+    let menu_cursor = game.menu_cursor;
+    let settings_cursor = game.settings_cursor;
+    let shake_on = game.shake_enabled;
+    let flash_on = game.flash_enabled;
+    let starfield_on = game.starfield_enabled;
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
@@ -337,8 +342,16 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     set_visible(world, hud.gameplay_panel, playing);
     set_visible(world, hud.overlay_panel, !playing && !shopping);
     set_visible(world, hud.shop_panel, shopping);
-    set_visible(world, hud.damage_flash, playing && damage_flash > 0.0);
-    set_visible(world, hud.nova_flash, playing && nova_flash > 0.0);
+    set_visible(
+        world,
+        hud.damage_flash,
+        playing && damage_flash > 0.0 && flash_on,
+    );
+    set_visible(
+        world,
+        hud.nova_flash,
+        playing && nova_flash > 0.0 && flash_on,
+    );
     set_visible(world, hud.boss_panel, playing && boss.is_some());
     set_visible(world, hud.pickup_panel, playing && effect.is_some());
     set_visible(world, hud.ability_panel, playing && has_ability);
@@ -425,10 +438,21 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
     } else if !shopping {
         let blink = (mode_timer * 1.6).fract() < 0.62;
-        let (heading, body, prompt) = overlay_text(mode, sector_index, score);
+        let (heading, body, prompt) = match mode {
+            GameMode::Title => title_overlay(menu_cursor),
+            GameMode::Settings => {
+                settings_overlay(settings_cursor, shake_on, flash_on, starfield_on)
+            }
+            _ => overlay_text(mode, sector_index, score),
+        };
+        let blinkable = matches!(mode, GameMode::Title | GameMode::Settings);
         set_text(world, hud.overlay_heading, &heading);
         set_text(world, hud.overlay_body, &body);
-        set_text(world, hud.overlay_prompt, if blink { &prompt } else { " " });
+        set_text(
+            world,
+            hud.overlay_prompt,
+            if blink || blinkable { &prompt } else { " " },
+        );
     }
 
     ui_mark_render_dirty(world);
@@ -464,8 +488,54 @@ fn overlay_text(mode: GameMode, sector_index: usize, score: u32) -> (String, Str
             format!("The Monarch is dust. The fleet rolls in.\nFINAL SCORE  {score}"),
             "SPACE  —  FLY AGAIN".to_string(),
         ),
-        GameMode::Playing | GameMode::Shop => (String::new(), String::new(), String::new()),
+        GameMode::Playing | GameMode::Shop | GameMode::Settings => {
+            (String::new(), String::new(), String::new())
+        }
     }
+}
+
+fn menu_body(items: &[String], cursor: usize) -> String {
+    items
+        .iter()
+        .enumerate()
+        .map(|(index, item)| {
+            if index == cursor {
+                format!(">  {item}")
+            } else {
+                format!("    {item}")
+            }
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+fn title_overlay(cursor: usize) -> (String, String, String) {
+    let items = ["LAUNCH".to_string(), "SETTINGS".to_string()];
+    (
+        "SPACECRAFT".to_string(),
+        menu_body(&items, cursor),
+        "UP / DOWN  SELECT       SPACE  CONFIRM".to_string(),
+    )
+}
+
+fn settings_overlay(
+    cursor: usize,
+    shake: bool,
+    flash: bool,
+    starfield: bool,
+) -> (String, String, String) {
+    let on = |value: bool| if value { "ON" } else { "OFF" };
+    let items = [
+        format!("SCREEN SHAKE     {}", on(shake)),
+        format!("DAMAGE FLASH     {}", on(flash)),
+        format!("STARFIELD        {}", on(starfield)),
+        "BACK".to_string(),
+    ];
+    (
+        "SETTINGS".to_string(),
+        menu_body(&items, cursor),
+        "UP / DOWN  SELECT       SPACE  TOGGLE".to_string(),
+    )
 }
 
 fn shop_lines(game: &GameState) -> Vec<(String, Vec4)> {
