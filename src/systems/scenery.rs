@@ -32,8 +32,8 @@ pub fn spawn_belt_rock(world: &mut World, game: &mut GameState) {
 
 pub fn spawn_rings(world: &mut World, game: &mut GameState, count: usize) {
     let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
-    let amplitude_x = 3.4 + next_random(&mut game.random_state) * 1.6;
-    let amplitude_y = 1.9 + next_random(&mut game.random_state) * 1.2;
+    let amplitude_x = 6.0 + next_random(&mut game.random_state) * 3.0;
+    let amplitude_y = 3.4 + next_random(&mut game.random_state) * 1.8;
     for step in 0..count {
         let phase_step = step as f32;
         let x = (phase_step * 0.9 + phase).sin() * amplitude_x;

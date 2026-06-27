@@ -2,8 +2,8 @@ pub const COMBO_WINDOW: f32 = 2.6;
 
 pub const SHIP_SCALE: f32 = 0.42;
 pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
-pub const BOUND_X: f32 = 6.5;
-pub const BOUND_Y: f32 = 3.8;
+pub const BOUND_X: f32 = 11.0;
+pub const BOUND_Y: f32 = 6.0;
 pub const BASE_HEIGHT: f32 = 0.0;
 
 pub const MAX_BANK: f32 = 0.85;
@@ -11,8 +11,8 @@ pub const MAX_PITCH: f32 = 0.40;
 pub const MAX_LEAD_YAW: f32 = 0.25;
 pub const IDLE_BOB: f32 = 0.12;
 
-pub const LATERAL_ACCEL: f32 = 9.0;
-pub const MAX_LATERAL_SPEED: f32 = 12.0;
+pub const LATERAL_ACCEL: f32 = 13.0;
+pub const MAX_LATERAL_SPEED: f32 = 18.0;
 pub const BANK_IN_RESPONSE: f32 = 13.0;
 pub const BANK_OUT_RESPONSE: f32 = 3.2;
 pub const EDGE_SHAKE: f32 = 0.3;
@@ -46,15 +46,15 @@ pub const SPEED_RESPONSE: f32 = 4.0;
 
 pub const STICK_DEADZONE: f32 = 0.15;
 
-pub const CAMERA_DISTANCE: f32 = 9.0;
-pub const CAMERA_HEIGHT: f32 = 1.4;
-pub const CAMERA_FOLLOW_X: f32 = 0.3;
-pub const CAMERA_FOLLOW_Y: f32 = 0.25;
+pub const CAMERA_DISTANCE: f32 = 11.5;
+pub const CAMERA_HEIGHT: f32 = 1.7;
+pub const CAMERA_FOLLOW_X: f32 = 0.18;
+pub const CAMERA_FOLLOW_Y: f32 = 0.16;
 pub const CAMERA_RESPONSE: f32 = 3.8;
 pub const FOV_RESPONSE: f32 = 9.0;
 pub const CAMERA_PITCH: f32 = -0.155;
 pub const CAMERA_ROLL: f32 = 0.30;
-pub const BASE_FOV_DEGREES: f32 = 60.0;
+pub const BASE_FOV_DEGREES: f32 = 66.0;
 pub const BOOST_FOV_DEGREES: f32 = 18.0;
 
 pub const RAIL_SPEED: f32 = 38.0;

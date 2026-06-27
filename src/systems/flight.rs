@@ -202,11 +202,8 @@ fn read_input(world: &mut World) -> InputFrame {
             frame.steer_x += stick_x * scaled;
             frame.steer_y += stick_y * scaled;
         }
-        if gamepad.is_pressed(gilrs::Button::RightTrigger2) {
-            frame.boost = 1.0;
-        }
         if gamepad.is_pressed(gilrs::Button::LeftTrigger2) {
-            frame.brake = 1.0;
+            frame.boost = 1.0;
         }
     }
     frame.steer_x = frame.steer_x.clamp(-1.0, 1.0);

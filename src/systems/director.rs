@@ -68,8 +68,8 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
             for (index, kind) in kinds.into_iter().enumerate() {
                 let offset = formation_offset(formation, index, total);
                 let position = Vec3::new(
-                    offset.x.clamp(-5.5, 5.5),
-                    BASE_HEIGHT + offset.y,
+                    offset.x.clamp(-9.5, 9.5),
+                    BASE_HEIGHT + offset.y.clamp(-5.0, 5.0),
                     -ENEMY_SPAWN_AHEAD + offset.z,
                 );
                 enemies::spawn(world, game, kind, position);
@@ -96,10 +96,14 @@ fn formation_offset(formation: u32, index: usize, total: usize) -> Vec3 {
         0.0
     };
     match formation {
-        0 => Vec3::new(spread * 9.0, 0.0, 0.0),
-        1 => Vec3::new(spread * 9.0, 0.0, -spread.abs() * 44.0),
-        2 => Vec3::new(spread * 8.0, (0.5 - spread.abs()) * 5.0, 0.0),
-        _ => Vec3::new((spread * 6.0).sin() * 4.0, 0.0, index as f32 * -15.0),
+        0 => Vec3::new(spread * 16.0, 0.0, 0.0),
+        1 => Vec3::new(spread * 16.0, 0.0, -spread.abs() * 44.0),
+        2 => Vec3::new(spread * 14.0, (0.5 - spread.abs()) * 7.5, 0.0),
+        _ => Vec3::new(
+            (spread * 6.0).sin() * 8.0,
+            spread * 6.0,
+            index as f32 * -15.0,
+        ),
     }
 }
 

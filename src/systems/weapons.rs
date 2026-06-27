@@ -160,7 +160,8 @@ fn read_fire_input(world: &mut World) -> bool {
         .keyboard
         .is_key_pressed(KeyCode::Space);
     if let Some(gamepad) = query_active_gamepad(world)
-        && gamepad.is_pressed(gilrs::Button::South)
+        && (gamepad.is_pressed(gilrs::Button::RightTrigger2)
+            || gamepad.is_pressed(gilrs::Button::South))
     {
         firing = true;
     }
