@@ -25,5 +25,6 @@ pub mod setup;
 pub mod shield;
 pub mod shop;
 pub mod spawn;
+pub mod synthwave;
 pub mod tuning;
 pub mod weapons;

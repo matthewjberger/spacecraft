@@ -97,7 +97,8 @@ pub const COURSE_AHEAD: f32 = 210.0;
 pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 
-pub const RETICLE_NEAR_Z: f32 = 16.0;
+pub const RETICLE_NEAR_Z: f32 = 11.0;
+pub const RETICLE_MID_Z: f32 = 27.0;
 pub const RETICLE_FAR_Z: f32 = 44.0;
 pub const AIM_FAR_LEAD_X: f32 = 3.6;
 pub const AIM_FAR_LEAD_Y: f32 = 3.0;

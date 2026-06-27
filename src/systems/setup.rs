@@ -16,7 +16,10 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     world.resources.render_settings.bloom_enabled = true;
     world.resources.render_settings.bloom_intensity = 0.4;
     world.resources.render_settings.bloom_threshold = 1.25;
-    world.resources.render_settings.ambient_light = [0.05, 0.07, 0.13, 1.0];
+    world.resources.render_settings.ssr_enabled = true;
+    world.resources.render_settings.ssr_intensity = 0.7;
+    world.resources.render_settings.ssr_max_distance = 60.0;
+    world.resources.render_settings.ambient_light = [0.14, 0.16, 0.24, 1.0];
     world.resources.debug_draw.show_grid = false;
 
     let grading = &mut world.resources.render_settings.color_grading;
@@ -97,6 +100,10 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         Some(reticle::spawn(world)),
         Some(reticle::spawn(world)),
         Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
     ];
     game.reticle_far = Some(reticle::spawn(world));
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
@@ -114,6 +121,44 @@ fn load_ship(world: &mut World) -> Option<Entity> {
         &result.animations,
         Vec3::new(0.0, BASE_HEIGHT, 0.0),
     ))
+}
+
+pub fn shine_ship(game_world: &mut TemplateWorld, world: &mut World) {
+    if game_world.resources.game.ship_shined {
+        return;
+    }
+    let Some(ship) = game_world.resources.game.ship else {
+        return;
+    };
+    validate_and_rebuild_children_cache(world);
+    let mut entities = nightshade::ecs::transform::queries::query_descendants(world, ship);
+    entities.push(ship);
+
+    let mut pairs: Vec<(Entity, String)> = Vec::new();
+    for entity in entities {
+        if let Some(material_ref) = world.core.get_material_ref(entity) {
+            pairs.push((entity, material_ref.name.clone()));
+        }
+    }
+    if pairs.is_empty() {
+        return;
+    }
+
+    for (_, name) in &pairs {
+        if let Some(material) =
+            registry_entry_by_name_mut(&mut world.resources.assets.material_registry.registry, name)
+        {
+            material.metallic = 0.6;
+            material.roughness = 0.32;
+        }
+    }
+    for (entity, _) in &pairs {
+        world
+            .resources
+            .mesh_render_state
+            .mark_material_dirty(*entity);
+    }
+    game_world.resources.game.ship_shined = true;
 }
 
 fn spawn_exhaust(world: &mut World) -> Entity {

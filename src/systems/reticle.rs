@@ -32,19 +32,29 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &game_world.resources.game;
     let visible = game.mode == GameMode::Playing;
     let aim = aim_point(game);
-    let near_z = game.ship_position.z - RETICLE_NEAR_Z;
-    let near = game.reticle_near;
     let far = game.reticle_far;
     let ports = game.blaster_ports;
+    let markers = game.reticle_near;
 
-    for (marker, &port) in near.iter().zip(ports.iter()) {
+    let depths = [RETICLE_NEAR_Z, RETICLE_MID_Z];
+    let scales = [0.26, 0.4];
+    for (blaster, &port) in ports.iter().enumerate() {
         let direction = aim - port;
-        let position = if direction.z.abs() > 0.001 {
-            port + direction * ((near_z - port.z) / direction.z)
-        } else {
-            Vec3::new(port.x, port.y, near_z)
-        };
-        place(world, *marker, position, 0.34, visible);
+        for (stage, &depth) in depths.iter().enumerate() {
+            let plane_z = game.ship_position.z - depth;
+            let position = if direction.z.abs() > 0.001 {
+                port + direction * ((plane_z - port.z) / direction.z)
+            } else {
+                Vec3::new(port.x, port.y, plane_z)
+            };
+            place(
+                world,
+                markers[blaster * 2 + stage],
+                position,
+                scales[stage],
+                visible,
+            );
+        }
     }
     place(world, far, aim, 1.2, visible);
 }

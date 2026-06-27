@@ -228,6 +228,7 @@ pub struct HudHandles {
 
 pub struct GameState {
     pub ship: Option<Entity>,
+    pub ship_shined: bool,
     pub camera: Option<Entity>,
     pub exhaust: Option<Entity>,
     pub corner_thrusters: Vec<Entity>,
@@ -285,7 +286,7 @@ pub struct GameState {
     pub hard_mode: bool,
     pub starfield: Option<Entity>,
     pub dais: Option<Entity>,
-    pub reticle_near: [Option<Entity>; 4],
+    pub reticle_near: [Option<Entity>; 8],
     pub reticle_far: Option<Entity>,
     pub menu_orbit: f32,
     pub beat_index: usize,
@@ -314,6 +315,7 @@ impl Default for GameState {
     fn default() -> Self {
         Self {
             ship: None,
+            ship_shined: false,
             camera: None,
             exhaust: None,
             corner_thrusters: Vec::new(),
@@ -371,7 +373,7 @@ impl Default for GameState {
             hard_mode: false,
             starfield: None,
             dais: None,
-            reticle_near: [None; 4],
+            reticle_near: [None; 8],
             reticle_far: None,
             menu_orbit: 0.0,
             beat_index: 0,

@@ -2,9 +2,11 @@ use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::atmosphere::AtmosphereState;
 use crate::systems::crt::CrtState;
 use crate::systems::ring_fx::RingState;
+use crate::systems::synthwave::SynthState;
 use crate::systems::{
     abilities, atmosphere, backdrop, boss, camera, combat, crt, director, enemies, flight, game,
-    hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, weapons,
+    hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, synthwave,
+    weapons,
 };
 use nightshade::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -15,6 +17,7 @@ pub struct Spacecraft {
     pub atmosphere: Arc<Mutex<AtmosphereState>>,
     pub rings: Arc<Mutex<RingState>>,
     pub crt: Arc<Mutex<CrtState>>,
+    pub synth: Arc<Mutex<SynthState>>,
 }
 
 impl State for Spacecraft {
@@ -38,6 +41,12 @@ impl State for Spacecraft {
 
         let ring_pass = ring_fx::RingFxPass::new(device, self.rings.clone());
         let _ = render_graph_pass(graph, Box::new(ring_pass))
+            .read("depth", resources.depth)
+            .slot("hdr", resources.scene_color)
+            .add();
+
+        let synth_pass = synthwave::SynthwavePass::new(device, self.synth.clone());
+        let _ = render_graph_pass(graph, Box::new(synth_pass))
             .read("depth", resources.depth)
             .slot("hdr", resources.scene_color)
             .add();
@@ -66,6 +75,7 @@ impl State for Spacecraft {
 
     fn run_systems(&mut self, world: &mut World) {
         game::update(&mut self.template_world, world);
+        setup::shine_ship(&mut self.template_world, world);
         let mode = self.template_world.resources.game.mode;
 
         let frozen = {
@@ -103,5 +113,6 @@ impl State for Spacecraft {
         atmosphere::sync(&self.template_world.resources.game, &self.atmosphere);
         ring_fx::sync(&self.template_world.resources.game, &self.rings);
         crt::sync(&self.template_world.resources.game, &self.crt);
+        synthwave::sync(&self.template_world.resources.game, &self.synth);
     }
 }
