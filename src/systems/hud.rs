@@ -1,5 +1,6 @@
 use crate::content::{ModKind, SECTORS, SHOP_ITEMS, TAGLINE};
 use crate::ecs::{GameMode, GameState, TemplateWorld};
+use crate::systems::common::*;
 use crate::systems::shop;
 use nightshade::prelude::*;
 
@@ -129,12 +130,51 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         30.0,
     );
 
+    let ability_panel = window_panel(
+        world,
+        root,
+        Rl(vec2(0.0, 100.0)) + Ab(vec2(28.0, -24.0)),
+        Ab(vec2(252.0, 152.0)),
+        Anchor::BottomLeft,
+        border,
+        panel_bg,
+    );
+    centered_line(world, ability_panel, "ABILITIES", 12.0, dim, 16.0);
+    let lance_label = text_line(world, ability_panel, "[F] LANCE", 15.0, cyan, 18.0);
+    let lance_bar = bar(world, ability_panel, vec4(0.5, 0.95, 1.0, 1.0));
+    let nova_label = text_line(
+        world,
+        ability_panel,
+        "[C] NOVA",
+        15.0,
+        vec4(1.0, 0.85, 0.4, 1.0),
+        20.0,
+    );
+    let aegis_label = text_line(
+        world,
+        ability_panel,
+        "[V] AEGIS",
+        15.0,
+        vec4(0.6, 0.9, 1.0, 1.0),
+        18.0,
+    );
+    let aegis_bar = bar(world, ability_panel, vec4(0.4, 0.8, 1.0, 1.0));
+
     let damage_flash = {
         let mut tree = UiTreeBuilder::from_parent(world, root);
         tree.add_node()
             .window(Ab(vec2(0.0, 0.0)), Rl(vec2(100.0, 100.0)), Anchor::TopLeft)
             .with_rect(0.0, 0.0, vec4(0.0, 0.0, 0.0, 0.0))
             .color_raw::<UiBase>(vec4(0.9, 0.1, 0.12, 0.28))
+            .with_visible(false)
+            .entity()
+    };
+    let nova_flash = {
+        let mut tree = UiTreeBuilder::from_parent(world, root);
+        tree.add_node()
+            .window(Ab(vec2(0.0, 0.0)), Rl(vec2(100.0, 100.0)), Anchor::TopLeft)
+            .with_rect(0.0, 0.0, vec4(0.0, 0.0, 0.0, 0.0))
+            .color_raw::<UiBase>(vec4(1.0, 1.0, 0.92, 0.55))
             .with_visible(false)
             .entity()
     };
@@ -164,6 +204,13 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.shop_credits = Some(shop_credits);
     hud.shop_lines = shop_lines;
     hud.shop_prompt = Some(shop_prompt);
+    hud.ability_panel = Some(ability_panel);
+    hud.lance_label = Some(lance_label);
+    hud.lance_bar = Some(lance_bar);
+    hud.nova_label = Some(nova_label);
+    hud.aegis_label = Some(aegis_label);
+    hud.aegis_bar = Some(aegis_bar);
+    hud.nova_flash = Some(nova_flash);
 }
 
 fn window_panel(
@@ -275,17 +322,67 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     } else {
         None
     };
+    let mods = game.mods;
+    let laser_cooldown = game.laser_cooldown;
+    let nova_charges = game.nova_charges;
+    let aegis_timer = game.aegis_timer;
+    let aegis_cooldown = game.aegis_cooldown;
+    let nova_flash = game.nova_flash;
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
     let shopping = mode == GameMode::Shop;
+    let has_ability = mods.lance > 0 || mods.nova_max > 0 || mods.aegis > 0;
 
     set_visible(world, hud.gameplay_panel, playing);
     set_visible(world, hud.overlay_panel, !playing && !shopping);
     set_visible(world, hud.shop_panel, shopping);
     set_visible(world, hud.damage_flash, playing && damage_flash > 0.0);
+    set_visible(world, hud.nova_flash, playing && nova_flash > 0.0);
     set_visible(world, hud.boss_panel, playing && boss.is_some());
     set_visible(world, hud.pickup_panel, playing && effect.is_some());
+    set_visible(world, hud.ability_panel, playing && has_ability);
+    set_visible(world, hud.lance_label, playing && mods.lance > 0);
+    set_visible(world, hud.lance_bar, playing && mods.lance > 0);
+    set_visible(world, hud.nova_label, playing && mods.nova_max > 0);
+    set_visible(world, hud.aegis_label, playing && mods.aegis > 0);
+    set_visible(world, hud.aegis_bar, playing && mods.aegis > 0);
+
+    if playing && has_ability {
+        if mods.lance > 0 {
+            let span = LASER_DURATION + LASER_COOLDOWN;
+            let ready = (1.0 - laser_cooldown / span).clamp(0.0, 1.0);
+            set_bar(world, hud.lance_bar, ready);
+            tint_node(world, hud.lance_label, ready_color(laser_cooldown <= 0.0));
+        }
+        if mods.nova_max > 0 {
+            set_text(
+                world,
+                hud.nova_label,
+                &format!("[C] NOVA   x{nova_charges}"),
+            );
+            tint_node(world, hud.nova_label, ready_color(nova_charges > 0));
+        }
+        if mods.aegis > 0 {
+            let ready = if aegis_timer > 0.0 {
+                1.0
+            } else {
+                (1.0 - aegis_cooldown / AEGIS_COOLDOWN).clamp(0.0, 1.0)
+            };
+            set_bar(world, hud.aegis_bar, ready);
+            let label = if aegis_timer > 0.0 {
+                "[V] AEGIS  ON"
+            } else {
+                "[V] AEGIS"
+            };
+            set_text(world, hud.aegis_label, label);
+            tint_node(
+                world,
+                hud.aegis_label,
+                ready_color(aegis_timer > 0.0 || aegis_cooldown <= 0.0),
+            );
+        }
+    }
 
     if let Some((credits, lines)) = shop_data {
         set_text(world, hud.shop_credits, &format!("CREDITS  {credits}"));
@@ -410,6 +507,14 @@ fn shop_lines(game: &GameState) -> Vec<(String, Vec4)> {
             (text, color)
         })
         .collect()
+}
+
+fn ready_color(ready: bool) -> Vec4 {
+    if ready {
+        vec4(0.65, 1.0, 0.7, 1.0)
+    } else {
+        vec4(0.5, 0.6, 0.7, 0.7)
+    }
 }
 
 fn tint_node(world: &mut World, entity: Option<Entity>, color: Vec4) {

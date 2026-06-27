@@ -78,8 +78,15 @@ pub const LASER_DURATION: f32 = 1.1;
 pub const LASER_COOLDOWN: f32 = 0.7;
 pub const LASER_LENGTH: f32 = 135.0;
 pub const LASER_SLICE_STRENGTH: f32 = 0.3;
-pub const LASER_SLICE_RADIUS: f32 = 1.7;
+pub const LASER_SLICE_RADIUS: f32 = 2.2;
 pub const FRAGMENT_LIFE: f32 = 1.7;
+
+pub const NOVA_RADIUS: f32 = 24.0;
+pub const NOVA_RANGE_Z: f32 = 165.0;
+pub const NOVA_FLASH_TIME: f32 = 0.32;
+pub const NOVA_BOSS_DAMAGE: i32 = 12;
+pub const AEGIS_DURATION: f32 = 2.6;
+pub const AEGIS_COOLDOWN: f32 = 7.5;
 
 pub const DAMAGE_INVULN: f32 = 1.1;
 pub const DAMAGE_FLASH_TIME: f32 = 0.35;

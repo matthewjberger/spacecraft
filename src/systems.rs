@@ -1,3 +1,4 @@
+pub mod abilities;
 pub mod asteroid_mesh;
 pub mod atmosphere;
 pub mod backdrop;

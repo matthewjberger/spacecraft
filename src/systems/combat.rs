@@ -13,7 +13,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.invuln -= delta;
     }
 
-    let barrier = game.effect == Some(PickupKind::Barrier);
+    let barrier = game.effect == Some(PickupKind::Barrier) || game.aegis_timer > 0.0;
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
     let mut damage = false;
 

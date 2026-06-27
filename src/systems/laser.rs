@@ -20,7 +20,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.laser_timer > 0.0 {
         game.laser_timer -= delta;
     }
-    if laser_pressed(world) && game.laser_timer <= 0.0 && game.laser_cooldown <= 0.0 {
+    if game.mods.lance > 0
+        && laser_pressed(world)
+        && game.laser_timer <= 0.0
+        && game.laser_cooldown <= 0.0
+    {
         game.laser_timer = LASER_DURATION;
         game.laser_cooldown = LASER_DURATION + LASER_COOLDOWN;
     }
@@ -38,17 +42,17 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     {
         beam.start = Vec3::new(ship.x, ship.y, ship.z - 1.6);
         beam.end = Vec3::new(ship.x, ship.y, ship.z - LASER_LENGTH);
-        beam.width = strength * (0.4 + lance * 0.16);
-        beam.alpha = strength;
-        beam.intensity = 2.0 + strength * 4.5;
+        beam.width = strength * (1.7 + lance * 0.5);
+        beam.alpha = (strength * 1.4).min(1.0);
+        beam.intensity = 3.0 + strength * 6.0;
         beam.color = Vec3::new(
-            0.7 + strength * 0.7,
-            1.6 + strength * 1.6,
-            2.6 + strength * 1.2,
+            1.1 + strength * 1.0,
+            2.2 + strength * 2.0,
+            3.2 + strength * 1.4,
         );
-        beam.strands = 6 + game.mods.lance as u32 * 2;
-        beam.flicker = 0.18;
-        beam.flicker_speed = 50.0;
+        beam.strands = 12 + game.mods.lance as u32 * 3;
+        beam.flicker = 0.16;
+        beam.flicker_speed = 55.0;
     }
 
     if strength > LASER_SLICE_STRENGTH {
@@ -132,7 +136,7 @@ fn vaporize_enemies(world: &mut World, game: &mut GameState, ship: Vec3, radius:
     }
 }
 
-fn spawn_fragments(world: &mut World, game: &mut GameState, position: Vec3, rock: f32) {
+pub fn spawn_fragments(world: &mut World, game: &mut GameState, position: Vec3, rock: f32) {
     for _ in 0..3 {
         let variant = ((next_random(&mut game.random_state)
             * asteroid_mesh::ASTEROID_VARIANTS as f32) as usize)

@@ -169,11 +169,11 @@ pub struct Sector {
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ModKind {
+    Lance,
+    Nova,
+    Aegis,
     Hull,
     Rapid,
-    Damage,
-    Magnet,
-    Lance,
     Repair,
 }
 
@@ -186,9 +186,33 @@ pub struct ShopItem {
     pub max_level: u8,
 }
 
-pub const STARTING_CREDITS: u32 = 70;
+pub const STARTING_CREDITS: u32 = 80;
 
 pub const SHOP_ITEMS: &[ShopItem] = &[
+    ShopItem {
+        name: "PRISM LANCE  [F]",
+        desc: "charge a slicing laser beam",
+        kind: ModKind::Lance,
+        base_cost: 50,
+        cost_step: 35,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "NOVA BOMB  [C]",
+        desc: "blast that clears the screen",
+        kind: ModKind::Nova,
+        base_cost: 45,
+        cost_step: 30,
+        max_level: 4,
+    },
+    ShopItem {
+        name: "AEGIS FIELD  [V]",
+        desc: "raise a shield on demand",
+        kind: ModKind::Aegis,
+        base_cost: 55,
+        cost_step: 35,
+        max_level: 3,
+    },
     ShopItem {
         name: "HULL PLATING",
         desc: "+1 max shield",
@@ -203,30 +227,6 @@ pub const SHOP_ITEMS: &[ShopItem] = &[
         kind: ModKind::Rapid,
         base_cost: 35,
         cost_step: 25,
-        max_level: 3,
-    },
-    ShopItem {
-        name: "OVERCHARGE",
-        desc: "+1 cannon damage",
-        kind: ModKind::Damage,
-        base_cost: 45,
-        cost_step: 30,
-        max_level: 3,
-    },
-    ShopItem {
-        name: "TRACTOR COIL",
-        desc: "wider pickup reach",
-        kind: ModKind::Magnet,
-        base_cost: 25,
-        cost_step: 20,
-        max_level: 2,
-    },
-    ShopItem {
-        name: "PRISM LANCE",
-        desc: "stronger slicing laser",
-        kind: ModKind::Lance,
-        base_cost: 55,
-        cost_step: 35,
         max_level: 3,
     },
     ShopItem {

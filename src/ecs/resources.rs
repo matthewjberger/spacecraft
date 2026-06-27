@@ -16,9 +16,9 @@ pub enum GameMode {
 pub struct ShipMods {
     pub hull: u8,
     pub rapid: u8,
-    pub damage: u8,
-    pub magnet: u8,
     pub lance: u8,
+    pub nova_max: u8,
+    pub aegis: u8,
 }
 
 pub struct Fragment {
@@ -195,6 +195,13 @@ pub struct HudHandles {
     pub shop_credits: Option<Entity>,
     pub shop_lines: [Option<Entity>; 6],
     pub shop_prompt: Option<Entity>,
+    pub ability_panel: Option<Entity>,
+    pub lance_label: Option<Entity>,
+    pub lance_bar: Option<Entity>,
+    pub nova_label: Option<Entity>,
+    pub aegis_label: Option<Entity>,
+    pub aegis_bar: Option<Entity>,
+    pub nova_flash: Option<Entity>,
 }
 
 pub struct GameState {
@@ -223,6 +230,10 @@ pub struct GameState {
     pub beam: Option<Entity>,
     pub laser_timer: f32,
     pub laser_cooldown: f32,
+    pub nova_charges: u8,
+    pub nova_flash: f32,
+    pub aegis_timer: f32,
+    pub aegis_cooldown: f32,
     pub boss: Option<Boss>,
     pub mode: GameMode,
     pub mode_timer: f32,
@@ -275,6 +286,10 @@ impl Default for GameState {
             beam: None,
             laser_timer: 0.0,
             laser_cooldown: 0.0,
+            nova_charges: 0,
+            nova_flash: 0.0,
+            aegis_timer: 0.0,
+            aegis_cooldown: 0.0,
             boss: None,
             mode: GameMode::Title,
             mode_timer: 0.0,

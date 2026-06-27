@@ -12,7 +12,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     let overdrive = game.effect == Some(PickupKind::Overdrive);
     let spread = game.effect == Some(PickupKind::Spread);
-    let damage_amount = 1 + game.mods.damage as i32;
+    let damage_amount = 1;
     let base_interval = FIRE_INTERVAL * 0.82_f32.powi(game.mods.rapid as i32);
 
     game.fire_cooldown -= delta;
@@ -160,7 +160,7 @@ fn read_fire_input(world: &mut World) -> bool {
         .keyboard
         .is_key_pressed(KeyCode::Space);
     if let Some(gamepad) = query_active_gamepad(world)
-        && (gamepad.is_pressed(gilrs::Button::South) || gamepad.is_pressed(gilrs::Button::West))
+        && gamepad.is_pressed(gilrs::Button::South)
     {
         firing = true;
     }

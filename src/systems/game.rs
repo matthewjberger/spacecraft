@@ -125,6 +125,9 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.beat_distance = 0.0;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
+    game.nova_charges = game.mods.nova_max;
+    game.aegis_cooldown = 0.0;
+    game.aegis_timer = 0.0;
 }
 
 fn to_title(world: &mut World, game: &mut GameState) {
@@ -217,6 +220,10 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     game.effect = None;
     game.effect_timer = 0.0;
+    game.nova_charges = 0;
+    game.nova_flash = 0.0;
+    game.aegis_timer = 0.0;
+    game.aegis_cooldown = 0.0;
     game.barrel = Default::default();
     game.invuln = 0.0;
     game.damage_flash = 0.0;
