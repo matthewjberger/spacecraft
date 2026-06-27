@@ -11,12 +11,19 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let ship = game.ship_position;
     let roll = game.roll;
     let speed_scale = game.speed_scale;
+    let shake = game.shake;
+    let elapsed = game.elapsed;
 
+    let shake_offset = Vec3::new(
+        (elapsed * 92.0).sin() * shake * 0.16,
+        (elapsed * 71.0).cos() * shake * 0.16,
+        0.0,
+    );
     let target = Vec3::new(
         ship.x * CAMERA_FOLLOW_X,
         BASE_HEIGHT + CAMERA_HEIGHT + ship.y * CAMERA_FOLLOW_Y,
         ship.z + CAMERA_DISTANCE,
-    );
+    ) + shake_offset;
 
     if let Some(transform) = world.core.get_local_transform_mut(camera) {
         transform.translation =

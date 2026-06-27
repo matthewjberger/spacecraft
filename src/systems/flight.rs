@@ -1,4 +1,4 @@
-use crate::ecs::TemplateWorld;
+use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -13,7 +13,12 @@ struct InputFrame {
 }
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
-    let frame = read_input(world);
+    let active = game_world.resources.game.mode == GameMode::Playing;
+    let frame = if active {
+        read_input(world)
+    } else {
+        InputFrame::default()
+    };
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
     let Some(ship) = game.ship else {

@@ -63,6 +63,27 @@ pub const TURRET_OFFSET_Y: f32 = -0.05;
 pub const TURRET_OFFSET_Z: f32 = -0.9;
 pub const PROJECTILE_HIT_RADIUS: f32 = 0.7;
 
+pub const PLAYER_HIT_RADIUS: f32 = 0.6;
+pub const ENEMY_RADIUS: f32 = 1.2;
+pub const ENEMY_SPAWN_AHEAD: f32 = 120.0;
+pub const ENEMY_DESPAWN_Z: f32 = 16.0;
+pub const ENEMY_FIRE_INTERVAL: f32 = 1.7;
+pub const ENEMY_SHOT_SPEED: f32 = 52.0;
+pub const ENEMY_SCORE: u32 = 5;
+
+pub const BOSS_HEALTH: i32 = 90;
+pub const BOSS_SPAWN_Z: f32 = -80.0;
+pub const BOSS_HOLD_Z: f32 = -30.0;
+pub const BOSS_RADIUS: f32 = 5.0;
+pub const BOSS_FIRE_INTERVAL: f32 = 1.5;
+pub const BOSS_ESCORT_INTERVAL: f32 = 2.8;
+pub const BOSS_SCORE: u32 = 250;
+pub const BOSS_APPROACH_SPEED: f32 = 22.0;
+
+pub const DAMAGE_INVULN: f32 = 1.1;
+pub const DAMAGE_FLASH_TIME: f32 = 0.35;
+pub const DAMAGE_SHAKE: f32 = 0.9;
+
 pub fn approach(current: f32, target: f32, rate: f32) -> f32 {
     current + (target - current) * rate.clamp(0.0, 1.0)
 }

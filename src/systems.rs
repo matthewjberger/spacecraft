@@ -1,9 +1,14 @@
 pub mod asteroid_mesh;
 pub mod atmosphere;
 pub mod backdrop;
+pub mod boss;
 pub mod camera;
+pub mod combat;
 pub mod common;
+pub mod enemies;
+pub mod enemy_mesh;
 pub mod flight;
+pub mod game;
 pub mod hud;
 pub mod planet_texture;
 pub mod ring_fx;

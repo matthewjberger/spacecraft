@@ -211,7 +211,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         despawn_recursive_immediate(world, entity);
     }
 
-    ensure_course(world, game);
+    if game.distance < (game.sector_goal - SCENERY_SPAWN_DISTANCE).max(0.0) {
+        ensure_course(world, game);
+    }
 
     for (position, color, count) in bursts {
         let entity = spawn_burst(world, position, color, count);

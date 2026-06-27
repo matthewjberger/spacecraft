@@ -31,8 +31,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 
     let mut remove: Vec<usize> = Vec::new();
-    let mut hits: Vec<usize> = Vec::new();
+    let mut asteroid_hits: Vec<usize> = Vec::new();
+    let mut enemy_deaths: Vec<usize> = Vec::new();
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
+    let mut score_gain: u32 = 0;
 
     for index in 0..game.projectiles.len() {
         let step = game.projectiles[index].velocity * delta;
@@ -48,6 +50,33 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
 
         if position.z < -PROJECTILE_RANGE || game.projectiles[index].age > 5.0 {
+            remove.push(index);
+            continue;
+        }
+
+        let mut consumed = false;
+        for enemy_index in 0..game.enemies.len() {
+            let separation = (game.enemies[enemy_index].position - position).magnitude();
+            if separation < ENEMY_RADIUS + PROJECTILE_HIT_RADIUS {
+                game.enemies[enemy_index].health -= 1;
+                bursts.push((position, Vec3::new(1.0, 0.6, 0.3), 14));
+                remove.push(index);
+                if game.enemies[enemy_index].health <= 0 {
+                    enemy_deaths.push(enemy_index);
+                }
+                consumed = true;
+                break;
+            }
+        }
+        if consumed {
+            continue;
+        }
+
+        if let Some(boss) = game.boss.as_mut()
+            && (boss.position - position).magnitude() < BOSS_RADIUS + PROJECTILE_HIT_RADIUS
+        {
+            boss.health -= 1;
+            bursts.push((position, Vec3::new(1.0, 0.5, 0.25), 12));
             remove.push(index);
             continue;
         }
@@ -69,18 +98,29 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 Vec3::new(1.0, 0.5, 0.2),
                 28,
             ));
-            hits.push(scenery_index);
+            asteroid_hits.push(scenery_index);
             remove.push(index);
         }
     }
 
-    hits.sort_unstable();
-    hits.dedup();
-    for scenery_index in hits.into_iter().rev() {
+    enemy_deaths.sort_unstable();
+    enemy_deaths.dedup();
+    for enemy_index in enemy_deaths.into_iter().rev() {
+        let enemy = game.enemies.remove(enemy_index);
+        bursts.push((enemy.position, Vec3::new(1.0, 0.45, 0.2), 30));
+        despawn_recursive_immediate(world, enemy.entity);
+        score_gain += ENEMY_SCORE;
+    }
+
+    asteroid_hits.sort_unstable();
+    asteroid_hits.dedup();
+    for scenery_index in asteroid_hits.into_iter().rev() {
         let scenery_item = game.scenery.remove(scenery_index);
         despawn_recursive_immediate(world, scenery_item.entity);
-        game.score += 1;
+        score_gain += 1;
     }
+
+    game.score += score_gain;
 
     remove.sort_unstable();
     remove.dedup();

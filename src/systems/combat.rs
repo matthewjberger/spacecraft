@@ -1,0 +1,96 @@
+use crate::ecs::{SceneryKind, TemplateWorld};
+use crate::systems::common::*;
+use nightshade::prelude::*;
+
+pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
+    let delta = world.resources.window.timing.delta_time;
+    let game = &mut game_world.resources.game;
+    if game.ship.is_none() {
+        return;
+    }
+    let ship = game.ship_position;
+    if game.invuln > 0.0 {
+        game.invuln -= delta;
+    }
+
+    let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
+    let mut damage = false;
+
+    let mut shot_remove: Vec<usize> = Vec::new();
+    for index in 0..game.enemy_shots.len() {
+        let velocity = game.enemy_shots[index].velocity;
+        game.enemy_shots[index].position += velocity * delta;
+        game.enemy_shots[index].age += delta;
+        let position = game.enemy_shots[index].position;
+        if let Some(emitter) = world
+            .core
+            .get_particle_emitter_mut(game.enemy_shots[index].entity)
+        {
+            emitter.position = position;
+        }
+        if (position - ship).magnitude() < PLAYER_HIT_RADIUS + 0.5 {
+            damage = true;
+            bursts.push((position, Vec3::new(1.0, 0.4, 0.2), 16));
+            shot_remove.push(index);
+        } else if position.z > ship.z + 6.0 || game.enemy_shots[index].age > 6.0 {
+            shot_remove.push(index);
+        }
+    }
+    for index in shot_remove.into_iter().rev() {
+        let shot = game.enemy_shots.remove(index);
+        despawn_recursive_immediate(world, shot.entity);
+    }
+
+    if game.invuln <= 0.0 {
+        let mut struck: Option<usize> = None;
+        for index in 0..game.scenery.len() {
+            if game.scenery[index].kind != SceneryKind::Asteroid {
+                continue;
+            }
+            let asteroid = game.scenery[index].position;
+            let radius = game.scenery[index].radius;
+            let planar = ((asteroid.x - ship.x).powi(2) + (asteroid.y - ship.y).powi(2)).sqrt();
+            if planar < radius + PLAYER_HIT_RADIUS && (asteroid.z - ship.z).abs() < radius + 1.2 {
+                struck = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = struck {
+            let item = game.scenery.remove(index);
+            bursts.push((item.position, Vec3::new(1.0, 0.6, 0.3), 32));
+            despawn_recursive_immediate(world, item.entity);
+            damage = true;
+        }
+    }
+
+    if game.invuln <= 0.0 {
+        let mut struck: Option<usize> = None;
+        for index in 0..game.enemies.len() {
+            if (game.enemies[index].position - ship).magnitude() < ENEMY_RADIUS + PLAYER_HIT_RADIUS
+            {
+                struck = Some(index);
+                break;
+            }
+        }
+        if let Some(index) = struck {
+            let enemy = game.enemies.remove(index);
+            bursts.push((enemy.position, Vec3::new(1.0, 0.5, 0.2), 32));
+            despawn_recursive_immediate(world, enemy.entity);
+            damage = true;
+        }
+    }
+
+    if damage && game.invuln <= 0.0 {
+        game.shields -= 1;
+        game.invuln = DAMAGE_INVULN;
+        game.damage_flash = DAMAGE_FLASH_TIME;
+        game.shake = DAMAGE_SHAKE;
+    } else if damage {
+        game.damage_flash = game.damage_flash.max(0.12);
+    }
+
+    for (position, color, count) in bursts {
+        let entity = spawn_burst(world, position, color, count);
+        game.bursts.push((entity, 0.0));
+    }
+}

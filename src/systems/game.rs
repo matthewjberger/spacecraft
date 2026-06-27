@@ -1,0 +1,139 @@
+use crate::content::SECTORS;
+use crate::ecs::{GameMode, GameState, TemplateWorld};
+use crate::systems::common::*;
+use crate::systems::scenery;
+use nightshade::prelude::*;
+
+pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
+    let delta = world.resources.window.timing.delta_time;
+    let advance = read_advance(world);
+    let game = &mut game_world.resources.game;
+    game.mode_timer += delta;
+    if game.damage_flash > 0.0 {
+        game.damage_flash -= delta;
+    }
+    if game.shake > 0.0 {
+        game.shake = (game.shake - delta * 1.4).max(0.0);
+    }
+
+    match game.mode {
+        GameMode::Title => {
+            if advance {
+                start_game(world, game);
+            }
+        }
+        GameMode::Briefing => {
+            if advance {
+                enter_mode(game, GameMode::Playing);
+            }
+        }
+        GameMode::Playing => {
+            game.distance += RAIL_SPEED * game.speed_scale * delta;
+            if game.shields <= 0 {
+                enter_mode(game, GameMode::GameOver);
+            } else if SECTORS[game.sector].boss {
+                if game.boss_defeated {
+                    enter_mode(game, GameMode::Victory);
+                }
+            } else if game.distance >= game.sector_goal && game.enemies.is_empty() {
+                enter_mode(game, GameMode::SectorClear);
+            }
+        }
+        GameMode::SectorClear => {
+            if advance {
+                let next = game.sector + 1;
+                if next < SECTORS.len() {
+                    enter_briefing(world, game, next);
+                } else {
+                    enter_mode(game, GameMode::Victory);
+                }
+            }
+        }
+        GameMode::GameOver => {
+            if advance {
+                to_title(world, game);
+            }
+        }
+        GameMode::Victory => {
+            if advance {
+                to_title(world, game);
+            }
+        }
+    }
+}
+
+fn enter_mode(game: &mut GameState, mode: GameMode) {
+    game.mode = mode;
+    game.mode_timer = 0.0;
+}
+
+fn start_game(world: &mut World, game: &mut GameState) {
+    game.score = 0;
+    game.shields = game.max_shields;
+    enter_briefing(world, game, 0);
+}
+
+fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
+    game.sector = sector;
+    begin_sector(world, game);
+    enter_mode(game, GameMode::Briefing);
+}
+
+fn begin_sector(world: &mut World, game: &mut GameState) {
+    clear_world(world, game);
+    game.distance = 0.0;
+    game.frontier_z = COURSE_START_Z;
+    game.boss_defeated = false;
+    game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
+    game.speed_scale = 1.0;
+    let sector = &SECTORS[game.sector];
+    game.sector_goal = sector.goal;
+    game.enemy_timer = sector.enemy_interval;
+    game.escort_timer = BOSS_ESCORT_INTERVAL;
+    scenery::populate(world, game);
+}
+
+fn to_title(world: &mut World, game: &mut GameState) {
+    clear_world(world, game);
+    enter_mode(game, GameMode::Title);
+    game.sector = 0;
+    game.score = 0;
+    game.shields = game.max_shields;
+    game.distance = 0.0;
+    game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
+    game.speed_scale = 1.0;
+}
+
+fn clear_world(world: &mut World, game: &mut GameState) {
+    for item in game.scenery.drain(..) {
+        despawn_recursive_immediate(world, item.entity);
+    }
+    for enemy in game.enemies.drain(..) {
+        despawn_recursive_immediate(world, enemy.entity);
+    }
+    for shot in game.enemy_shots.drain(..) {
+        despawn_recursive_immediate(world, shot.entity);
+    }
+    for projectile in game.projectiles.drain(..) {
+        despawn_recursive_immediate(world, projectile.entity);
+    }
+    for (entity, _) in game.bursts.drain(..) {
+        despawn_recursive_immediate(world, entity);
+    }
+    if let Some(boss) = game.boss.take() {
+        despawn_recursive_immediate(world, boss.entity);
+    }
+    game.barrel = Default::default();
+    game.invuln = 0.0;
+    game.damage_flash = 0.0;
+    game.shake = 0.0;
+}
+
+fn read_advance(world: &mut World) -> bool {
+    let keyboard = &world.resources.input.keyboard;
+    if keyboard.just_pressed(KeyCode::Space) || keyboard.just_pressed(KeyCode::Enter) {
+        return true;
+    }
+    let gamepad = &world.resources.input.gamepad;
+    gamepad.just_pressed(gilrs::Button::South) || gamepad.just_pressed(gilrs::Button::Start)
+}
