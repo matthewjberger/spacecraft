@@ -3,8 +3,8 @@ use nightshade::prelude::*;
 pub const SHIP_SCALE: f32 = 0.42;
 pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
 pub const SHIP_STEER_SPEED: f32 = 9.0;
-pub const BOUND_X: f32 = 7.0;
-pub const BOUND_Y: f32 = 4.0;
+pub const BOUND_X: f32 = 6.5;
+pub const BOUND_Y: f32 = 3.8;
 pub const BASE_HEIGHT: f32 = 0.0;
 
 pub const MAX_BANK: f32 = 0.85;
@@ -22,11 +22,11 @@ pub const SPEED_RESPONSE: f32 = 4.0;
 pub const STICK_DEADZONE: f32 = 0.15;
 
 pub const CAMERA_DISTANCE: f32 = 9.0;
-pub const CAMERA_HEIGHT: f32 = 2.5;
-pub const CAMERA_FOLLOW_X: f32 = 0.35;
-pub const CAMERA_FOLLOW_Y: f32 = 0.40;
+pub const CAMERA_HEIGHT: f32 = 1.4;
+pub const CAMERA_FOLLOW_X: f32 = 0.3;
+pub const CAMERA_FOLLOW_Y: f32 = 0.25;
 pub const CAMERA_RESPONSE: f32 = 5.0;
-pub const CAMERA_PITCH: f32 = 0.13;
+pub const CAMERA_PITCH: f32 = -0.155;
 pub const CAMERA_ROLL: f32 = 0.30;
 pub const BASE_FOV_DEGREES: f32 = 60.0;
 pub const BOOST_FOV_DEGREES: f32 = 18.0;
