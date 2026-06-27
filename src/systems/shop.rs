@@ -6,6 +6,7 @@ pub fn item_level(mods: &ShipMods, kind: ModKind) -> u8 {
         ModKind::Lance => mods.lance,
         ModKind::Nova => mods.nova_max,
         ModKind::Aegis => mods.aegis,
+        ModKind::Seeker => mods.seeker,
         ModKind::Magnet => mods.magnet,
         ModKind::Hull => mods.hull,
         ModKind::Rapid => mods.rapid,
@@ -41,6 +42,7 @@ pub fn buy(game: &mut GameState, index: usize) {
             game.nova_charges = game.mods.nova_max;
         }
         ModKind::Aegis => game.mods.aegis += 1,
+        ModKind::Seeker => game.mods.seeker += 1,
         ModKind::Magnet => game.mods.magnet += 1,
         ModKind::Hull => {
             game.mods.hull += 1;

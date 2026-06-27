@@ -95,6 +95,13 @@ pub const NOVA_BOSS_DAMAGE: i32 = 12;
 pub const AEGIS_DURATION: f32 = 2.6;
 pub const AEGIS_COOLDOWN: f32 = 7.5;
 
+pub const SEEKER_INTERVAL: f32 = 1.7;
+pub const MISSILE_SPEED: f32 = 72.0;
+pub const MISSILE_TURN: f32 = 4.5;
+pub const MISSILE_LIFE: f32 = 3.0;
+pub const MISSILE_HIT_RADIUS: f32 = 1.4;
+pub const MISSILE_DAMAGE: i32 = 3;
+
 pub const MAGNET_BASE_RANGE: f32 = 4.5;
 pub const MAGNET_RANGE_PER: f32 = 4.5;
 pub const MAGNET_PULL_SPEED: f32 = 18.0;

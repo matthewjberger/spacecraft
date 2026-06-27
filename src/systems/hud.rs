@@ -104,7 +104,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         world,
         root,
         Rl(vec2(50.0, 50.0)),
-        Ab(vec2(780.0, 492.0)),
+        Ab(vec2(780.0, 520.0)),
         Anchor::Center,
         vec4(1.0, 0.85, 0.4, 0.7),
         vec4(0.04, 0.05, 0.1, 0.88),

@@ -19,9 +19,17 @@ pub struct ShipMods {
     pub hull: u8,
     pub rapid: u8,
     pub magnet: u8,
+    pub seeker: u8,
     pub lance: u8,
     pub nova_max: u8,
     pub aegis: u8,
+}
+
+pub struct Missile {
+    pub entity: Entity,
+    pub position: Vec3,
+    pub velocity: Vec3,
+    pub life: f32,
 }
 
 pub struct Fragment {
@@ -229,6 +237,8 @@ pub struct GameState {
     pub projectiles: Vec<Projectile>,
     pub enemies: Vec<Enemy>,
     pub enemy_shots: Vec<Projectile>,
+    pub missiles: Vec<Missile>,
+    pub missile_timer: f32,
     pub pickups: Vec<Pickup>,
     pub effect: Option<PickupKind>,
     pub effect_timer: f32,
@@ -302,6 +312,8 @@ impl Default for GameState {
             projectiles: Vec::new(),
             enemies: Vec::new(),
             enemy_shots: Vec::new(),
+            missiles: Vec::new(),
+            missile_timer: 0.0,
             pickups: Vec::new(),
             effect: None,
             effect_timer: 0.0,

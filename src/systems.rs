@@ -14,6 +14,7 @@ pub mod game;
 pub mod hangar;
 pub mod hud;
 pub mod laser;
+pub mod missiles;
 pub mod pickups;
 pub mod planet_texture;
 pub mod reticle;

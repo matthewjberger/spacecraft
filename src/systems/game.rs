@@ -290,6 +290,10 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     for shot in game.enemy_shots.drain(..) {
         despawn_recursive_immediate(world, shot.entity);
     }
+    for missile in game.missiles.drain(..) {
+        despawn_recursive_immediate(world, missile.entity);
+    }
+    game.missile_timer = 0.0;
     for pickup in game.pickups.drain(..) {
         despawn_recursive_immediate(world, pickup.entity);
     }
