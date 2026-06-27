@@ -2,8 +2,8 @@ use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::atmosphere::AtmosphereState;
 use crate::systems::ring_fx::RingState;
 use crate::systems::{
-    abilities, atmosphere, backdrop, boss, camera, combat, director, enemies, flight, game, hud,
-    laser, pickups, ring_fx, scenery, setup, weapons,
+    abilities, atmosphere, backdrop, boss, camera, combat, director, enemies, flight, game, hangar,
+    hud, laser, pickups, ring_fx, scenery, setup, weapons,
 };
 use nightshade::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -59,6 +59,7 @@ impl State for Spacecraft {
         }
         backdrop::update(&mut self.template_world, world);
         camera::update(&mut self.template_world, world);
+        hangar::update(&mut self.template_world, world);
         hud::update(&mut self.template_world, world);
 
         atmosphere::sync(&self.template_world.resources.game, &self.atmosphere);

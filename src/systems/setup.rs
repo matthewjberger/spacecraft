@@ -3,6 +3,7 @@ use crate::systems::asteroid_mesh;
 use crate::systems::backdrop;
 use crate::systems::common::*;
 use crate::systems::enemy_mesh;
+use crate::systems::hangar;
 use nightshade::ecs::light::components::{Light, LightType};
 use nightshade::prelude::*;
 
@@ -42,6 +43,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
 
     asteroid_mesh::register_asteroid_meshes(world);
     enemy_mesh::register_enemy_meshes(world);
+    hangar::register_mesh(world);
 
     let camera = spawn_camera(
         world,
@@ -86,6 +88,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.exhaust = Some(exhaust);
     game.corner_thrusters = corner_thrusters;
     game.starfield = Some(starfield);
+    game.dais = Some(hangar::spawn(world));
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
 
     backdrop::spawn_backdrop(world, game);

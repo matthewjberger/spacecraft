@@ -11,6 +11,7 @@ pub mod enemies;
 pub mod enemy_mesh;
 pub mod flight;
 pub mod game;
+pub mod hangar;
 pub mod hud;
 pub mod laser;
 pub mod pickups;
