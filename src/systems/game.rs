@@ -1,7 +1,6 @@
 use crate::content::SECTORS;
 use crate::ecs::{GameMode, GameState, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::scenery;
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -28,15 +27,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
         }
         GameMode::Playing => {
-            game.distance += RAIL_SPEED * game.speed_scale * delta;
             if game.shields <= 0 {
                 enter_mode(game, GameMode::GameOver);
-            } else if SECTORS[game.sector].boss {
-                if game.boss_defeated {
+            } else if game.beat_index >= SECTORS[game.sector].beats.len() {
+                if game.sector + 1 >= SECTORS.len() {
                     enter_mode(game, GameMode::Victory);
+                } else {
+                    enter_mode(game, GameMode::SectorClear);
                 }
-            } else if game.distance >= game.sector_goal && game.enemies.is_empty() {
-                enter_mode(game, GameMode::SectorClear);
             }
         }
         GameMode::SectorClear => {
@@ -81,16 +79,11 @@ fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
 
 fn begin_sector(world: &mut World, game: &mut GameState) {
     clear_world(world, game);
-    game.distance = 0.0;
-    game.frontier_z = COURSE_START_Z;
-    game.boss_defeated = false;
+    game.beat_index = 0;
+    game.beat_started = false;
+    game.beat_distance = 0.0;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
-    let sector = &SECTORS[game.sector];
-    game.sector_goal = sector.goal;
-    game.enemy_timer = sector.enemy_interval;
-    game.escort_timer = BOSS_ESCORT_INTERVAL;
-    scenery::populate(world, game);
 }
 
 fn to_title(world: &mut World, game: &mut GameState) {
@@ -99,7 +92,8 @@ fn to_title(world: &mut World, game: &mut GameState) {
     game.sector = 0;
     game.score = 0;
     game.shields = game.max_shields;
-    game.distance = 0.0;
+    game.beat_index = 0;
+    game.beat_started = false;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
 }

@@ -57,7 +57,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let mut consumed = false;
         for enemy_index in 0..game.enemies.len() {
             let separation = (game.enemies[enemy_index].position - position).magnitude();
-            if separation < ENEMY_RADIUS + PROJECTILE_HIT_RADIUS {
+            if separation < game.enemies[enemy_index].radius + PROJECTILE_HIT_RADIUS {
                 game.enemies[enemy_index].health -= 1;
                 bursts.push((position, Vec3::new(1.0, 0.6, 0.3), 14));
                 remove.push(index);
@@ -73,7 +73,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
 
         if let Some(boss) = game.boss.as_mut()
-            && (boss.position - position).magnitude() < BOSS_RADIUS + PROJECTILE_HIT_RADIUS
+            && (boss.position - position).magnitude()
+                < boss.kind.stats().radius + PROJECTILE_HIT_RADIUS
         {
             boss.health -= 1;
             bursts.push((position, Vec3::new(1.0, 0.5, 0.25), 12));

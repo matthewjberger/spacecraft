@@ -5,6 +5,7 @@ pub mod boss;
 pub mod camera;
 pub mod combat;
 pub mod common;
+pub mod director;
 pub mod enemies;
 pub mod enemy_mesh;
 pub mod flight;

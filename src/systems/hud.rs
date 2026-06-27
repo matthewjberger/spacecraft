@@ -135,8 +135,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let shields = game.shields.max(0) as usize;
     let max_shields = game.max_shields as usize;
     let speed_scale = game.speed_scale;
-    let distance = game.distance;
-    let goal = game.sector_goal.max(1.0);
+    let beat_index = game.beat_index;
     let mode_timer = game.mode_timer;
     let damage_flash = game.damage_flash;
     let boss_ratio = game
@@ -170,7 +169,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             hud.thrust,
             &format!("THRUST  [{}]", meter(thrust_filled, 10)),
         );
-        let approach = ((distance / goal).clamp(0.0, 1.0) * 12.0) as usize;
+        let beat_total = SECTORS[sector_index].beats.len().max(1);
+        let approach = ((beat_index as f32 / beat_total as f32).clamp(0.0, 1.0) * 12.0) as usize;
         set_text(
             world,
             hud.progress,

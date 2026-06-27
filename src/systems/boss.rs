@@ -1,26 +1,18 @@
-use crate::content::SECTORS;
+use crate::content::BossKind;
 use crate::ecs::{Boss, GameState, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::enemies::{spawn_enemy_shot, spawn_fighter};
-use crate::systems::enemy_mesh::MONARCH_MESH;
+use crate::systems::enemies;
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
-    if game.ship.is_none() {
+    let Some(kind) = game.boss.as_ref().map(|boss| boss.kind) else {
         return;
-    }
-    let sector = &SECTORS[game.sector];
-    if !sector.boss {
-        return;
-    }
+    };
+    let stats = kind.stats();
     let ship = game.ship_position;
     let elapsed = game.elapsed;
-
-    if game.boss.is_none() && !game.boss_defeated && game.distance >= game.sector_goal {
-        spawn_boss(world, game);
-    }
 
     let mut transform_update: Option<(Entity, Vec3, f32)> = None;
     let mut volley_origin: Option<Vec3> = None;
@@ -31,9 +23,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         boss.phase += delta;
         boss.spin += delta * 0.5;
         if !boss.arrived {
-            boss.position.z += BOSS_APPROACH_SPEED * delta;
-            if boss.position.z >= BOSS_HOLD_Z {
-                boss.position.z = BOSS_HOLD_Z;
+            boss.position.z += stats.approach_speed * delta;
+            if boss.position.z >= stats.hold_z {
+                boss.position.z = stats.hold_z;
                 boss.arrived = true;
             }
         }
@@ -44,7 +36,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         if boss.arrived {
             boss.fire_timer -= delta;
             if boss.fire_timer <= 0.0 {
-                boss.fire_timer = BOSS_FIRE_INTERVAL;
+                boss.fire_timer = stats.fire_interval;
                 volley_origin = Some(boss.position);
             }
         }
@@ -59,75 +51,82 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.translation = position;
             transform.rotation = yaw * tilt;
-            transform.scale = Vec3::new(BOSS_RADIUS, BOSS_RADIUS, BOSS_RADIUS);
+            transform.scale = Vec3::new(stats.scale, stats.scale, stats.scale);
         }
         mark_local_transform_dirty(world, entity);
     }
 
     if let Some(origin) = volley_origin {
-        let spread = [
-            Vec3::new(-4.5, 0.6, 0.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(4.5, 0.6, 0.0),
-            Vec3::new(-2.2, 2.6, 0.0),
-            Vec3::new(2.2, -2.2, 0.0),
-        ];
-        for offset in spread {
-            spawn_enemy_shot(world, game, origin, ship + offset);
+        for shot in 0..stats.volley {
+            let offset = if stats.volley > 1 {
+                shot as f32 / (stats.volley - 1) as f32 - 0.5
+            } else {
+                0.0
+            };
+            let target = ship
+                + Vec3::new(
+                    offset * stats.spread * 2.0,
+                    ((shot % 2) as f32 - 0.5) * 2.4,
+                    0.0,
+                );
+            enemies::spawn_enemy_shot(world, game, origin, target);
         }
     }
 
-    if game.boss.is_some() && game.boss.as_ref().is_some_and(|boss| boss.arrived) {
+    if stats.escort_interval > 0.0 && game.boss.as_ref().is_some_and(|boss| boss.arrived) {
         game.escort_timer -= delta;
         if game.escort_timer <= 0.0 {
-            game.escort_timer = BOSS_ESCORT_INTERVAL;
-            spawn_fighter(world, game, sector.enemy_health, sector.enemy_speed);
+            game.escort_timer = stats.escort_interval;
+            let lane_x = random_range(&mut game.random_state, -5.0, 5.0);
+            let lane_y = BASE_HEIGHT + random_range(&mut game.random_state, -2.4, 2.4);
+            let position = Vec3::new(lane_x, lane_y, ship.z - ENEMY_SPAWN_AHEAD);
+            enemies::spawn(world, game, stats.escort, position);
         }
     }
 
     if died {
         if let Some(boss) = game.boss.take() {
-            for ring in 0..7 {
-                let angle = ring as f32 * 1.3;
-                let offset = Vec3::new(angle.cos() * 3.0, angle.sin() * 3.0, 0.0);
+            for ring in 0..8 {
+                let angle = ring as f32 * 1.2;
+                let offset = Vec3::new(angle.cos() * 3.2, angle.sin() * 3.2, 0.0);
                 let entity =
-                    spawn_burst(world, boss_position + offset, Vec3::new(1.0, 0.55, 0.2), 44);
+                    spawn_burst(world, boss_position + offset, Vec3::new(1.0, 0.55, 0.2), 46);
                 game.bursts.push((entity, 0.0));
             }
             despawn_recursive_immediate(world, boss.entity);
         }
-        game.boss_defeated = true;
-        game.score += BOSS_SCORE;
+        game.score += stats.score;
     }
 }
 
-fn spawn_boss(world: &mut World, game: &mut GameState) {
+pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
+    let stats = kind.stats();
     let position = Vec3::new(0.0, BASE_HEIGHT, BOSS_SPAWN_Z);
     let entity = spawn_mesh(
         world,
-        MONARCH_MESH,
+        stats.mesh,
         position,
-        Vec3::new(BOSS_RADIUS, BOSS_RADIUS, BOSS_RADIUS),
+        Vec3::new(stats.scale, stats.scale, stats.scale),
     );
     apply_material(
         world,
         entity,
-        "monarch",
-        [0.1, 0.08, 0.13, 1.0],
-        [0.65, 0.05, 0.08],
+        "boss",
+        stats.base_color,
+        stats.emissive,
         false,
         false,
     );
     game.boss = Some(Boss {
         entity,
-        core: None,
+        kind,
         position,
-        health: BOSS_HEALTH,
-        max_health: BOSS_HEALTH,
+        health: stats.health,
+        max_health: stats.health,
         fire_timer: 2.0,
         phase: 0.0,
         spin: 0.0,
         arrived: false,
     });
-    game.escort_timer = BOSS_ESCORT_INTERVAL;
+    game.escort_timer = stats.escort_interval.max(2.0);
 }

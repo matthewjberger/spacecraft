@@ -1,7 +1,6 @@
-use crate::content::SECTORS;
-use crate::ecs::{Enemy, Projectile, TemplateWorld};
+use crate::content::EnemyKind;
+use crate::ecs::{Enemy, GameState, Projectile, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::enemy_mesh::FIGHTER_MESH;
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -10,17 +9,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.ship.is_none() {
         return;
     }
-    let sector = &SECTORS[game.sector];
     let ship = game.ship_position;
     let elapsed = game.elapsed;
-
-    if !sector.boss && game.distance < game.sector_goal {
-        game.enemy_timer -= delta;
-        if game.enemy_timer <= 0.0 {
-            game.enemy_timer = sector.enemy_interval;
-            spawn_fighter(world, game, sector.enemy_health, sector.enemy_speed);
-        }
-    }
 
     let mut remove: Vec<usize> = Vec::new();
     let mut shots: Vec<Vec3> = Vec::new();
@@ -53,10 +43,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
         mark_local_transform_dirty(world, entity);
 
-        game.enemies[index].fire_timer -= delta;
-        if position.z > -60.0 && position.z < -6.0 && game.enemies[index].fire_timer <= 0.0 {
-            game.enemies[index].fire_timer = ENEMY_FIRE_INTERVAL;
-            shots.push(position);
+        if game.enemies[index].fires {
+            game.enemies[index].fire_timer -= delta;
+            if position.z > -60.0 && position.z < -6.0 && game.enemies[index].fire_timer <= 0.0 {
+                game.enemies[index].fire_timer = game.enemies[index].fire_interval;
+                shots.push(position);
+            }
         }
 
         if position.z > ENEMY_DESPAWN_Z {
@@ -74,40 +66,46 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 }
 
-pub fn spawn_fighter(world: &mut World, game: &mut crate::ecs::GameState, health: i32, speed: f32) {
-    let lane_x = random_range(&mut game.random_state, -5.0, 5.0);
-    let lane_y = BASE_HEIGHT + random_range(&mut game.random_state, -2.6, 2.6);
-    let position = Vec3::new(lane_x, lane_y, game.ship_position.z - ENEMY_SPAWN_AHEAD);
-    let entity = spawn_mesh(world, FIGHTER_MESH, position, Vec3::new(1.05, 1.05, 1.05));
+pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position: Vec3) {
+    let stats = kind.stats();
+    let entity = spawn_mesh(
+        world,
+        stats.mesh,
+        position,
+        Vec3::new(stats.scale, stats.scale, stats.scale),
+    );
     apply_material(
         world,
         entity,
         "drift",
-        [0.22, 0.13, 0.16, 1.0],
-        [0.55, 0.05, 0.07],
+        stats.base_color,
+        stats.emissive,
         false,
         false,
     );
+    let fire_interval = if stats.fire_interval > 0.0 {
+        stats.fire_interval
+    } else {
+        1.5
+    };
     game.enemies.push(Enemy {
         entity,
         position,
-        health,
-        closing_speed: speed,
-        lane_x,
-        lane_y,
+        health: stats.health,
+        radius: stats.radius,
+        closing_speed: stats.closing_speed,
+        fires: stats.fires,
+        fire_interval,
+        lane_x: position.x,
+        lane_y: position.y,
         sway_phase: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
         sway_amount: random_range(&mut game.random_state, 1.0, 2.6),
-        fire_timer: random_range(&mut game.random_state, 0.5, 1.5),
+        fire_timer: random_range(&mut game.random_state, 0.5, fire_interval),
         spin: 0.0,
     });
 }
 
-pub fn spawn_enemy_shot(
-    world: &mut World,
-    game: &mut crate::ecs::GameState,
-    origin: Vec3,
-    target: Vec3,
-) {
+pub fn spawn_enemy_shot(world: &mut World, game: &mut GameState, origin: Vec3, target: Vec3) {
     let direction = (target - origin).normalize();
     let entity = spawn_entities(world, PARTICLE_EMITTER | NAME, 1)[0];
     let emitter = ParticleEmitter {

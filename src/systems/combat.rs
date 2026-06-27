@@ -66,7 +66,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.invuln <= 0.0 {
         let mut struck: Option<usize> = None;
         for index in 0..game.enemies.len() {
-            if (game.enemies[index].position - ship).magnitude() < ENEMY_RADIUS + PLAYER_HIT_RADIUS
+            if (game.enemies[index].position - ship).magnitude()
+                < game.enemies[index].radius + PLAYER_HIT_RADIUS
             {
                 struck = Some(index);
                 break;

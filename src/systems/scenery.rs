@@ -3,77 +3,29 @@ use crate::systems::asteroid_mesh;
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
-pub fn populate(world: &mut World, game: &mut GameState) {
-    game.frontier_z = COURSE_START_Z;
-    ensure_course(world, game);
-}
-
-fn ensure_course(world: &mut World, game: &mut GameState) {
-    while game.frontier_z > -SCENERY_SPAWN_DISTANCE {
-        game.frontier_z = spawn_pattern(world, game);
-    }
-}
-
-fn spawn_pattern(world: &mut World, game: &mut GameState) -> f32 {
-    let start_z = game.frontier_z - PATTERN_GAP;
-    let choice = next_random(&mut game.random_state);
-    if choice < 0.32 {
-        ring_slalom(world, game, start_z)
-    } else if choice < 0.8 {
-        asteroid_field(world, game, start_z)
-    } else if choice < 0.93 {
-        asteroid_gauntlet(world, game, start_z)
-    } else {
-        start_z - 30.0
-    }
-}
-
-fn ring_slalom(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
-    let count = 3 + (next_random(&mut game.random_state) * 3.0) as usize;
-    let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
-    let amplitude_x = 3.4 + next_random(&mut game.random_state) * 1.5;
-    let amplitude_y = 1.9 + next_random(&mut game.random_state) * 1.1;
-    let mut z = start_z;
-    for step in 0..count {
-        let phase_step = step as f32;
-        let x = (phase_step * 0.9 + phase).sin() * amplitude_x;
-        let y = (phase_step * 0.6 + phase * 1.3).sin() * amplitude_y;
-        let scenery = spawn_ring(world, game, Vec3::new(x, BASE_HEIGHT + y, z));
-        game.scenery.push(scenery);
-        z -= RING_SPACING;
-    }
-    z
-}
-
-fn asteroid_field(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
-    let length = 100.0 + next_random(&mut game.random_state) * 80.0;
-    let count = 11 + (next_random(&mut game.random_state) * 12.0) as usize;
+pub fn spawn_field(world: &mut World, game: &mut GameState, length: f32, count: usize) {
     for _ in 0..count {
         let x = random_range(&mut game.random_state, -ASTEROID_FIELD_X, ASTEROID_FIELD_X);
         let y =
             BASE_HEIGHT + random_range(&mut game.random_state, -ASTEROID_FIELD_Y, ASTEROID_FIELD_Y);
-        let z = start_z - random_range(&mut game.random_state, 0.0, length);
+        let z = -COURSE_AHEAD - random_range(&mut game.random_state, 0.0, length);
         let scenery = spawn_asteroid(world, game, Vec3::new(x, y, z), 1.0, 3.6);
         game.scenery.push(scenery);
     }
-    start_z - length
 }
 
-fn asteroid_gauntlet(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
-    let gap_x = random_range(&mut game.random_state, -3.0, 3.0);
-    let gap_y = random_range(&mut game.random_state, -1.5, 1.5);
-    let count = 9;
+pub fn spawn_rings(world: &mut World, game: &mut GameState, count: usize) {
+    let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
+    let amplitude_x = 3.4 + next_random(&mut game.random_state) * 1.6;
+    let amplitude_y = 1.9 + next_random(&mut game.random_state) * 1.2;
     for step in 0..count {
-        let angle = (step as f32 / count as f32) * std::f32::consts::TAU
-            + next_random(&mut game.random_state) * 0.3;
-        let radius = 4.5 + next_random(&mut game.random_state) * 2.0;
-        let x = gap_x + angle.cos() * radius;
-        let y = BASE_HEIGHT + gap_y + angle.sin() * radius * 0.7;
-        let z = start_z - random_range(&mut game.random_state, 0.0, 6.0);
-        let scenery = spawn_asteroid(world, game, Vec3::new(x, y, z), 1.0, 2.2);
+        let phase_step = step as f32;
+        let x = (phase_step * 0.9 + phase).sin() * amplitude_x;
+        let y = (phase_step * 0.6 + phase * 1.3).sin() * amplitude_y;
+        let z = -COURSE_AHEAD - phase_step * RING_SPACING;
+        let scenery = spawn_ring(world, game, Vec3::new(x, BASE_HEIGHT + y, z));
         game.scenery.push(scenery);
     }
-    start_z - 26.0
 }
 
 fn spawn_ring(world: &mut World, game: &mut GameState, position: Vec3) -> Scenery {
@@ -153,12 +105,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &mut game_world.resources.game;
     let speed = RAIL_SPEED * game.speed_scale;
     let ship_position = game.ship_position;
-    let elapsed = game.elapsed;
-    game.frontier_z += speed * delta;
 
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
-
-    let _ = elapsed;
 
     for index in 0..game.scenery.len() {
         game.scenery[index].position.z += speed * delta;
@@ -209,10 +157,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     });
     for entity in passed {
         despawn_recursive_immediate(world, entity);
-    }
-
-    if game.distance < (game.sector_goal - SCENERY_SPAWN_DISTANCE).max(0.0) {
-        ensure_course(world, game);
     }
 
     for (position, color, count) in bursts {
