@@ -1,5 +1,5 @@
 use crate::content::{Beat, SECTORS};
-use crate::ecs::{GameState, TemplateWorld};
+use crate::ecs::{GameState, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::{boss, enemies, pickups, scenery};
 use nightshade::prelude::*;
@@ -32,7 +32,6 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
     match &SECTORS[sector_index].beats[beat_index] {
         Beat::Field { length, count } => {
             scenery::spawn_field(world, game, *length, *count);
-            spawn_pickup(world, game, *length);
         }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
@@ -49,8 +48,26 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
                 }
             }
         }
-        Beat::MiniBoss(kind) | Beat::Boss(kind) => boss::spawn(world, game, *kind),
+        Beat::MiniBoss(kind) | Beat::Boss(kind) => {
+            clear_rings(world, game);
+            boss::spawn(world, game, *kind);
+        }
         Beat::Breather { length } => spawn_pickup(world, game, *length),
+    }
+}
+
+fn clear_rings(world: &mut World, game: &mut GameState) {
+    let mut removed: Vec<Entity> = Vec::new();
+    game.scenery.retain(|scenery| {
+        if scenery.kind == SceneryKind::Ring {
+            removed.push(scenery.entity);
+            false
+        } else {
+            true
+        }
+    });
+    for entity in removed {
+        despawn_recursive_immediate(world, entity);
     }
 }
 

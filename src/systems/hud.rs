@@ -96,7 +96,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         world,
         root,
         Rl(vec2(50.0, 50.0)),
-        Ab(vec2(760.0, 446.0)),
+        Ab(vec2(780.0, 492.0)),
         Anchor::Center,
         vec4(1.0, 0.85, 0.4, 0.7),
         vec4(0.04, 0.05, 0.1, 0.88),
@@ -117,9 +117,9 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         vec4(0.7, 1.0, 0.7, 1.0),
         28.0,
     );
-    let mut shop_lines: [Option<Entity>; 6] = [None; 6];
+    let mut shop_lines: [Option<Entity>; 8] = [None; 8];
     for slot in shop_lines.iter_mut().take(SHOP_ITEMS.len()) {
-        *slot = Some(text_line(world, shop_panel, "", 17.0, dim, 28.0));
+        *slot = Some(text_line(world, shop_panel, "", 17.0, dim, 26.0));
     }
     let shop_prompt = centered_line(
         world,

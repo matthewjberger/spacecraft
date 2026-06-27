@@ -107,6 +107,7 @@ fn slice_asteroids(world: &mut World, game: &mut GameState, ship: Vec3, radius: 
         spawn_fragments(world, game, item.position, item.radius);
         let burst = spawn_burst(world, item.position, Vec3::new(0.6, 1.4, 1.9), 26);
         game.bursts.push((burst, 0.0));
+        crate::systems::pickups::maybe_drop(world, game, item.position);
         game.score += 2;
         game.credits += 2;
         despawn_recursive_immediate(world, item.entity);
@@ -128,6 +129,7 @@ fn vaporize_enemies(world: &mut World, game: &mut GameState, ship: Vec3, radius:
     }
     for index in killed.into_iter().rev() {
         let enemy = game.enemies.remove(index);
+        spawn_fragments(world, game, enemy.position, enemy.radius);
         let burst = spawn_burst(world, enemy.position, Vec3::new(0.7, 1.5, 2.0), 30);
         game.bursts.push((burst, 0.0));
         game.score += ENEMY_SCORE;

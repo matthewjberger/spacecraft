@@ -88,6 +88,16 @@ pub const NOVA_BOSS_DAMAGE: i32 = 12;
 pub const AEGIS_DURATION: f32 = 2.6;
 pub const AEGIS_COOLDOWN: f32 = 7.5;
 
+pub const MAGNET_BASE_RANGE: f32 = 4.5;
+pub const MAGNET_RANGE_PER: f32 = 4.5;
+pub const MAGNET_PULL_SPEED: f32 = 18.0;
+pub const ASTEROID_DROP_CHANCE: f32 = 0.18;
+
+pub const BOSS_BEAM_INTERVAL: f32 = 5.5;
+pub const BOSS_BEAM_DURATION: f32 = 1.4;
+pub const BOSS_BEAM_CHARGE: f32 = 0.75;
+pub const BOSS_BEAM_RADIUS: f32 = 1.9;
+
 pub const DAMAGE_INVULN: f32 = 1.1;
 pub const DAMAGE_FLASH_TIME: f32 = 0.35;
 pub const DAMAGE_SHAKE: f32 = 0.9;

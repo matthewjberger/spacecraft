@@ -4,13 +4,15 @@ use crate::systems::common::*;
 use crate::systems::shop;
 use nightshade::prelude::*;
 
-const DIGIT_KEYS: [KeyCode; 6] = [
+const DIGIT_KEYS: [KeyCode; 8] = [
     KeyCode::Digit1,
     KeyCode::Digit2,
     KeyCode::Digit3,
     KeyCode::Digit4,
     KeyCode::Digit5,
     KeyCode::Digit6,
+    KeyCode::Digit7,
+    KeyCode::Digit8,
 ];
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -213,6 +215,12 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     game.laser_timer = 0.0;
     game.laser_cooldown = 0.0;
     if let Some(beam) = game.beam
+        && let Some(beam_component) = world.core.get_beam_mut(beam)
+    {
+        beam_component.alpha = 0.0;
+        beam_component.width = 0.0;
+    }
+    if let Some(beam) = game.boss_beam
         && let Some(beam_component) = world.core.get_beam_mut(beam)
     {
         beam_component.alpha = 0.0;

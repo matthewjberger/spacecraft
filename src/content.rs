@@ -82,6 +82,7 @@ pub struct BossStats {
     pub hold_z: f32,
     pub approach_speed: f32,
     pub score: u32,
+    pub beam: bool,
 }
 
 impl BossKind {
@@ -103,6 +104,7 @@ impl BossKind {
                 hold_z: -26.0,
                 approach_speed: 24.0,
                 score: 80,
+                beam: false,
             },
             BossKind::Warden => BossStats {
                 name: "WARDEN",
@@ -120,6 +122,7 @@ impl BossKind {
                 hold_z: -30.0,
                 approach_speed: 22.0,
                 score: 170,
+                beam: true,
             },
             BossKind::Monarch => BossStats {
                 name: "MONARCH",
@@ -137,6 +140,7 @@ impl BossKind {
                 hold_z: -32.0,
                 approach_speed: 20.0,
                 score: 320,
+                beam: true,
             },
         }
     }
@@ -172,6 +176,7 @@ pub enum ModKind {
     Lance,
     Nova,
     Aegis,
+    Magnet,
     Hull,
     Rapid,
     Repair,
@@ -211,6 +216,14 @@ pub const SHOP_ITEMS: &[ShopItem] = &[
         kind: ModKind::Aegis,
         base_cost: 55,
         cost_step: 35,
+        max_level: 3,
+    },
+    ShopItem {
+        name: "TRACTOR COIL",
+        desc: "pulls drops toward your ship",
+        kind: ModKind::Magnet,
+        base_cost: 30,
+        cost_step: 25,
         max_level: 3,
     },
     ShopItem {

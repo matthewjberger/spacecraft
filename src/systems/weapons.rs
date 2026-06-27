@@ -1,5 +1,6 @@
 use crate::ecs::{PickupKind, Projectile, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::pickups;
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -134,6 +135,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     for scenery_index in asteroid_hits.into_iter().rev() {
         let scenery_item = game.scenery.remove(scenery_index);
         despawn_recursive_immediate(world, scenery_item.entity);
+        pickups::maybe_drop(world, game, scenery_item.position);
         score_gain += 1;
     }
 

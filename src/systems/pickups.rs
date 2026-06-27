@@ -32,6 +32,13 @@ pub fn random_kind(state: &mut u64) -> PickupKind {
     }
 }
 
+pub fn maybe_drop(world: &mut World, game: &mut GameState, position: Vec3) {
+    if next_random(&mut game.random_state) < ASTEROID_DROP_CHANCE {
+        let kind = random_kind(&mut game.random_state);
+        spawn(world, game, kind, position);
+    }
+}
+
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
@@ -41,6 +48,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let speed = RAIL_SPEED * game.speed_scale;
     let ship = game.ship_position;
     let elapsed = game.elapsed;
+    let magnet_range = if game.mods.magnet > 0 {
+        MAGNET_BASE_RANGE + game.mods.magnet as f32 * MAGNET_RANGE_PER
+    } else {
+        0.0
+    };
 
     if game.effect.is_some() {
         game.effect_timer -= delta;
@@ -57,6 +69,16 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     for index in 0..game.pickups.len() {
         game.pickups[index].position.z += speed * delta;
         game.pickups[index].spin += delta * 2.2;
+        if magnet_range > 0.0 {
+            let delta_x = ship.x - game.pickups[index].position.x;
+            let delta_y = ship.y - game.pickups[index].position.y;
+            let distance = (delta_x * delta_x + delta_y * delta_y).sqrt();
+            if distance > 0.01 && distance < magnet_range {
+                let step = (MAGNET_PULL_SPEED * delta).min(distance);
+                game.pickups[index].position.x += delta_x / distance * step;
+                game.pickups[index].position.y += delta_y / distance * step;
+            }
+        }
         let position = game.pickups[index].position;
         let spin = game.pickups[index].spin;
         let entity = game.pickups[index].entity;

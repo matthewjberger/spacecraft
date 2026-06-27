@@ -1,5 +1,5 @@
 use crate::content::BossKind;
-use crate::ecs::{Boss, GameState, TemplateWorld};
+use crate::ecs::{Boss, GameState, PickupKind, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::enemies;
 use nightshade::prelude::*;
@@ -84,6 +84,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
     }
 
+    if stats.beam {
+        run_boss_beam(world, game, delta);
+    }
+
     if died {
         if let Some(boss) = game.boss.take() {
             for ring in 0..8 {
@@ -95,9 +99,107 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
             despawn_recursive_immediate(world, boss.entity);
         }
+        if let Some(beam_entity) = game.boss_beam
+            && let Some(beam) = world.core.get_beam_mut(beam_entity)
+        {
+            beam.alpha = 0.0;
+            beam.width = 0.0;
+        }
         game.score += stats.score;
         game.credits += stats.score;
     }
+}
+
+fn run_boss_beam(world: &mut World, game: &mut GameState, delta: f32) {
+    ensure_boss_beam(world, game);
+    let ship = game.ship_position;
+    let protected = game.effect == Some(PickupKind::Barrier) || game.aegis_timer > 0.0;
+
+    let mut origin = Vec3::zeros();
+    let mut aim = (0.0, 0.0);
+    let mut firing = 0.0;
+    let mut arrived = false;
+    if let Some(boss) = game.boss.as_mut() {
+        arrived = boss.arrived;
+        if boss.arrived {
+            boss.beam_timer -= delta;
+            if boss.beam_timer <= 0.0 {
+                boss.beam_timer = BOSS_BEAM_INTERVAL;
+                boss.firing = BOSS_BEAM_DURATION + BOSS_BEAM_CHARGE;
+                boss.aim_x = ship.x;
+                boss.aim_y = ship.y;
+            }
+            if boss.firing > 0.0 {
+                boss.firing -= delta;
+            }
+        }
+        origin = boss.position;
+        aim = (boss.aim_x, boss.aim_y);
+        firing = boss.firing;
+    }
+
+    let charging = firing > BOSS_BEAM_DURATION;
+    let hot = firing > 0.0 && !charging;
+
+    if let Some(beam_entity) = game.boss_beam
+        && let Some(beam) = world.core.get_beam_mut(beam_entity)
+    {
+        if firing > 0.0 && arrived {
+            beam.start = origin;
+            beam.end = Vec3::new(aim.0, aim.1, ship.z + 4.0);
+            if charging {
+                beam.width = 0.16;
+                beam.alpha = 0.55;
+                beam.intensity = 2.2;
+                beam.color = Vec3::new(2.6, 0.5, 0.4);
+            } else {
+                beam.width = 1.3;
+                beam.alpha = 1.0;
+                beam.intensity = 6.5;
+                beam.color = Vec3::new(3.8, 0.4, 0.3);
+            }
+            beam.strands = 10;
+            beam.flicker = 0.2;
+            beam.flicker_speed = 55.0;
+        } else {
+            beam.alpha = 0.0;
+            beam.width = 0.0;
+        }
+    }
+
+    if hot
+        && !protected
+        && game.invuln <= 0.0
+        && (ship.x - aim.0).abs() < BOSS_BEAM_RADIUS
+        && (ship.y - aim.1).abs() < BOSS_BEAM_RADIUS
+    {
+        game.shields -= 1;
+        game.invuln = DAMAGE_INVULN;
+        game.damage_flash = DAMAGE_FLASH_TIME;
+        game.shake = DAMAGE_SHAKE;
+    }
+}
+
+fn ensure_boss_beam(world: &mut World, game: &mut GameState) {
+    if game.boss_beam.is_some() {
+        return;
+    }
+    let handle = spawn_vfx(world, VfxPreset::Laser, Vec3::new(0.0, BASE_HEIGHT, -50.0));
+    let mut beam_entity = None;
+    for entity in handle.entities {
+        if beam_entity.is_none() && world.core.get_beam_mut(entity).is_some() {
+            beam_entity = Some(entity);
+        } else {
+            despawn_recursive_immediate(world, entity);
+        }
+    }
+    if let Some(entity) = beam_entity
+        && let Some(beam) = world.core.get_beam_mut(entity)
+    {
+        beam.alpha = 0.0;
+        beam.width = 0.0;
+    }
+    game.boss_beam = beam_entity;
 }
 
 pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
@@ -128,6 +230,10 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
         phase: 0.0,
         spin: 0.0,
         arrived: false,
+        beam_timer: BOSS_BEAM_INTERVAL,
+        firing: 0.0,
+        aim_x: 0.0,
+        aim_y: 0.0,
     });
     game.escort_timer = stats.escort_interval.max(2.0);
 }

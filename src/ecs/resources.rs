@@ -16,6 +16,7 @@ pub enum GameMode {
 pub struct ShipMods {
     pub hull: u8,
     pub rapid: u8,
+    pub magnet: u8,
     pub lance: u8,
     pub nova_max: u8,
     pub aegis: u8,
@@ -92,6 +93,10 @@ pub struct Boss {
     pub phase: f32,
     pub spin: f32,
     pub arrived: bool,
+    pub beam_timer: f32,
+    pub firing: f32,
+    pub aim_x: f32,
+    pub aim_y: f32,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -193,7 +198,7 @@ pub struct HudHandles {
     pub damage_flash: Option<Entity>,
     pub shop_panel: Option<Entity>,
     pub shop_credits: Option<Entity>,
-    pub shop_lines: [Option<Entity>; 6],
+    pub shop_lines: [Option<Entity>; 8],
     pub shop_prompt: Option<Entity>,
     pub ability_panel: Option<Entity>,
     pub lance_label: Option<Entity>,
@@ -235,6 +240,7 @@ pub struct GameState {
     pub aegis_timer: f32,
     pub aegis_cooldown: f32,
     pub boss: Option<Boss>,
+    pub boss_beam: Option<Entity>,
     pub mode: GameMode,
     pub mode_timer: f32,
     pub sector: usize,
@@ -291,6 +297,7 @@ impl Default for GameState {
             aegis_timer: 0.0,
             aegis_cooldown: 0.0,
             boss: None,
+            boss_beam: None,
             mode: GameMode::Title,
             mode_timer: 0.0,
             sector: 0,
