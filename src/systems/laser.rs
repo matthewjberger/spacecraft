@@ -42,9 +42,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     {
         beam.start = Vec3::new(ship.x, ship.y, ship.z - 1.6);
         beam.end = Vec3::new(ship.x, ship.y, ship.z - LASER_LENGTH);
-        beam.width = strength * (1.7 + lance * 0.5);
+        beam.width = strength * (0.85 + lance * 0.3);
         beam.alpha = (strength * 1.4).min(1.0);
-        beam.intensity = 3.0 + strength * 6.0;
+        beam.intensity = 3.5 + strength * 7.0;
         beam.color = Vec3::new(
             1.1 + strength * 1.0,
             2.2 + strength * 2.0,
