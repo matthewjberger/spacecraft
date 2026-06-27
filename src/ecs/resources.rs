@@ -8,6 +8,7 @@ pub enum GameMode {
     Shop,
     Briefing,
     Playing,
+    Paused,
     SectorClear,
     GameOver,
     Victory,

@@ -42,10 +42,6 @@ impl State for Spacecraft {
     }
 
     fn run_systems(&mut self, world: &mut World) {
-        if world.resources.input.keyboard.just_pressed(KeyCode::Escape) {
-            world.resources.window.should_exit = true;
-        }
-
         game::update(&mut self.template_world, world);
         let mode = self.template_world.resources.game.mode;
 

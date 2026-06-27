@@ -18,6 +18,7 @@ const DIGIT_KEYS: [KeyCode; 8] = [
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let advance = read_advance(world);
+    let pause = pause_pressed(world);
     let game = &mut game_world.resources.game;
     game.mode_timer += delta;
     if matches!(game.mode, GameMode::Title | GameMode::Settings) {
@@ -32,6 +33,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     match game.mode {
         GameMode::Title => {
+            if pause {
+                world.resources.window.should_exit = true;
+            }
             if nav_up(world) {
                 game.menu_cursor = game.menu_cursor.saturating_sub(1);
             }
@@ -94,13 +98,35 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
         }
         GameMode::Playing => {
-            if game.shields <= 0 {
+            if pause {
+                game.menu_cursor = 0;
+                enter_mode(game, GameMode::Paused);
+            } else if game.shields <= 0 {
                 enter_mode(game, GameMode::GameOver);
             } else if game.beat_index >= SECTORS[game.sector].beats.len() {
                 if game.sector + 1 >= SECTORS.len() {
                     enter_mode(game, GameMode::Victory);
                 } else {
                     enter_mode(game, GameMode::SectorClear);
+                }
+            }
+        }
+        GameMode::Paused => {
+            if pause {
+                enter_mode(game, GameMode::Playing);
+            } else {
+                if nav_up(world) {
+                    game.menu_cursor = game.menu_cursor.saturating_sub(1);
+                }
+                if nav_down(world) {
+                    game.menu_cursor = (game.menu_cursor + 1).min(1);
+                }
+                if advance {
+                    if game.menu_cursor == 0 {
+                        enter_mode(game, GameMode::Playing);
+                    } else {
+                        to_title(world, game);
+                    }
                 }
             }
         }
@@ -234,6 +260,15 @@ fn leave(world: &World) -> bool {
             .input
             .gamepad
             .just_pressed(gilrs::Button::Start)
+}
+
+fn pause_pressed(world: &World) -> bool {
+    world.resources.input.keyboard.just_pressed(KeyCode::Escape)
+        || world
+            .resources
+            .input
+            .gamepad
+            .just_pressed(gilrs::Button::Select)
 }
 
 fn clear_world(world: &mut World, game: &mut GameState) {

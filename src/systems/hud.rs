@@ -443,9 +443,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             GameMode::Settings => {
                 settings_overlay(settings_cursor, shake_on, flash_on, starfield_on)
             }
+            GameMode::Paused => pause_overlay(menu_cursor),
             _ => overlay_text(mode, sector_index, score),
         };
-        let blinkable = matches!(mode, GameMode::Title | GameMode::Settings);
+        let blinkable = matches!(
+            mode,
+            GameMode::Title | GameMode::Settings | GameMode::Paused
+        );
         set_text(world, hud.overlay_heading, &heading);
         set_text(world, hud.overlay_body, &body);
         set_text(
@@ -488,10 +492,19 @@ fn overlay_text(mode: GameMode, sector_index: usize, score: u32) -> (String, Str
             format!("The Monarch is dust. The fleet rolls in.\nFINAL SCORE  {score}"),
             "SPACE  —  FLY AGAIN".to_string(),
         ),
-        GameMode::Playing | GameMode::Shop | GameMode::Settings => {
+        GameMode::Playing | GameMode::Shop | GameMode::Settings | GameMode::Paused => {
             (String::new(), String::new(), String::new())
         }
     }
+}
+
+fn pause_overlay(cursor: usize) -> (String, String, String) {
+    let items = ["RESUME".to_string(), "QUIT TO TITLE".to_string()];
+    (
+        "PAUSED".to_string(),
+        menu_body(&items, cursor),
+        "UP / DOWN  SELECT       SPACE  CONFIRM       ESC  RESUME".to_string(),
+    )
 }
 
 fn menu_body(items: &[String], cursor: usize) -> String {
