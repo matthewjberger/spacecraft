@@ -91,15 +91,15 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
     game.enemies.push(Enemy {
         entity,
         position,
-        health: stats.health,
+        health: stats.health + game.loop_count as i32,
         radius: stats.radius,
-        closing_speed: stats.closing_speed,
+        closing_speed: stats.closing_speed + game.loop_count as f32 * 1.5,
         fires: stats.fires,
         fire_interval,
         lane_x: position.x,
         lane_y: position.y,
         sway_phase: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
-        sway_amount: random_range(&mut game.random_state, 1.0, 2.6),
+        sway_amount: random_range(&mut game.random_state, 1.0, 2.6) * stats.sway,
         fire_timer: random_range(&mut game.random_state, 0.5, fire_interval),
         spin: 0.0,
     });

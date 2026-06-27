@@ -1,4 +1,4 @@
-use crate::content::{Beat, SECTORS};
+use crate::content::{Beat, EnemyKind, SECTORS};
 use crate::ecs::{GameState, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::{boss, enemies, pickups, scenery};
@@ -35,17 +35,22 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
         }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
-            let mut slot = 0usize;
+            let mut kinds: Vec<EnemyKind> = Vec::new();
             for (kind, amount) in groups.iter() {
                 for _ in 0..*amount {
-                    let lane_x = random_range(&mut game.random_state, -5.5, 5.5);
-                    let lane_y = BASE_HEIGHT + random_range(&mut game.random_state, -2.6, 2.6);
-                    let stagger =
-                        slot as f32 * 16.0 + random_range(&mut game.random_state, 0.0, 10.0);
-                    let position = Vec3::new(lane_x, lane_y, -ENEMY_SPAWN_AHEAD - stagger);
-                    enemies::spawn(world, game, *kind, position);
-                    slot += 1;
+                    kinds.push(*kind);
                 }
+            }
+            let total = kinds.len();
+            let formation = (next_random(&mut game.random_state) * 4.0) as u32;
+            for (index, kind) in kinds.into_iter().enumerate() {
+                let offset = formation_offset(formation, index, total);
+                let position = Vec3::new(
+                    offset.x.clamp(-5.5, 5.5),
+                    BASE_HEIGHT + offset.y,
+                    -ENEMY_SPAWN_AHEAD + offset.z,
+                );
+                enemies::spawn(world, game, kind, position);
             }
         }
         Beat::MiniBoss(kind) | Beat::Boss(kind) => {
@@ -53,6 +58,20 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
             boss::spawn(world, game, *kind);
         }
         Beat::Breather { length } => spawn_pickup(world, game, *length),
+    }
+}
+
+fn formation_offset(formation: u32, index: usize, total: usize) -> Vec3 {
+    let spread = if total > 1 {
+        index as f32 / (total - 1) as f32 - 0.5
+    } else {
+        0.0
+    };
+    match formation {
+        0 => Vec3::new(spread * 9.0, 0.0, 0.0),
+        1 => Vec3::new(spread * 9.0, 0.0, -spread.abs() * 44.0),
+        2 => Vec3::new(spread * 8.0, (0.5 - spread.abs()) * 5.0, 0.0),
+        _ => Vec3::new((spread * 6.0).sin() * 4.0, 0.0, index as f32 * -15.0),
     }
 }
 

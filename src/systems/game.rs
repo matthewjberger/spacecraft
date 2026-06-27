@@ -149,7 +149,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
         GameMode::Victory => {
             if advance {
-                to_title(world, game);
+                game.loop_count += 1;
+                enter_shop(world, game, 0);
             }
         }
     }
@@ -178,6 +179,7 @@ fn start_game(world: &mut World, game: &mut GameState) {
     game.best_combo = 0;
     game.credits = STARTING_CREDITS;
     game.mods = ShipMods::default();
+    game.loop_count = 0;
     game.max_shields = 4;
     game.shields = 4;
     enter_shop(world, game, 0);
@@ -219,6 +221,7 @@ fn to_title(world: &mut World, game: &mut GameState) {
     game.score = 0;
     game.credits = 0;
     game.mods = ShipMods::default();
+    game.loop_count = 0;
     game.max_shields = 4;
     game.shields = 4;
     game.beat_index = 0;

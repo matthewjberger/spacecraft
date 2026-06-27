@@ -5,6 +5,7 @@ pub enum EnemyKind {
     Drone,
     Fighter,
     Gunship,
+    Weaver,
 }
 
 pub struct EnemyStats {
@@ -15,6 +16,7 @@ pub struct EnemyStats {
     pub closing_speed: f32,
     pub fires: bool,
     pub fire_interval: f32,
+    pub sway: f32,
     pub base_color: [f32; 4],
     pub emissive: [f32; 3],
 }
@@ -30,6 +32,7 @@ impl EnemyKind {
                 closing_speed: 34.0,
                 fires: false,
                 fire_interval: 0.0,
+                sway: 1.0,
                 base_color: [0.26, 0.1, 0.3, 1.0],
                 emissive: [0.5, 0.1, 0.65],
             },
@@ -41,6 +44,7 @@ impl EnemyKind {
                 closing_speed: 28.0,
                 fires: true,
                 fire_interval: 1.7,
+                sway: 1.0,
                 base_color: [0.22, 0.13, 0.16, 1.0],
                 emissive: [0.55, 0.05, 0.07],
             },
@@ -52,8 +56,21 @@ impl EnemyKind {
                 closing_speed: 17.0,
                 fires: true,
                 fire_interval: 1.25,
+                sway: 0.7,
                 base_color: [0.2, 0.16, 0.1, 1.0],
                 emissive: [0.7, 0.35, 0.05],
+            },
+            EnemyKind::Weaver => EnemyStats {
+                mesh: enemy_mesh::FIGHTER_MESH,
+                scale: 0.85,
+                radius: 1.0,
+                health: 1,
+                closing_speed: 38.0,
+                fires: true,
+                fire_interval: 1.9,
+                sway: 2.6,
+                base_color: [0.32, 0.12, 0.34, 1.0],
+                emissive: [0.85, 0.2, 0.95],
             },
         }
     }
@@ -299,7 +316,11 @@ pub const SECTORS: &[Sector] = &[
                 count: 24,
             },
             Beat::Wave {
-                groups: &[(EnemyKind::Drone, 6), (EnemyKind::Fighter, 3)],
+                groups: &[
+                    (EnemyKind::Drone, 4),
+                    (EnemyKind::Weaver, 3),
+                    (EnemyKind::Fighter, 2),
+                ],
             },
             Beat::MiniBoss(BossKind::Harvester),
             Beat::Breather { length: 120.0 },
@@ -312,14 +333,22 @@ pub const SECTORS: &[Sector] = &[
         briefing: "The Monarch coordinates the whole swarm.\nBurn through its escort, then break the core.\nThis is where it ends.",
         beats: &[
             Beat::Wave {
-                groups: &[(EnemyKind::Fighter, 4), (EnemyKind::Gunship, 2)],
+                groups: &[
+                    (EnemyKind::Fighter, 3),
+                    (EnemyKind::Weaver, 3),
+                    (EnemyKind::Gunship, 2),
+                ],
             },
             Beat::Field {
                 length: 180.0,
                 count: 16,
             },
             Beat::Wave {
-                groups: &[(EnemyKind::Drone, 8), (EnemyKind::Fighter, 4)],
+                groups: &[
+                    (EnemyKind::Drone, 6),
+                    (EnemyKind::Weaver, 4),
+                    (EnemyKind::Fighter, 2),
+                ],
             },
             Beat::MiniBoss(BossKind::Warden),
             Beat::Breather { length: 110.0 },

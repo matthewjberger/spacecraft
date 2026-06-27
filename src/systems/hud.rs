@@ -340,6 +340,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let combo = game.combo;
     let best_combo = game.best_combo;
     let best_score = game.best_score;
+    let loop_count = game.loop_count;
     let menu_cursor = game.menu_cursor;
     let settings_cursor = game.settings_cursor;
     let shake_on = game.shake_enabled;
@@ -419,11 +420,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     if playing {
         let sector = &SECTORS[sector_index];
-        set_text(
-            world,
-            hud.sector,
-            &format!("{}  {}", sector.name, sector.subtitle),
-        );
+        let sector_text = if loop_count > 0 {
+            format!("{}  ·  LOOP {}", sector.name, loop_count + 1)
+        } else {
+            format!("{}  {}", sector.name, sector.subtitle)
+        };
+        set_text(world, hud.sector, &sector_text);
         set_text(world, hud.score, &format!("SCORE  {score}"));
         if combo > 1 {
             set_text(
@@ -518,9 +520,9 @@ fn overlay_text(
         GameMode::Victory => (
             "THE DRIFT IS BROKEN".to_string(),
             format!(
-                "The Monarch is dust. The fleet rolls in.\nFINAL SCORE  {score}      BEST COMBO  x{best_combo}"
+                "The Monarch falls — but the swarm regroups, fiercer.\nSCORE  {score}      BEST COMBO  x{best_combo}"
             ),
-            "SPACE  —  FLY AGAIN".to_string(),
+            "SPACE  —  PRESS ON".to_string(),
         ),
         GameMode::Playing | GameMode::Shop | GameMode::Settings | GameMode::Paused => {
             (String::new(), String::new(), String::new())

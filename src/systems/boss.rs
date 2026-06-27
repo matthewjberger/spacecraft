@@ -219,12 +219,14 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
         false,
         false,
     );
+    let scaled_health =
+        ((stats.health as f32) * (1.0 + game.loop_count as f32 * 0.4)).round() as i32;
     game.boss = Some(Boss {
         entity,
         kind,
         position,
-        health: stats.health,
-        max_health: stats.health,
+        health: scaled_health,
+        max_health: scaled_health,
         fire_timer: 2.0,
         phase: 0.0,
         spin: 0.0,
