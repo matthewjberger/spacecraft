@@ -15,6 +15,10 @@ pub struct Scenery {
     pub angle: f32,
     pub radius: f32,
     pub resolved: bool,
+    pub collected: bool,
+    pub collect_timer: f32,
+    pub pulse_phase: f32,
+    pub material_name: String,
 }
 
 #[derive(Default)]
@@ -35,13 +39,27 @@ pub struct Backdrop {
     pub position: Vec3,
     pub radius: f32,
     pub atmosphere: Option<[f32; 3]>,
-    pub drift_speed: f32,
+    pub orbit_radius: f32,
+    pub orbit_angle: f32,
+    pub orbit_speed: f32,
+}
+
+pub struct Moon {
+    pub entity: Entity,
+    pub parent: usize,
+    pub radius: f32,
+    pub orbit_radius: f32,
+    pub orbit_angle: f32,
+    pub orbit_speed: f32,
+    pub tilt: f32,
 }
 
 pub struct GameState {
     pub ship: Option<Entity>,
     pub camera: Option<Entity>,
     pub exhaust: Option<Entity>,
+    pub hud_score: Option<Entity>,
+    pub hud_speed: Option<Entity>,
     pub corner_thrusters: Vec<Entity>,
     pub backdrop: Vec<Backdrop>,
     pub ship_position: Vec3,
@@ -51,11 +69,14 @@ pub struct GameState {
     pub elapsed: f32,
     pub barrel: BarrelRoll,
     pub scenery: Vec<Scenery>,
+    pub moons: Vec<Moon>,
     pub bursts: Vec<(Entity, f32)>,
     pub projectiles: Vec<Projectile>,
+    pub ring_counter: u32,
     pub fire_cooldown: f32,
     pub next_turret: u8,
     pub frontier_z: f32,
+    pub solar_center: Vec3,
     pub score: u32,
     pub random_state: u64,
 }
@@ -66,6 +87,8 @@ impl Default for GameState {
             ship: None,
             camera: None,
             exhaust: None,
+            hud_score: None,
+            hud_speed: None,
             corner_thrusters: Vec::new(),
             backdrop: Vec::new(),
             ship_position: Vec3::new(0.0, 0.0, 0.0),
@@ -75,11 +98,14 @@ impl Default for GameState {
             elapsed: 0.0,
             barrel: BarrelRoll::default(),
             scenery: Vec::new(),
+            moons: Vec::new(),
             bursts: Vec::new(),
             projectiles: Vec::new(),
+            ring_counter: 0,
             fire_cooldown: 0.0,
             next_turret: 0,
             frontier_z: 0.0,
+            solar_center: Vec3::new(0.0, 0.0, 0.0),
             score: 0,
             random_state: 0x9E37_79B9_7F4A_7C15,
         }

@@ -19,7 +19,7 @@ fn spawn_pattern(world: &mut World, game: &mut GameState) -> f32 {
     let choice = next_random(&mut game.random_state);
     if choice < 0.32 {
         ring_slalom(world, game, start_z)
-    } else if choice < 0.80 {
+    } else if choice < 0.8 {
         asteroid_field(world, game, start_z)
     } else if choice < 0.93 {
         asteroid_gauntlet(world, game, start_z)
@@ -29,16 +29,16 @@ fn spawn_pattern(world: &mut World, game: &mut GameState) -> f32 {
 }
 
 fn ring_slalom(world: &mut World, game: &mut GameState, start_z: f32) -> f32 {
-    let count = 4 + (next_random(&mut game.random_state) * 4.0) as usize;
+    let count = 3 + (next_random(&mut game.random_state) * 3.0) as usize;
     let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
-    let amplitude_x = 3.2 + next_random(&mut game.random_state) * 1.8;
-    let amplitude_y = 1.6 + next_random(&mut game.random_state) * 1.3;
+    let amplitude_x = 3.4 + next_random(&mut game.random_state) * 1.5;
+    let amplitude_y = 1.9 + next_random(&mut game.random_state) * 1.1;
     let mut z = start_z;
     for step in 0..count {
         let phase_step = step as f32;
         let x = (phase_step * 0.9 + phase).sin() * amplitude_x;
         let y = (phase_step * 0.6 + phase * 1.3).sin() * amplitude_y;
-        let scenery = spawn_ring(world, Vec3::new(x, BASE_HEIGHT + y, z));
+        let scenery = spawn_ring(world, game, Vec3::new(x, BASE_HEIGHT + y, z));
         game.scenery.push(scenery);
         z -= RING_SPACING;
     }
@@ -76,30 +76,22 @@ fn asteroid_gauntlet(world: &mut World, game: &mut GameState, start_z: f32) -> f
     start_z - 26.0
 }
 
-fn spawn_ring(world: &mut World, position: Vec3) -> Scenery {
-    let entity = spawn_torus_at(world, position);
-    apply_material(
-        world,
-        entity,
-        "ring",
-        [1.0, 0.82, 0.3, 1.0],
-        [2.1, 1.5, 0.4],
-        false,
-        false,
-    );
-    if let Some(transform) = world.core.get_local_transform_mut(entity) {
-        transform.scale = Vec3::new(RING_RADIUS, RING_RADIUS, RING_RADIUS);
-    }
-    mark_local_transform_dirty(world, entity);
+fn spawn_ring(world: &mut World, game: &mut GameState, position: Vec3) -> Scenery {
+    let entity = spawn_entities(world, NAME, 1)[0];
+    let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
     Scenery {
         entity,
         kind: SceneryKind::Ring,
         position,
         spin_axis: Vec3::new(0.0, 0.0, 1.0),
-        spin_speed: 1.4,
+        spin_speed: 0.0,
         angle: 0.0,
         radius: RING_RADIUS,
         resolved: false,
+        collected: false,
+        collect_timer: 0.0,
+        pulse_phase: phase,
+        material_name: String::new(),
     }
 }
 
@@ -149,6 +141,10 @@ fn spawn_asteroid(
         angle: 0.0,
         radius: base,
         resolved: false,
+        collected: false,
+        collect_timer: 0.0,
+        pulse_phase: 0.0,
+        material_name: String::new(),
     }
 }
 
@@ -157,9 +153,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &mut game_world.resources.game;
     let speed = RAIL_SPEED * game.speed_scale;
     let ship_position = game.ship_position;
+    let elapsed = game.elapsed;
     game.frontier_z += speed * delta;
 
     let mut bursts: Vec<(Vec3, Vec3, u32)> = Vec::new();
+
+    let _ = elapsed;
 
     for index in 0..game.scenery.len() {
         game.scenery[index].position.z += speed * delta;
@@ -172,36 +171,36 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let radius = game.scenery[index].radius;
         let entity = game.scenery[index].entity;
 
-        let spin = nalgebra_glm::quat_angle_axis(angle, &axis);
-        let base = if kind == SceneryKind::Ring {
-            nalgebra_glm::quat_angle_axis(std::f32::consts::FRAC_PI_2, &Vec3::new(1.0, 0.0, 0.0))
-        } else {
-            nalgebra_glm::quat_identity()
-        };
+        if kind == SceneryKind::Ring {
+            if !game.scenery[index].resolved && position.z >= ship_position.z {
+                game.scenery[index].resolved = true;
+                let planar = ((position.x - ship_position.x).powi(2)
+                    + (position.y - ship_position.y).powi(2))
+                .sqrt();
+                if planar < radius {
+                    game.score += 1;
+                    game.scenery[index].collected = true;
+                    bursts.push((position, Vec3::new(0.4, 0.9, 1.0), 30));
+                }
+            }
+            if game.scenery[index].collected {
+                game.scenery[index].collect_timer += delta;
+            }
+            continue;
+        }
+
+        let rotation = nalgebra_glm::quat_angle_axis(angle, &axis);
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.translation = position;
-            transform.rotation = spin * base;
+            transform.rotation = rotation;
         }
         mark_local_transform_dirty(world, entity);
-
-        if !game.scenery[index].resolved
-            && kind == SceneryKind::Ring
-            && position.z >= ship_position.z
-        {
-            game.scenery[index].resolved = true;
-            let planar = ((position.x - ship_position.x).powi(2)
-                + (position.y - ship_position.y).powi(2))
-            .sqrt();
-            if planar < radius {
-                game.score += 1;
-                bursts.push((position, Vec3::new(1.0, 0.85, 0.4), 24));
-            }
-        }
     }
 
     let mut passed: Vec<Entity> = Vec::new();
     game.scenery.retain(|scenery| {
-        if scenery.position.z > SCENERY_DESPAWN_Z {
+        let collected_done = scenery.collected && scenery.collect_timer >= RING_COLLECT_TIME;
+        if scenery.position.z > SCENERY_DESPAWN_Z || collected_done {
             passed.push(scenery.entity);
             false
         } else {
