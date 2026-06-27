@@ -31,23 +31,22 @@ pub fn spawn(world: &mut World) -> Entity {
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &game_world.resources.game;
     let visible = game.mode == GameMode::Playing;
-    let ship = game.ship_position;
-    let (lead_x, lead_y) = aim_lead(game);
+    let aim = aim_point(game);
+    let near_z = game.ship_position.z - RETICLE_NEAR_Z;
     let near = game.reticle_near;
     let far = game.reticle_far;
+    let ports = game.blaster_ports;
 
-    place(
-        world,
-        near,
-        Vec3::new(
-            ship.x + lead_x * AIM_NEAR_LEAD_X,
-            ship.y + lead_y * AIM_NEAR_LEAD_Y,
-            ship.z - RETICLE_NEAR_Z,
-        ),
-        0.55,
-        visible,
-    );
-    place(world, far, aim_point(game), 1.2, visible);
+    for (marker, &port) in near.iter().zip(ports.iter()) {
+        let direction = aim - port;
+        let position = if direction.z.abs() > 0.001 {
+            port + direction * ((near_z - port.z) / direction.z)
+        } else {
+            Vec3::new(port.x, port.y, near_z)
+        };
+        place(world, *marker, position, 0.34, visible);
+    }
+    place(world, far, aim, 1.2, visible);
 }
 
 fn place(world: &mut World, entity: Option<Entity>, position: Vec3, scale: f32, visible: bool) {

@@ -92,7 +92,12 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.corner_thrusters = corner_thrusters;
     game.starfield = Some(starfield);
     game.dais = Some(hangar::spawn(world));
-    game.reticle_near = Some(reticle::spawn(world));
+    game.reticle_near = [
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+        Some(reticle::spawn(world)),
+    ];
     game.reticle_far = Some(reticle::spawn(world));
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
 

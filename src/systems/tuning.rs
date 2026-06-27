@@ -72,8 +72,6 @@ pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 
 pub const RETICLE_NEAR_Z: f32 = 16.0;
 pub const RETICLE_FAR_Z: f32 = 44.0;
-pub const AIM_NEAR_LEAD_X: f32 = 1.4;
-pub const AIM_NEAR_LEAD_Y: f32 = 1.2;
 pub const AIM_FAR_LEAD_X: f32 = 3.6;
 pub const AIM_FAR_LEAD_Y: f32 = 3.0;
 
