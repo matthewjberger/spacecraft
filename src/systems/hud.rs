@@ -19,7 +19,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         world,
         root,
         Ab(vec2(28.0, 24.0)),
-        Ab(vec2(300.0, 232.0)),
+        Ab(vec2(300.0, 292.0)),
         Anchor::TopLeft,
         border,
         panel_bg,
