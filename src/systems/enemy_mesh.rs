@@ -6,6 +6,7 @@ pub const FIGHTER_MESH: &str = "drift_fighter";
 pub const GUNSHIP_MESH: &str = "drift_gunship";
 pub const HARVESTER_MESH: &str = "harvester";
 pub const WARDEN_MESH: &str = "warden";
+pub const SENTINEL_MESH: &str = "sentinel";
 pub const MONARCH_MESH: &str = "monarch";
 
 pub fn register_enemy_meshes(world: &mut World) {
@@ -14,6 +15,7 @@ pub fn register_enemy_meshes(world: &mut World) {
     insert(world, GUNSHIP_MESH, build_gunship());
     insert(world, HARVESTER_MESH, build_hulk(3.4, 0.5, 0.7));
     insert(world, WARDEN_MESH, build_hulk(8.7, 1.25, 0.85));
+    insert(world, SENTINEL_MESH, build_hulk(2.2, 1.5, 0.62));
     insert(world, MONARCH_MESH, build_hulk(5.1, 0.82, 1.0));
 }
 

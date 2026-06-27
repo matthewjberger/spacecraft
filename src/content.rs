@@ -80,6 +80,7 @@ impl EnemyKind {
 pub enum BossKind {
     Harvester,
     Warden,
+    Sentinel,
     Monarch,
 }
 
@@ -139,6 +140,24 @@ impl BossKind {
                 hold_z: -30.0,
                 approach_speed: 22.0,
                 score: 170,
+                beam: true,
+            },
+            BossKind::Sentinel => BossStats {
+                name: "SENTINEL",
+                mesh: enemy_mesh::SENTINEL_MESH,
+                scale: 3.0,
+                radius: 3.2,
+                health: 46,
+                base_color: [0.16, 0.12, 0.24, 1.0],
+                emissive: [0.4, 0.2, 0.95],
+                fire_interval: 1.25,
+                volley: 4,
+                spread: 5.6,
+                escort_interval: 3.0,
+                escort: EnemyKind::Weaver,
+                hold_z: -28.0,
+                approach_speed: 26.0,
+                score: 140,
                 beam: true,
             },
             BossKind::Monarch => BossStats {
@@ -359,7 +378,7 @@ pub const SECTORS: &[Sector] = &[
                     (EnemyKind::Fighter, 2),
                 ],
             },
-            Beat::MiniBoss(BossKind::Warden),
+            Beat::MiniBoss(BossKind::Sentinel),
             Beat::Breather { length: 110.0 },
             Beat::Boss(BossKind::Monarch),
         ],
