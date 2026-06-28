@@ -8,6 +8,8 @@ use nightshade::prelude::*;
 pub struct SynthState {
     pub enabled: bool,
     pub style: u32,
+    pub curve_x: f32,
+    pub curve_y: f32,
 }
 
 pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
@@ -17,6 +19,8 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
         GameMode::Playing | GameMode::Paused | GameMode::Cinematic
     );
     state.style = game.sector as u32;
+    state.curve_x = game.curve_x;
+    state.curve_y = game.curve_y;
 }
 
 #[repr(C)]
@@ -182,7 +186,10 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
         t = max((ro.y - (GROUND_Y + MAX_HEIGHT)) / -rd.y, 0.0);
         for (var i = 0; i < 220; i = i + 1) {
             let pos = ro + rd * t;
-            let height = GROUND_Y + terrain(vec2<f32>(pos.x, -pos.z + scroll), style);
+            let depth = max(0.0, -pos.z);
+            let bx = u.extra.y * depth * depth;
+            let by = u.extra.z * depth * depth;
+            let height = GROUND_Y + by + terrain(vec2<f32>(pos.x - bx, -pos.z + scroll), style);
             if (pos.y < height) {
                 hit = true;
                 hit_pos = pos;
@@ -196,7 +203,10 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
     if (hit) {
-        color = surface(hit_pos, ro, style, scroll);
+        let hd = max(0.0, -hit_pos.z);
+        let hbx = u.extra.y * hd * hd;
+        let hby = u.extra.z * hd * hd;
+        color = surface(vec3<f32>(hit_pos.x - hbx, hit_pos.y - hby, hit_pos.z), ro, style, scroll);
     } else {
         color = sky(rd, style);
     }
@@ -335,9 +345,9 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         Vec<nightshade::render::wgpu::rendergraph::SubGraphRunCommand<'r>>,
         nightshade::render::wgpu::rendergraph::RenderGraphError,
     > {
-        let (enabled, style) = {
+        let (enabled, style, curve_x, curve_y) = {
             let state = self.shared.lock().unwrap();
-            (state.enabled, state.style)
+            (state.enabled, state.style, state.curve_x, state.curve_y)
         };
         if !context.is_pass_enabled() || !enabled {
             return Ok(context.into_sub_graph_commands());
@@ -353,7 +363,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         let uniforms = GpuUniforms {
             inv_view_proj: mat_to_array(&inverse),
             camera: [position.x, position.y, position.z, time],
-            extra: [style as f32, 0.0, 0.0, 0.0],
+            extra: [style as f32, curve_x, curve_y, 0.0],
         };
         context
             .queue

@@ -1,4 +1,4 @@
-use crate::ecs::{GameMode, PickupKind, TemplateWorld};
+use crate::ecs::{GameMode, GameState, PickupKind, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -26,6 +26,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     };
 
     game.elapsed += delta;
+
+    if game.sendoff_timer > 0.0 {
+        sendoff_step(game, world, ship, delta);
+        return;
+    }
 
     if game.barrel.timer <= 0.0 {
         if frame.roll_left {
@@ -116,7 +121,16 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
     mark_local_transform_dirty(world, ship);
 
-    let speed_scale = game.speed_scale;
+    update_effects(game, world, position, rotation, game.speed_scale);
+}
+
+fn update_effects(
+    game: &mut GameState,
+    world: &mut World,
+    position: Vec3,
+    rotation: nalgebra_glm::Qua<f32>,
+    speed_scale: f32,
+) {
     let exhaust_dir = nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, 0.0, -1.0));
     if let Some(exhaust) = game.exhaust {
         let tail =
@@ -159,6 +173,44 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         emitter.size_start = STAR_SIZE * (1.0 + warp * 2.6);
         emitter.spawn_rate = STARFIELD_RATE * (1.0 + warp * 0.8);
     }
+}
+
+fn sendoff_step(game: &mut GameState, world: &mut World, ship: Entity, delta: f32) {
+    game.sendoff_timer -= delta;
+    let progress = 1.0 - (game.sendoff_timer / SENDOFF_DURATION).clamp(0.0, 1.0);
+    let ease = progress * progress;
+
+    game.speed_scale = approach(
+        game.speed_scale,
+        SENDOFF_SPEED_SCALE,
+        SPEED_RESPONSE * delta,
+    );
+    game.ship_position.z -= SENDOFF_FORWARD * ease * delta;
+    game.ship_position.y += SENDOFF_CLIMB * progress * delta;
+    game.roll = 0.0;
+    game.pitch = 0.0;
+
+    let roll_angle = ease * std::f32::consts::TAU * SENDOFF_ROLLS;
+    let pitch_angle = -smoothstep(progress) * SENDOFF_PITCH;
+    let position = game.ship_position;
+    let base = nalgebra_glm::quat_angle_axis(SHIP_BASE_YAW, &Vec3::new(0.0, 1.0, 0.0));
+    let pitch = nalgebra_glm::quat_angle_axis(pitch_angle, &Vec3::new(1.0, 0.0, 0.0));
+    let roll = nalgebra_glm::quat_angle_axis(roll_angle, &Vec3::new(0.0, 0.0, 1.0));
+    let rotation = pitch * roll * base;
+
+    if let Some(transform) = world.core.get_local_transform_mut(ship) {
+        transform.translation = position;
+        transform.rotation = rotation;
+        transform.scale = Vec3::new(SHIP_SCALE, SHIP_SCALE, SHIP_SCALE);
+    }
+    mark_local_transform_dirty(world, ship);
+
+    update_effects(game, world, position, rotation, game.speed_scale);
+}
+
+fn smoothstep(value: f32) -> f32 {
+    let t = value.clamp(0.0, 1.0);
+    t * t * (3.0 - 2.0 * t)
 }
 
 fn read_input(world: &mut World) -> InputFrame {

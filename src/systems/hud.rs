@@ -406,6 +406,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let starfield_on = game.starfield_enabled;
     let hard_on = game.hard_mode;
     let crt_on = game.crt_enabled;
+    let audio_on = game.audio_enabled;
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
@@ -562,6 +563,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 starfield_on,
                 hard_on,
                 crt_on,
+                audio_on,
             ),
             GameMode::Paused => pause_overlay(menu_cursor),
             GameMode::LevelSelect => level_select_overlay(menu_cursor),
@@ -693,6 +695,7 @@ fn settings_overlay(
     starfield: bool,
     hard: bool,
     crt: bool,
+    audio: bool,
 ) -> (String, String, String) {
     let on = |value: bool| if value { "ON" } else { "OFF" };
     let items = [
@@ -701,6 +704,7 @@ fn settings_overlay(
         format!("STARFIELD        {}", on(starfield)),
         format!("DIFFICULTY       {}", if hard { "HARD" } else { "NORMAL" }),
         format!("CRT FILTER       {}", on(crt)),
+        format!("AUDIO            {}", on(audio)),
         "BACK".to_string(),
     ];
     (

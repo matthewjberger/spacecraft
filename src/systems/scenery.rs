@@ -156,8 +156,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
 
         let rotation = nalgebra_glm::quat_angle_axis(angle, &axis);
+        let bend = course_bend(game, position);
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
-            transform.translation = position;
+            transform.translation = position + bend;
             transform.rotation = rotation;
         }
         mark_local_transform_dirty(world, entity);

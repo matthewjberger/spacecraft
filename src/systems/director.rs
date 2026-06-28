@@ -7,6 +7,7 @@ use nightshade::prelude::*;
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
+    update_course_curve(game, delta);
     let sector_index = game.sector;
     let beats = SECTORS[sector_index].beats;
     if game.beat_index >= beats.len() {
@@ -43,6 +44,42 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.beat_index += 1;
         game.beat_started = false;
     }
+}
+
+fn update_course_curve(game: &mut GameState, delta: f32) {
+    game.curve_timer -= delta;
+    if game.curve_timer <= 0.0 {
+        game.curve_timer = random_range(
+            &mut game.random_state,
+            COURSE_CURVE_MIN_HOLD,
+            COURSE_CURVE_MAX_HOLD,
+        );
+        if next_random(&mut game.random_state) < 0.3 {
+            game.curve_target_x = 0.0;
+            game.curve_target_y = 0.0;
+        } else {
+            game.curve_target_x = random_range(
+                &mut game.random_state,
+                -COURSE_CURVE_MAX_X,
+                COURSE_CURVE_MAX_X,
+            );
+            game.curve_target_y = random_range(
+                &mut game.random_state,
+                -COURSE_CURVE_MAX_Y,
+                COURSE_CURVE_MAX_Y,
+            );
+        }
+    }
+    game.curve_x = approach(
+        game.curve_x,
+        game.curve_target_x,
+        COURSE_CURVE_RESPONSE * delta,
+    );
+    game.curve_y = approach(
+        game.curve_y,
+        game.curve_target_y,
+        COURSE_CURVE_RESPONSE * delta,
+    );
 }
 
 fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat_index: usize) {

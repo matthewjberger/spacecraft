@@ -36,8 +36,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
         let face = nalgebra_glm::quat_angle_axis(std::f32::consts::PI, &Vec3::new(0.0, 1.0, 0.0));
         let roll = nalgebra_glm::quat_angle_axis(bank, &Vec3::new(0.0, 0.0, 1.0));
+        let bend = course_bend(game, position);
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
-            transform.translation = position;
+            transform.translation = position + bend;
             transform.rotation = roll * face;
         }
         mark_local_transform_dirty(world, entity);

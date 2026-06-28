@@ -31,5 +31,6 @@ pub mod shop;
 pub mod spawn;
 pub mod structures;
 pub mod synthwave;
+pub mod textures;
 pub mod tuning;
 pub mod weapons;

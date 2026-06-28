@@ -94,7 +94,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 game.settings_cursor = game.settings_cursor.saturating_sub(1);
             }
             if nav_down(world) {
-                game.settings_cursor = (game.settings_cursor + 1).min(5);
+                game.settings_cursor = (game.settings_cursor + 1).min(6);
             }
             if advance {
                 match game.settings_cursor {
@@ -106,6 +106,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                     }
                     3 => game.hard_mode = !game.hard_mode,
                     4 => game.crt_enabled = !game.crt_enabled,
+                    5 => game.audio_enabled = !game.audio_enabled,
                     _ => {
                         game.menu_cursor = 0;
                         enter_mode(game, GameMode::Title);
@@ -164,7 +165,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 if game.sector + 1 >= SECTORS.len() {
                     enter_victory(world, game);
                 } else {
-                    enter_mode(game, GameMode::SectorClear);
+                    enter_sendoff(world, game);
                 }
             }
         }
@@ -283,6 +284,12 @@ fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
     }
 }
 
+fn enter_sendoff(world: &mut World, game: &mut GameState) {
+    game.sendoff_timer = SENDOFF_DURATION;
+    game.cinematic_return = GameMode::SectorClear;
+    start_cinematic(world, game, cutscene::sendoff_cutscene(game.ship_position));
+}
+
 fn enter_victory(world: &mut World, game: &mut GameState) {
     game.best_score = game.best_score.max(game.score);
     if game.run_mode == ModeKind::Story {
@@ -309,6 +316,11 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.beat_distance = 0.0;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
+    game.curve_x = 0.0;
+    game.curve_y = 0.0;
+    game.curve_target_x = 0.0;
+    game.curve_target_y = 0.0;
+    game.curve_timer = 0.0;
     game.nova_charges = game.mods.nova_max;
     game.aegis_cooldown = 0.0;
     game.aegis_timer = 0.0;
@@ -432,6 +444,7 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     game.effect = None;
     game.effect_timer = 0.0;
+    game.sendoff_timer = 0.0;
     game.nova_charges = 0;
     game.nova_flash = 0.0;
     game.aegis_timer = 0.0;

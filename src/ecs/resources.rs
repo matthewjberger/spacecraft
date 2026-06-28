@@ -341,6 +341,7 @@ pub struct GameState {
     pub hard_mode: bool,
     pub starfield: Option<Entity>,
     pub dais: Option<Entity>,
+    pub hangar_parts: Vec<(Entity, Vec3, Vec3)>,
     pub reticle_near: [Option<Entity>; 8],
     pub reticle_far: Option<Entity>,
     pub menu_orbit: f32,
@@ -368,9 +369,18 @@ pub struct GameState {
     pub solar_center: Vec3,
     pub score: u32,
     pub random_state: u64,
+    pub curve_x: f32,
+    pub curve_y: f32,
+    pub curve_target_x: f32,
+    pub curve_target_y: f32,
+    pub curve_timer: f32,
+    pub sendoff_timer: f32,
+    pub fire_sound_index: u32,
+    pub alt_sound_index: u32,
     pub sounds: Vec<Sound>,
     pub sfx_voices: Vec<(Entity, f32)>,
     pub audio_loaded: bool,
+    pub audio_enabled: bool,
 }
 
 impl Default for GameState {
@@ -439,6 +449,7 @@ impl Default for GameState {
             hard_mode: false,
             starfield: None,
             dais: None,
+            hangar_parts: Vec::new(),
             reticle_near: [None; 8],
             reticle_far: None,
             menu_orbit: 0.0,
@@ -466,9 +477,18 @@ impl Default for GameState {
             solar_center: Vec3::new(0.0, 0.0, 0.0),
             score: 0,
             random_state: 0x9E37_79B9_7F4A_7C15,
+            curve_x: 0.0,
+            curve_y: 0.0,
+            curve_target_x: 0.0,
+            curve_target_y: 0.0,
+            curve_timer: 0.0,
+            sendoff_timer: 0.0,
+            fire_sound_index: 0,
+            alt_sound_index: 0,
             sounds: Vec::new(),
             sfx_voices: Vec::new(),
             audio_loaded: false,
+            audio_enabled: false,
         }
     }
 }

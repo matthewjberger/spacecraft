@@ -17,6 +17,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let cam_kick = game.cam_kick;
     let fov_pop = game.cam_fov_pop;
     let steer_lead = -game.roll / MAX_BANK;
+    let curve_x = game.curve_x;
+    let curve_y = game.curve_y;
 
     if matches!(
         mode,
@@ -59,7 +61,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         0.0,
     );
     let target = Vec3::new(
-        ship.x * CAMERA_FOLLOW_X + steer_lead * CAMERA_LEAD,
+        ship.x * CAMERA_FOLLOW_X + steer_lead * CAMERA_LEAD + curve_x * COURSE_CURVE_CAM_PAN,
         BASE_HEIGHT + CAMERA_HEIGHT + ship.y * CAMERA_FOLLOW_Y,
         ship.z + CAMERA_DISTANCE + (speed_scale - 1.0) * CAMERA_BOOST_DOLLY + cam_kick,
     ) + shake_offset;
@@ -67,9 +69,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(transform) = world.core.get_local_transform_mut(camera) {
         transform.translation =
             approach_vec3(transform.translation, target, CAMERA_RESPONSE * delta);
-        let pitch = nalgebra_glm::quat_angle_axis(CAMERA_PITCH, &Vec3::new(1.0, 0.0, 0.0));
-        let roll_quat =
-            nalgebra_glm::quat_angle_axis(roll * CAMERA_ROLL, &Vec3::new(0.0, 0.0, 1.0));
+        let pitch = nalgebra_glm::quat_angle_axis(
+            CAMERA_PITCH + curve_y * COURSE_CURVE_CAM_PITCH,
+            &Vec3::new(1.0, 0.0, 0.0),
+        );
+        let roll_quat = nalgebra_glm::quat_angle_axis(
+            roll * CAMERA_ROLL + curve_x * COURSE_CURVE_CAM_BANK,
+            &Vec3::new(0.0, 0.0, 1.0),
+        );
         transform.rotation = roll_quat * pitch;
     }
     mark_local_transform_dirty(world, camera);

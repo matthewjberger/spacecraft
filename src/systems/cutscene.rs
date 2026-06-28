@@ -49,6 +49,22 @@ pub fn sector_cutscene(sector: &Sector, ship: Vec3) -> Cutscene {
         .letterbox_out(orbit + settle, hold)
 }
 
+pub fn sendoff_cutscene(ship: Vec3) -> Cutscene {
+    let focus = ship + Vec3::new(0.0, 0.5, 0.0);
+    let shot_a = CutsceneShot::new(ship + Vec3::new(3.6, 1.5, 8.0), focus).with_field_of_view(54.0);
+    let shot_b = CutsceneShot::new(
+        ship + Vec3::new(-2.4, 3.4, 9.5),
+        focus + Vec3::new(0.0, 2.4, -26.0),
+    )
+    .with_field_of_view(40.0);
+
+    Cutscene::new("Sector Clear")
+        .letterbox_in(0.0, 0.45)
+        .camera(0.0, 2.4, EasingFunction::SineInOut, shot_a, shot_b)
+        .handheld(0.0, 2.4, 0.05, 0.04, 1.1)
+        .letterbox_out(1.95, 0.45)
+}
+
 pub fn finale_cutscene(ship: Vec3) -> Cutscene {
     let focus = ship + Vec3::new(0.0, 0.2, 0.0);
     let shot_a = CutsceneShot::new(ship + Vec3::new(0.0, 1.0, 6.5), focus).with_field_of_view(48.0);

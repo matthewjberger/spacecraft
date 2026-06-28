@@ -150,8 +150,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             )
         };
         let rotation = nalgebra_glm::quat_angle_axis(spin, &axis);
+        let bend = course_bend(game, position);
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
-            transform.translation = position;
+            transform.translation = position + bend;
             transform.rotation = rotation;
             transform.scale = base_scale * pulse;
         }
@@ -164,7 +165,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 let offset =
                     nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, 0.92 * pulse, 0.0));
                 if let Some(transform) = world.core.get_local_transform_mut(terminal) {
-                    transform.translation = position + offset;
+                    transform.translation = position + bend + offset;
                     transform.rotation = rotation;
                     transform.scale = Vec3::new(0.16, 0.12, 0.16) * pulse;
                 }

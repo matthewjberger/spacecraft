@@ -5,6 +5,7 @@ use crate::systems::common::*;
 use crate::systems::enemy_mesh;
 use crate::systems::hangar;
 use crate::systems::reticle;
+use crate::systems::textures;
 use nightshade::ecs::light::components::{Light, LightType};
 use nightshade::prelude::*;
 
@@ -50,6 +51,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     enemy_mesh::register_enemy_meshes(world);
     hangar::register_mesh(world);
     reticle::register_mesh(world);
+    textures::load(world);
 
     let camera = spawn_camera(
         world,
@@ -123,6 +125,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.corner_thrusters = corner_thrusters;
     game.starfield = Some(starfield);
     game.dais = Some(hangar::spawn(world));
+    game.hangar_parts = hangar::spawn_room(world);
     game.reticle_near = [
         Some(reticle::spawn(world)),
         Some(reticle::spawn(world)),

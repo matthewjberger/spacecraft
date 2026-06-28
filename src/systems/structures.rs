@@ -148,12 +148,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.structures[index].position.z += rail * delta;
 
         let position = game.structures[index].position;
+        let bend = course_bend(game, position);
         let rotation = nalgebra_glm::quat_angle_axis(
             game.structures[index].angle,
             &game.structures[index].spin_axis,
         );
         for (entity, offset, scale) in &game.structures[index].parts {
-            let world_pos = position + nalgebra_glm::quat_rotate_vec3(&rotation, offset);
+            let world_pos = position + bend + nalgebra_glm::quat_rotate_vec3(&rotation, offset);
             if let Some(transform) = world.core.get_local_transform_mut(*entity) {
                 transform.translation = world_pos;
                 transform.rotation = rotation;

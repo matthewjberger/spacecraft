@@ -97,6 +97,21 @@ pub const ENEMY_SCORE: u32 = 5;
 pub const BOSS_SPAWN_Z: f32 = -80.0;
 
 pub const COURSE_AHEAD: f32 = 210.0;
+pub const COURSE_CURVE_MAX_X: f32 = 0.00055;
+pub const COURSE_CURVE_MAX_Y: f32 = 0.0003;
+pub const COURSE_CURVE_RESPONSE: f32 = 0.45;
+pub const COURSE_CURVE_MIN_HOLD: f32 = 3.0;
+pub const COURSE_CURVE_MAX_HOLD: f32 = 7.5;
+pub const COURSE_CURVE_CAM_BANK: f32 = 320.0;
+pub const COURSE_CURVE_CAM_PITCH: f32 = 380.0;
+pub const COURSE_CURVE_CAM_PAN: f32 = 1000.0;
+
+pub const SENDOFF_DURATION: f32 = 2.4;
+pub const SENDOFF_SPEED_SCALE: f32 = 3.2;
+pub const SENDOFF_FORWARD: f32 = 78.0;
+pub const SENDOFF_CLIMB: f32 = 9.0;
+pub const SENDOFF_PITCH: f32 = 1.5;
+pub const SENDOFF_ROLLS: f32 = 2.0;
 pub const PICKUP_COLLECT_RADIUS: f32 = 2.9;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 
