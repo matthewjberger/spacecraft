@@ -23,7 +23,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let game = &mut game_world.resources.game;
     game.mode_timer += delta;
     if matches!(game.mode, GameMode::Playing | GameMode::Cinematic) {
-        game.course_time += delta * game.speed_scale;
+        game.course_time += RAIL_SPEED * game.speed_scale * delta;
     }
     if matches!(
         game.mode,
@@ -357,6 +357,7 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.beat_distance = 0.0;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
+    game.course_time = 0.0;
     game.curve_x = 0.0;
     game.curve_y = 0.0;
     game.curve_target_x = 0.0;

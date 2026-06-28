@@ -172,8 +172,7 @@ fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
 
 @fragment
 fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let time = u.camera.w;
-    let scroll = time * 6.0;
+    let scroll = u.camera.w;
     let style = i32(u.extra.x);
     let ro = u.camera.xyz;
     let far = u.inv_view_proj * vec4<f32>(in.ndc, 0.0, 1.0);
