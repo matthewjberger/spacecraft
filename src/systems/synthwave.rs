@@ -121,7 +121,7 @@ fn surface(hit_pos: vec3<f32>, ro: vec3<f32>, style: i32, scroll: f32) -> vec3<f
         return mix(col, vec3<f32>(0.24, 0.05, 0.03), fog);
     } else if (style == 2) {
         let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll) * 0.5;
-        let deriv = fwidth(coord);
+        let deriv = vec2<f32>(max(0.0018, dist * 0.00065));
         let grid = abs(fract(coord - 0.5) - 0.5) / max(deriv, vec2<f32>(0.002));
         let line = 1.0 - min(min(grid.x, grid.y), 1.0);
         let base = mix(vec3<f32>(0.1, 0.25, 0.6), vec3<f32>(0.72, 0.45, 1.0), height01);
@@ -131,7 +131,7 @@ fn surface(hit_pos: vec3<f32>, ro: vec3<f32>, style: i32, scroll: f32) -> vec3<f
     }
 
     let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll) * 0.5;
-    let deriv = fwidth(coord);
+    let deriv = vec2<f32>(max(0.0015, dist * 0.00065));
     let grid = abs(fract(coord - 0.5) - 0.5) / max(deriv, vec2<f32>(0.0015));
     let line = 1.0 - min(min(grid.x, grid.y), 1.0);
     let base = mix(vec3<f32>(0.95, 0.12, 0.62), vec3<f32>(0.12, 0.72, 0.95), height01);
