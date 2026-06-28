@@ -1,11 +1,11 @@
-use crate::ecs::{GameMode, TemplateWorld};
+use crate::ecs::{GameMode, Sound, TemplateWorld};
 use crate::systems::atmosphere::AtmosphereState;
 use crate::systems::crt::CrtState;
 use crate::systems::ring_fx::RingState;
 use crate::systems::synthwave::SynthState;
 use crate::systems::{
-    abilities, ally, atmosphere, backdrop, boss, camera, combat, crt, director, enemies, flight,
-    game, hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield,
+    abilities, ally, atmosphere, audio, backdrop, boss, camera, combat, crt, director, enemies,
+    flight, game, hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield,
     structures, synthwave, weapons,
 };
 use nightshade::prelude::*;
@@ -88,6 +88,9 @@ impl State for Spacecraft {
                 }
                 game.mode = game.cinematic_return;
                 game.mode_timer = 0.0;
+                if game.cinematic_return == GameMode::Victory {
+                    game.sounds.push(Sound::Victory);
+                }
             }
         }
 
@@ -124,6 +127,7 @@ impl State for Spacecraft {
         camera::update(&mut self.template_world, world);
         hangar::update(&mut self.template_world, world);
         hud::update(&mut self.template_world, world);
+        audio::update(&mut self.template_world, world);
 
         atmosphere::sync(&self.template_world.resources.game, &self.atmosphere);
         ring_fx::sync(&self.template_world.resources.game, &self.rings);

@@ -1,0 +1,124 @@
+use crate::ecs::{Sound, TemplateWorld};
+use crate::systems::common::next_random;
+use nightshade::prelude::*;
+
+const CLIPS: &[(&str, &[u8])] = &[
+    ("fire", include_bytes!("../../assets/audio/fire.ogg")),
+    (
+        "fire_alt",
+        include_bytes!("../../assets/audio/fire_alt.ogg"),
+    ),
+    (
+        "enemy_hit",
+        include_bytes!("../../assets/audio/enemy_hit.ogg"),
+    ),
+    (
+        "enemy_explode",
+        include_bytes!("../../assets/audio/enemy_explode.ogg"),
+    ),
+    (
+        "big_explode",
+        include_bytes!("../../assets/audio/big_explode.ogg"),
+    ),
+    (
+        "player_hit",
+        include_bytes!("../../assets/audio/player_hit.ogg"),
+    ),
+    ("shield", include_bytes!("../../assets/audio/shield.ogg")),
+    ("nitrous", include_bytes!("../../assets/audio/nitrous.ogg")),
+    ("nova", include_bytes!("../../assets/audio/nova.ogg")),
+    ("pickup", include_bytes!("../../assets/audio/pickup.ogg")),
+    ("ring", include_bytes!("../../assets/audio/ring.ogg")),
+    ("ui_move", include_bytes!("../../assets/audio/ui_move.ogg")),
+    (
+        "ui_confirm",
+        include_bytes!("../../assets/audio/ui_confirm.ogg"),
+    ),
+    ("ui_back", include_bytes!("../../assets/audio/ui_back.ogg")),
+    ("victory", include_bytes!("../../assets/audio/victory.ogg")),
+];
+
+fn profile(sound: Sound) -> (&'static str, f32, AudioBus, f32, bool) {
+    match sound {
+        Sound::Fire => ("fire", 0.42, AudioBus::Sfx, 1.0, true),
+        Sound::FireAlt => ("fire_alt", 0.46, AudioBus::Sfx, 1.0, true),
+        Sound::EnemyHit => ("enemy_hit", 0.5, AudioBus::Sfx, 1.0, true),
+        Sound::EnemyExplode => ("enemy_explode", 0.7, AudioBus::Sfx, 2.0, true),
+        Sound::BigExplode => ("big_explode", 0.95, AudioBus::Sfx, 2.5, false),
+        Sound::PlayerHit => ("player_hit", 0.8, AudioBus::Sfx, 1.5, false),
+        Sound::Shield => ("shield", 0.6, AudioBus::Sfx, 1.5, false),
+        Sound::Nitrous => ("nitrous", 0.75, AudioBus::Sfx, 2.5, false),
+        Sound::Nova => ("nova", 0.9, AudioBus::Sfx, 2.5, false),
+        Sound::Pickup => ("pickup", 0.7, AudioBus::Sfx, 1.0, false),
+        Sound::Ring => ("ring", 0.55, AudioBus::Sfx, 1.0, true),
+        Sound::UiMove => ("ui_move", 0.5, AudioBus::Ui, 0.8, false),
+        Sound::UiConfirm => ("ui_confirm", 0.7, AudioBus::Ui, 1.2, false),
+        Sound::UiBack => ("ui_back", 0.6, AudioBus::Ui, 1.2, false),
+        Sound::Victory => ("victory", 0.9, AudioBus::Music, 6.0, false),
+    }
+}
+
+pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
+    #[cfg(not(target_arch = "wasm32"))]
+    initialize_audio_system(world);
+    #[cfg(target_arch = "wasm32")]
+    lazy_initialize_audio_system(world);
+    build_audio_buses_system(world);
+
+    if !game_world.resources.game.audio_loaded {
+        for (name, bytes) in CLIPS {
+            if let Ok(data) = load_sound_from_bytes(bytes) {
+                audio_engine_load_sound(&mut world.resources.audio, *name, data);
+            }
+        }
+        set_audio_bus_volume(world, AudioBus::Sfx, -2.0, 0.0);
+        set_audio_bus_volume(world, AudioBus::Ui, -4.0, 0.0);
+        set_audio_bus_volume(world, AudioBus::Music, -3.0, 0.0);
+        game_world.resources.game.audio_loaded = true;
+    }
+
+    let queued = std::mem::take(&mut game_world.resources.game.sounds);
+    let mut spawned: Vec<Sound> = Vec::new();
+    for sound in queued {
+        if spawned.iter().filter(|entry| **entry == sound).count() >= 3 {
+            continue;
+        }
+        let (name, volume, bus, lifetime, pitched) = profile(sound);
+        let rate = if pitched {
+            0.94 + next_random(&mut game_world.resources.game.random_state) * 0.12
+        } else {
+            1.0
+        };
+        let entity = spawn_entities(world, AUDIO_SOURCE, 1)[0];
+        world.core.set_audio_source(
+            entity,
+            AudioSource::new(name)
+                .with_volume(volume)
+                .with_bus(bus)
+                .with_spatial(false)
+                .with_playback_rate(rate as f64)
+                .playing(),
+        );
+        game_world
+            .resources
+            .game
+            .sfx_voices
+            .push((entity, lifetime));
+        spawned.push(sound);
+    }
+
+    update_audio_system(world);
+
+    let delta = world.resources.window.timing.delta_time;
+    let voices = std::mem::take(&mut game_world.resources.game.sfx_voices);
+    let mut keep = Vec::with_capacity(voices.len());
+    for (entity, timer) in voices {
+        let remaining = timer - delta;
+        if remaining <= 0.0 {
+            despawn_recursive_immediate(world, entity);
+        } else {
+            keep.push((entity, remaining));
+        }
+    }
+    game_world.resources.game.sfx_voices = keep;
+}

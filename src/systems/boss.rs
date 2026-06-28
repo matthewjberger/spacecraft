@@ -1,5 +1,5 @@
 use crate::content::BossKind;
-use crate::ecs::{Boss, GameState, PickupKind, TemplateWorld};
+use crate::ecs::{Boss, GameState, PickupKind, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::enemies;
 use nightshade::prelude::*;
@@ -109,6 +109,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.hitstop = HITSTOP_BIG * 2.0;
         game.cam_kick += NOVA_KICK;
         game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_LASER);
+        game.sounds.push(Sound::BigExplode);
     }
 }
 

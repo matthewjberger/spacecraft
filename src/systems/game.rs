@@ -1,5 +1,5 @@
 use crate::content::{SECTORS, SHOP_ITEMS, STARTING_CREDITS};
-use crate::ecs::{GameMode, GameState, ModeKind, ShipMods, TemplateWorld};
+use crate::ecs::{GameMode, GameState, ModeKind, ShipMods, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::cutscene;
 use crate::systems::shop;
@@ -46,6 +46,22 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.cam_fov_pop != 0.0 {
         game.cam_fov_pop = approach(game.cam_fov_pop, 0.0, FOV_POP_DECAY * delta);
     }
+
+    let pre_mode = game.mode;
+    let pre_cursor = (game.menu_cursor, game.shop_cursor, game.settings_cursor);
+    let confirm_sound = match game.mode {
+        GameMode::Shop => buy_pressed(world) || launch_pressed(world),
+        GameMode::Title
+        | GameMode::Settings
+        | GameMode::LevelSelect
+        | GameMode::Briefing
+        | GameMode::Paused
+        | GameMode::SectorClear
+        | GameMode::GameOver
+        | GameMode::Victory => advance,
+        _ => false,
+    };
+    let back_sound = matches!(game.mode, GameMode::LevelSelect) && pause;
 
     match game.mode {
         GameMode::Title => {
@@ -196,6 +212,20 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 }
             }
         }
+    }
+
+    if back_sound {
+        game.sounds.push(Sound::UiBack);
+    } else if confirm_sound {
+        game.sounds.push(Sound::UiConfirm);
+    }
+    if game.mode == pre_mode
+        && (game.menu_cursor, game.shop_cursor, game.settings_cursor) != pre_cursor
+    {
+        game.sounds.push(Sound::UiMove);
+    }
+    if game.mode == GameMode::Victory && pre_mode != GameMode::Victory {
+        game.sounds.push(Sound::Victory);
     }
 }
 

@@ -181,6 +181,25 @@ pub struct Pickup {
     pub terminal: Option<Entity>,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Sound {
+    Fire,
+    FireAlt,
+    EnemyHit,
+    EnemyExplode,
+    BigExplode,
+    PlayerHit,
+    Shield,
+    Nitrous,
+    Nova,
+    Pickup,
+    Ring,
+    UiMove,
+    UiConfirm,
+    UiBack,
+    Victory,
+}
+
 pub struct AllyShip {
     pub entity: Entity,
     pub position: Vec3,
@@ -349,6 +368,9 @@ pub struct GameState {
     pub solar_center: Vec3,
     pub score: u32,
     pub random_state: u64,
+    pub sounds: Vec<Sound>,
+    pub sfx_voices: Vec<(Entity, f32)>,
+    pub audio_loaded: bool,
 }
 
 impl Default for GameState {
@@ -444,6 +466,9 @@ impl Default for GameState {
             solar_center: Vec3::new(0.0, 0.0, 0.0),
             score: 0,
             random_state: 0x9E37_79B9_7F4A_7C15,
+            sounds: Vec::new(),
+            sfx_voices: Vec::new(),
+            audio_loaded: false,
         }
     }
 }

@@ -17,9 +17,9 @@ struct Body {
 fn bodies() -> [Body; 4] {
     [
         Body {
-            position: Vec3::new(-540.0, 300.0, -1950.0),
+            position: Vec3::new(-320.0, 180.0, -1150.0),
             spin_speed: 0.03,
-            radius: 86.0,
+            radius: 52.0,
             style: PlanetStyle::Blotchy,
             low: [0.45, 0.22, 0.12],
             high: [0.78, 0.5, 0.32],
@@ -28,9 +28,9 @@ fn bodies() -> [Body; 4] {
             moons: 1,
         },
         Body {
-            position: Vec3::new(540.0, 300.0, -1950.0),
+            position: Vec3::new(320.0, 180.0, -1150.0),
             spin_speed: 0.025,
-            radius: 104.0,
+            radius: 62.0,
             style: PlanetStyle::Blotchy,
             low: [0.08, 0.2, 0.52],
             high: [0.3, 0.55, 0.35],
@@ -39,9 +39,9 @@ fn bodies() -> [Body; 4] {
             moons: 1,
         },
         Body {
-            position: Vec3::new(-1140.0, 300.0, -1950.0),
+            position: Vec3::new(-680.0, 180.0, -1150.0),
             spin_speed: 0.02,
-            radius: 138.0,
+            radius: 82.0,
             style: PlanetStyle::Banded,
             low: [0.32, 0.2, 0.46],
             high: [0.78, 0.58, 0.86],
@@ -50,9 +50,9 @@ fn bodies() -> [Body; 4] {
             moons: 2,
         },
         Body {
-            position: Vec3::new(1140.0, 300.0, -1950.0),
+            position: Vec3::new(680.0, 180.0, -1150.0),
             spin_speed: 0.022,
-            radius: 120.0,
+            radius: 72.0,
             style: PlanetStyle::Banded,
             low: [0.08, 0.36, 0.4],
             high: [0.45, 0.85, 0.78],
@@ -90,15 +90,10 @@ pub fn spawn_backdrop(world: &mut World, game: &mut GameState) {
         mark_local_transform_dirty(world, entity);
         world.core.remove_components(entity, CASTS_SHADOW);
         let material = Material {
-            base_color: [1.0, 1.0, 1.0, 1.0],
-            base_texture: Some(texture_name.clone()),
-            emissive_texture: Some(texture_name),
-            emissive_factor: [
-                0.55 + body.emissive[0],
-                0.55 + body.emissive[1],
-                0.6 + body.emissive[2],
-            ],
-            unlit: false,
+            base_color: [1.3, 1.3, 1.4, 1.0],
+            base_texture: Some(texture_name),
+            emissive_factor: body.emissive,
+            unlit: true,
             metallic: 0.0,
             roughness: 0.95,
             ..Default::default()

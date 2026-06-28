@@ -1,4 +1,4 @@
-use crate::ecs::{GameState, Pickup, PickupKind, TemplateWorld};
+use crate::ecs::{GameState, Pickup, PickupKind, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::enemy_mesh::DRONE_MESH;
 use nightshade::prelude::*;
@@ -172,16 +172,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
         }
 
-        if !game.pickups[index].resolved {
-            if (position - ship).magnitude() < PICKUP_COLLECT_RADIUS {
-                game.pickups[index].resolved = true;
+        if !game.pickups[index].resolved && position.z >= ship.z {
+            game.pickups[index].resolved = true;
+            let planar = ((position.x - ship.x).powi(2) + (position.y - ship.y).powi(2)).sqrt();
+            if planar < PICKUP_COLLECT_RADIUS {
                 let kind = game.pickups[index].kind;
                 let color = kind.color();
                 collected = Some(kind);
                 bursts.push((position, Vec3::new(color.x, color.y, color.z), 44));
                 remove.push(index);
-            } else if position.z > ship.z + 5.0 {
-                game.pickups[index].resolved = true;
             }
         }
         if position.z > SCENERY_DESPAWN_Z {
@@ -203,6 +202,11 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.effect = Some(kind);
         game.effect_duration = kind.duration();
         game.effect_timer = kind.duration();
+        game.sounds.push(if kind == PickupKind::Nitrous {
+            Sound::Nitrous
+        } else {
+            Sound::Pickup
+        });
     }
 
     for (position, color, count) in bursts {

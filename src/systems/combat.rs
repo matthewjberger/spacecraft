@@ -1,4 +1,4 @@
-use crate::ecs::{PickupKind, SceneryKind, TemplateWorld};
+use crate::ecs::{PickupKind, SceneryKind, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::comms;
 use nightshade::prelude::*;
@@ -101,8 +101,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.cam_kick += DAMAGE_KICK;
         game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_DAMAGE);
         game.hitstop = game.hitstop.max(HITSTOP_BIG);
+        game.sounds.push(Sound::PlayerHit);
     } else if damage {
         game.damage_flash = game.damage_flash.max(0.12);
+        if barrier {
+            game.sounds.push(Sound::Shield);
+        }
     }
 
     for (position, color, count) in bursts {

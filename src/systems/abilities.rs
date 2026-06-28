@@ -1,4 +1,4 @@
-use crate::ecs::{GameState, SceneryKind, TemplateWorld};
+use crate::ecs::{GameState, SceneryKind, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::laser;
 use nightshade::prelude::*;
@@ -32,11 +32,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let ship = game.ship_position;
         let burst = spawn_burst(world, ship, Vec3::new(0.4, 0.9, 1.0), 36);
         game.bursts.push((burst, 0.0));
+        game.sounds.push(Sound::Shield);
     }
 }
 
 fn detonate_nova(world: &mut World, game: &mut GameState) {
     let ship = game.ship_position;
+    game.sounds.push(Sound::Nova);
     game.nova_flash = NOVA_FLASH_TIME;
     game.shake = DAMAGE_SHAKE;
     game.cam_kick += NOVA_KICK;

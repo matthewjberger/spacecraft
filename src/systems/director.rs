@@ -55,10 +55,15 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
             comms::belt(game);
         }
         Beat::Derelicts { length, count } => {
-            for _ in 0..*count {
-                let x = random_range(&mut game.random_state, -12.0, 12.0);
-                let y = BASE_HEIGHT + random_range(&mut game.random_state, -8.0, 8.0);
-                let z = -COURSE_AHEAD - random_range(&mut game.random_state, 10.0, *length);
+            let span = length / *count as f32;
+            for index in 0..*count {
+                let side = if index % 2 == 0 { -1.0 } else { 1.0 };
+                let lateral = random_range(&mut game.random_state, 17.0, 30.0);
+                let x = side * lateral;
+                let y = BASE_HEIGHT + random_range(&mut game.random_state, -9.0, 16.0);
+                let z = -COURSE_AHEAD
+                    - index as f32 * span
+                    - random_range(&mut game.random_state, 0.0, span * 0.6);
                 structures::spawn_derelict(world, game, Vec3::new(x, y, z));
             }
         }

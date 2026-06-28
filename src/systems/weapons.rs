@@ -1,4 +1,4 @@
-use crate::ecs::{PickupKind, Projectile, SceneryKind, TemplateWorld};
+use crate::ecs::{PickupKind, Projectile, SceneryKind, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::pickups;
 use nightshade::prelude::*;
@@ -47,6 +47,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
         game.cam_kick += FIRE_KICK;
         game.recoil += RECOIL_IMPULSE;
+        game.sounds
+            .push(if spread { Sound::FireAlt } else { Sound::Fire });
     }
 
     let mut remove: Vec<usize> = Vec::new();
@@ -129,6 +131,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         bursts.push((enemy.position, Vec3::new(1.0, 0.45, 0.2), 30));
         despawn_recursive_immediate(world, enemy.entity);
         award(game, ENEMY_SCORE);
+        game.sounds.push(Sound::EnemyExplode);
     }
 
     asteroid_hits.sort_unstable();
@@ -138,6 +141,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         despawn_recursive_immediate(world, scenery_item.entity);
         pickups::maybe_drop(world, game, scenery_item.position);
         award(game, 1);
+        game.sounds.push(Sound::EnemyHit);
     }
 
     remove.sort_unstable();

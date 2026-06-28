@@ -1,4 +1,4 @@
-use crate::ecs::{GameState, Scenery, SceneryKind, TemplateWorld};
+use crate::ecs::{GameState, Scenery, SceneryKind, Sound, TemplateWorld};
 use crate::systems::asteroid_mesh;
 use crate::systems::common::*;
 use nightshade::prelude::*;
@@ -145,6 +145,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                     award(game, 1);
                     game.ring_boost = RING_BOOST_TIME;
                     game.scenery[index].collected = true;
+                    game.sounds.push(Sound::Ring);
                     bursts.push((position, Vec3::new(0.4, 0.9, 1.0), 30));
                 }
             }

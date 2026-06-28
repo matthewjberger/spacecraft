@@ -39,12 +39,14 @@ fn add_part(
 
 pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
     let mut parts: Vec<(Entity, Vec3, Vec3)> = Vec::new();
-    let length = random_range(&mut game.random_state, 3.6, 7.2);
+    let length = random_range(&mut game.random_state, 24.0, 46.0);
+    let width = random_range(&mut game.random_state, 3.6, 5.6);
+    let height = width * 0.82;
     let warm = next_random(&mut game.random_state) < 0.45;
     let window = if warm {
-        [1.6, 0.7, 0.18]
+        [1.9, 0.85, 0.2]
     } else {
-        [0.25, 0.95, 1.5]
+        [0.3, 1.1, 1.8]
     };
 
     add_part(
@@ -52,19 +54,32 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         &mut parts,
         "Cube",
         Vec3::zeros(),
-        Vec3::new(1.2, 1.0, length),
+        Vec3::new(width, height, length),
         hull_material(),
     );
 
-    let strip = Vec3::new(0.08, 0.42, length * 0.82);
+    let ribs = 5;
+    for rib in 0..ribs {
+        let along = ((rib as f32 + 0.5) / ribs as f32 - 0.5) * length;
+        add_part(
+            world,
+            &mut parts,
+            "Cube",
+            Vec3::new(0.0, 0.0, along),
+            Vec3::new(width * 1.14, height * 1.14, length * 0.035),
+            hull_material(),
+        );
+    }
+
+    let strip = Vec3::new(0.2, height * 0.5, length * 0.88);
     for side in [-1.0_f32, 1.0] {
         add_part(
             world,
             &mut parts,
             "Cube",
-            Vec3::new(side * 1.22, 0.05, 0.0),
+            Vec3::new(side * width * 0.52, 0.0, 0.0),
             strip,
-            window_material(window, 2.6),
+            window_material(window, 3.0),
         );
     }
 
@@ -72,17 +87,17 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         world,
         &mut parts,
         "Cube",
-        Vec3::new(0.0, 1.02, length * 0.12),
-        Vec3::new(0.85, 0.07, length * 0.5),
-        window_material(window, 2.2),
+        Vec3::new(0.0, height * 0.55, length * 0.04),
+        Vec3::new(width * 0.42, 0.16, length * 0.62),
+        window_material(window, 2.4),
     );
 
     add_part(
         world,
         &mut parts,
         "Cube",
-        Vec3::new(0.0, 0.0, length * 0.55),
-        Vec3::new(1.5, 1.22, 0.55),
+        Vec3::new(0.0, height * 0.14, length * 0.52),
+        Vec3::new(width * 1.28, height * 1.1, length * 0.12),
         hull_material(),
     );
 
@@ -90,8 +105,8 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         world,
         &mut parts,
         "Cylinder",
-        Vec3::new(0.0, 0.0, -length * 0.55),
-        Vec3::new(1.7, 1.7, 0.22),
+        Vec3::new(0.0, 0.0, -length * 0.52),
+        Vec3::new(width * 1.5, width * 1.5, 0.6),
         hull_material(),
     );
 
@@ -99,28 +114,24 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         world,
         &mut parts,
         "Cylinder",
-        Vec3::new(0.45, 1.25, -length * 0.28),
-        Vec3::new(0.05, 1.25, 0.05),
+        Vec3::new(width * 0.3, height * 1.05, -length * 0.18),
+        Vec3::new(0.14, height * 1.5, 0.14),
         hull_material(),
     );
 
     let spin_axis = Vec3::new(
-        random_range(&mut game.random_state, -1.0, 1.0),
-        random_range(&mut game.random_state, -1.0, 1.0),
-        random_range(&mut game.random_state, -1.0, 1.0),
+        random_range(&mut game.random_state, -0.2, 0.2),
+        1.0,
+        random_range(&mut game.random_state, -0.2, 0.2),
     )
     .normalize();
     game.structures.push(Structure {
         parts,
         position,
         spin_axis,
-        spin_speed: random_range(&mut game.random_state, 0.08, 0.4),
+        spin_speed: random_range(&mut game.random_state, 0.0, 0.05),
         angle: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
-        drift: Vec3::new(
-            random_range(&mut game.random_state, -1.0, 1.0),
-            random_range(&mut game.random_state, -0.5, 0.5),
-            0.0,
-        ),
+        drift: Vec3::zeros(),
     });
 }
 

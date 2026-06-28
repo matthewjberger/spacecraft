@@ -2,6 +2,7 @@ pub mod abilities;
 pub mod ally;
 pub mod asteroid_mesh;
 pub mod atmosphere;
+pub mod audio;
 pub mod backdrop;
 pub mod boss;
 pub mod camera;

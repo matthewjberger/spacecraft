@@ -316,6 +316,10 @@ pub const SECTORS: &[Sector] = &[
         debrief: "WREN: Harvester's scrap. The corridor's holding, barely.\nTALON: It was stripping hulls for mass. Our hulls, Wren.\nWREN: Re-arm at the cache. The Maw runs deeper and meaner.",
         beats: &[
             Beat::Breather { length: 120.0 },
+            Beat::Derelicts {
+                length: 280.0,
+                count: 5,
+            },
             Beat::Belt {
                 length: 300.0,
                 density: 52,
