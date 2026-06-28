@@ -4,9 +4,9 @@ use crate::systems::crt::CrtState;
 use crate::systems::ring_fx::RingState;
 use crate::systems::synthwave::SynthState;
 use crate::systems::{
-    abilities, atmosphere, backdrop, boss, camera, combat, crt, director, enemies, flight, game,
-    hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield, synthwave,
-    weapons,
+    abilities, ally, atmosphere, backdrop, boss, camera, combat, crt, director, enemies, flight,
+    game, hangar, hud, laser, missiles, pickups, reticle, ring_fx, scenery, setup, shield,
+    structures, synthwave, weapons,
 };
 use nightshade::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -106,9 +106,11 @@ impl State for Spacecraft {
         }
         reticle::update(&mut self.template_world, world);
         shield::update(&mut self.template_world, world);
+        ally::update(&mut self.template_world, world);
         if mode == GameMode::Playing && !frozen {
             director::update(&mut self.template_world, world);
             scenery::update(&mut self.template_world, world);
+            structures::update(&mut self.template_world, world);
             enemies::update(&mut self.template_world, world);
             boss::update(&mut self.template_world, world);
             pickups::update(&mut self.template_world, world);

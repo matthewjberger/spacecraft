@@ -8,7 +8,6 @@ const HEIGHT: u32 = 128;
 pub enum PlanetStyle {
     Banded,
     Blotchy,
-    Star,
 }
 
 fn hash(x: i32, y: i32, seed: u32) -> f32 {
@@ -95,11 +94,6 @@ pub fn register(
                     let ice = ((v - 0.5).abs() * 2.0).powi(3);
                     let surface = mix(low, high, land);
                     mix(surface, [0.92, 0.95, 1.0], (ice * 0.8).clamp(0.0, 0.75))
-                }
-                PlanetStyle::Star => {
-                    let spots = periodic_fbm(u, v, 9.0, seed);
-                    let darken = ((spots - 0.55) * 2.0).clamp(0.0, 0.55);
-                    mix(high, low, darken)
                 }
             };
             let index = ((py * WIDTH + px) * 4) as usize;

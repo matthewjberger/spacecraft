@@ -42,6 +42,7 @@ pub const BARREL_DURATION: f32 = 0.55;
 
 pub const BOOST_GAIN: f32 = 1.4;
 pub const BRAKE_GAIN: f32 = 0.5;
+pub const NITROUS_GAIN: f32 = 2.7;
 pub const SPEED_RESPONSE: f32 = 4.0;
 
 pub const STICK_DEADZONE: f32 = 0.15;
@@ -96,11 +97,10 @@ pub const ENEMY_SCORE: u32 = 5;
 pub const BOSS_SPAWN_Z: f32 = -80.0;
 
 pub const COURSE_AHEAD: f32 = 210.0;
-pub const PICKUP_COLLECT_RADIUS: f32 = 2.3;
+pub const PICKUP_COLLECT_RADIUS: f32 = 2.9;
 pub const OVERDRIVE_FIRE_SCALE: f32 = 0.45;
 
-pub const RETICLE_NEAR_Z: f32 = 11.0;
-pub const RETICLE_MID_Z: f32 = 27.0;
+pub const RETICLE_NEAR_Z: f32 = 8.0;
 pub const RETICLE_FAR_Z: f32 = 44.0;
 pub const AIM_FAR_LEAD_X: f32 = 3.6;
 pub const AIM_FAR_LEAD_Y: f32 = 3.0;

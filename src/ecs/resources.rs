@@ -5,6 +5,7 @@ use nightshade::prelude::*;
 pub enum GameMode {
     Title,
     Settings,
+    LevelSelect,
     Shop,
     Briefing,
     Cinematic,
@@ -121,6 +122,7 @@ pub enum PickupKind {
     Overdrive,
     Barrier,
     Spread,
+    Nitrous,
 }
 
 impl PickupKind {
@@ -129,6 +131,7 @@ impl PickupKind {
             PickupKind::Overdrive => "OVERDRIVE",
             PickupKind::Barrier => "BARRIER",
             PickupKind::Spread => "SPREAD SHOT",
+            PickupKind::Nitrous => "NITROUS",
         }
     }
 
@@ -137,6 +140,7 @@ impl PickupKind {
             PickupKind::Overdrive => ">>>",
             PickupKind::Barrier => "( )",
             PickupKind::Spread => "<|>",
+            PickupKind::Nitrous => "N2O",
         }
     }
 
@@ -145,6 +149,7 @@ impl PickupKind {
             PickupKind::Overdrive => 8.0,
             PickupKind::Barrier => 7.0,
             PickupKind::Spread => 9.0,
+            PickupKind::Nitrous => 3.5,
         }
     }
 
@@ -153,6 +158,7 @@ impl PickupKind {
             PickupKind::Overdrive => vec4(1.0, 0.78, 0.2, 1.0),
             PickupKind::Barrier => vec4(0.4, 0.9, 1.0, 1.0),
             PickupKind::Spread => vec4(1.0, 0.4, 0.9, 1.0),
+            PickupKind::Nitrous => vec4(0.3, 1.0, 0.4, 1.0),
         }
     }
 
@@ -161,6 +167,7 @@ impl PickupKind {
             PickupKind::Overdrive => [1.0, 0.6, 0.1],
             PickupKind::Barrier => [0.2, 0.7, 1.0],
             PickupKind::Spread => [0.9, 0.2, 0.8],
+            PickupKind::Nitrous => [0.2, 1.4, 0.35],
         }
     }
 }
@@ -171,6 +178,25 @@ pub struct Pickup {
     pub position: Vec3,
     pub spin: f32,
     pub resolved: bool,
+    pub terminal: Option<Entity>,
+}
+
+pub struct AllyShip {
+    pub entity: Entity,
+    pub position: Vec3,
+    pub velocity: Vec3,
+    pub timer: f32,
+    pub phase: u8,
+    pub slot: f32,
+}
+
+pub struct Structure {
+    pub parts: Vec<(Entity, Vec3, Vec3)>,
+    pub position: Vec3,
+    pub spin_axis: Vec3,
+    pub spin_speed: f32,
+    pub angle: f32,
+    pub drift: Vec3,
 }
 
 pub struct Backdrop {
@@ -263,6 +289,8 @@ pub struct GameState {
     pub missiles: Vec<Missile>,
     pub missile_timer: f32,
     pub pickups: Vec<Pickup>,
+    pub allies: Vec<AllyShip>,
+    pub structures: Vec<Structure>,
     pub effect: Option<PickupKind>,
     pub effect_timer: f32,
     pub effect_duration: f32,
@@ -356,6 +384,8 @@ impl Default for GameState {
             missiles: Vec::new(),
             missile_timer: 0.0,
             pickups: Vec::new(),
+            allies: Vec::new(),
+            structures: Vec::new(),
             effect: None,
             effect_timer: 0.0,
             effect_duration: 0.0,

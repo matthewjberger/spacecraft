@@ -22,7 +22,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let pause = pause_pressed(world);
     let game = &mut game_world.resources.game;
     game.mode_timer += delta;
-    if matches!(game.mode, GameMode::Title | GameMode::Settings) {
+    if matches!(
+        game.mode,
+        GameMode::Title | GameMode::Settings | GameMode::LevelSelect
+    ) {
         game.menu_orbit += delta * 0.15;
     }
     if game.damage_flash > 0.0 {
@@ -57,9 +60,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
             if advance {
                 match game.menu_cursor {
-                    0 => start_game(world, game, ModeKind::Story),
-                    1 => start_game(world, game, ModeKind::Arcade),
-                    2 => start_game(world, game, ModeKind::Endless),
+                    0 => start_game(world, game, ModeKind::Story, 0),
+                    1 => {
+                        game.menu_cursor = 0;
+                        enter_mode(game, GameMode::LevelSelect);
+                    }
+                    2 => start_game(world, game, ModeKind::Endless, 0),
                     _ => {
                         game.settings_cursor = 0;
                         enter_mode(game, GameMode::Settings);
@@ -89,6 +95,21 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                         enter_mode(game, GameMode::Title);
                     }
                 }
+            }
+        }
+        GameMode::LevelSelect => {
+            if nav_up(world) {
+                game.menu_cursor = game.menu_cursor.saturating_sub(1);
+            }
+            if nav_down(world) {
+                game.menu_cursor = (game.menu_cursor + 1).min(SECTORS.len() - 1);
+            }
+            if advance {
+                start_game(world, game, ModeKind::Arcade, game.menu_cursor);
+            }
+            if pause {
+                game.menu_cursor = 1;
+                enter_mode(game, GameMode::Title);
             }
         }
         GameMode::Shop => {
@@ -196,7 +217,7 @@ fn apply_starfield(world: &mut World, game: &GameState) {
     }
 }
 
-fn start_game(world: &mut World, game: &mut GameState, mode: ModeKind) {
+fn start_game(world: &mut World, game: &mut GameState, mode: ModeKind, start_sector: usize) {
     game.run_mode = mode;
     game.score = 0;
     game.best_combo = 0;
@@ -205,7 +226,7 @@ fn start_game(world: &mut World, game: &mut GameState, mode: ModeKind) {
     game.loop_count = 0;
     game.max_shields = 4;
     game.shields = 4;
-    enter_shop(world, game, 0);
+    enter_shop(world, game, start_sector);
 }
 
 fn enter_shop(world: &mut World, game: &mut GameState, sector: usize) {
@@ -346,6 +367,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     game.missile_timer = 0.0;
     for pickup in game.pickups.drain(..) {
         despawn_recursive_immediate(world, pickup.entity);
+        if let Some(terminal) = pickup.terminal {
+            despawn_recursive_immediate(world, terminal);
+        }
     }
     for projectile in game.projectiles.drain(..) {
         despawn_recursive_immediate(world, projectile.entity);
@@ -389,6 +413,10 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     game.comms_timer = 0.0;
     game.comms_line.clear();
     game.comms_low_warned = false;
+    for ally in &mut game.allies {
+        ally.phase = 0;
+    }
+    crate::systems::structures::clear(world, game);
 }
 
 fn read_advance(world: &mut World) -> bool {

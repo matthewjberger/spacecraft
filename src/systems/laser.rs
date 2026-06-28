@@ -44,19 +44,27 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(beam_entity) = game.beam
         && let Some(beam) = world.core.get_beam_mut(beam_entity)
     {
-        beam.start = nose;
-        beam.end = nose + aim_dir * LASER_LENGTH;
-        beam.width = strength * (0.85 + lance * 0.3);
-        beam.alpha = (strength * 1.4).min(1.0);
-        beam.intensity = 3.5 + strength * 7.0;
-        beam.color = Vec3::new(
-            1.1 + strength * 1.0,
-            2.2 + strength * 2.0,
-            3.2 + strength * 1.4,
-        );
-        beam.strands = 12 + game.mods.lance as u32 * 3;
-        beam.flicker = 0.16;
-        beam.flicker_speed = 55.0;
+        if strength > 0.0 {
+            beam.start = nose;
+            beam.end = nose + aim_dir * LASER_LENGTH;
+            beam.width = strength * (0.85 + lance * 0.3);
+            beam.alpha = (strength * 1.4).min(1.0);
+            beam.intensity = 3.5 + strength * 7.0;
+            beam.color = Vec3::new(
+                1.1 + strength * 1.0,
+                2.2 + strength * 2.0,
+                3.2 + strength * 1.4,
+            );
+            beam.strands = 12 + game.mods.lance as u32 * 3;
+            beam.flicker = 0.16;
+            beam.flicker_speed = 55.0;
+        } else {
+            beam.start = nose;
+            beam.end = nose;
+            beam.width = 0.0;
+            beam.alpha = 0.0;
+            beam.intensity = 0.0;
+        }
     }
 
     if strength > LASER_SLICE_STRENGTH {

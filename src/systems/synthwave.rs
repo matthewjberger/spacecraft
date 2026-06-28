@@ -7,6 +7,7 @@ use nightshade::prelude::*;
 #[derive(Default)]
 pub struct SynthState {
     pub enabled: bool,
+    pub style: u32,
 }
 
 pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
@@ -15,6 +16,7 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
         game.mode,
         GameMode::Playing | GameMode::Paused | GameMode::Cinematic
     );
+    state.style = game.sector as u32;
 }
 
 #[repr(C)]
@@ -22,6 +24,7 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
 struct GpuUniforms {
     inv_view_proj: [[f32; 4]; 4],
     camera: [f32; 4],
+    extra: [f32; 4],
 }
 
 const HDR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba16Float;
@@ -31,6 +34,7 @@ const SHADER: &str = r#"
 struct Uniforms {
     inv_view_proj: mat4x4<f32>,
     camera: vec4<f32>,
+    extra: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 
@@ -67,42 +71,104 @@ fn noise(p: vec2<f32>) -> f32 {
     return mix(mix(a, b, w.x), mix(c, d, w.x), w.y);
 }
 
-fn terrain(p: vec2<f32>) -> f32 {
-    let valley = smoothstep(0.0, 9.0, abs(p.x));
+fn ridged(p: vec2<f32>) -> f32 {
     var h = 0.0;
     var amp = 1.0;
-    var freq = 0.035;
+    var freq = 1.0;
     for (var o = 0; o < 5; o = o + 1) {
-        let n = noise(p * freq);
-        h = h + (1.0 - abs(n * 2.0 - 1.0)) * amp;
+        h = h + (1.0 - abs(noise(p * freq) * 2.0 - 1.0)) * amp;
         amp = amp * 0.5;
         freq = freq * 2.0;
     }
-    return h * 4.5 * valley;
+    return h;
 }
 
 const GROUND_Y: f32 = -9.0;
 const MAX_HEIGHT: f32 = 9.0;
 
-fn sky(rd: vec3<f32>) -> vec3<f32> {
-    // Output only the sun on black so the Max blend keeps the real space sky.
+fn terrain(p: vec2<f32>, style: i32) -> f32 {
+    let valley = smoothstep(0.0, 9.0, abs(p.x));
+    if (style == 1) {
+        let h = ridged(p * 0.05);
+        return (h * 5.0 - 1.4) * valley;
+    } else if (style == 2) {
+        let base = ridged(p * 0.04);
+        let spike = pow(ridged(p * 0.1 + vec2<f32>(7.0, 3.0)), 2.2) * 3.6;
+        return (base * 2.0 + spike) * valley;
+    }
+    return ridged(p * 0.035) * 4.5 * valley;
+}
+
+fn surface(hit_pos: vec3<f32>, ro: vec3<f32>, style: i32, scroll: f32) -> vec3<f32> {
+    let height01 = clamp((hit_pos.y - GROUND_Y) / MAX_HEIGHT, 0.0, 1.0);
+    let dist = length(hit_pos.xz - ro.xz);
+    let fog = smoothstep(70.0, 340.0, dist);
+
+    if (style == 1) {
+        let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll);
+        let crack = pow(1.0 - height01, 2.4);
+        let vein = smoothstep(0.42, 0.52, noise(coord * 0.25));
+        let rock = vec3<f32>(0.10, 0.07, 0.07);
+        let lava = vec3<f32>(4.2, 0.9, 0.12);
+        var col = mix(rock, lava, clamp(crack * 0.7 + vein * crack, 0.0, 1.0));
+        col = col + lava * pow(crack, 4.0) * 0.6;
+        return mix(col, vec3<f32>(0.24, 0.05, 0.03), fog);
+    } else if (style == 2) {
+        let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll) * 0.5;
+        let deriv = fwidth(coord);
+        let grid = abs(fract(coord - 0.5) - 0.5) / max(deriv, vec2<f32>(0.002));
+        let line = 1.0 - min(min(grid.x, grid.y), 1.0);
+        let base = mix(vec3<f32>(0.1, 0.25, 0.6), vec3<f32>(0.72, 0.45, 1.0), height01);
+        let glow = pow(line, 1.5) * 2.2;
+        var col = base * 0.16 + base * glow + vec3<f32>(0.3, 0.6, 1.0) * pow(height01, 3.0) * 1.6;
+        return mix(col, vec3<f32>(0.12, 0.1, 0.32), fog);
+    }
+
+    let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll) * 0.5;
+    let deriv = fwidth(coord);
+    let grid = abs(fract(coord - 0.5) - 0.5) / max(deriv, vec2<f32>(0.0015));
+    let line = 1.0 - min(min(grid.x, grid.y), 1.0);
+    let base = mix(vec3<f32>(0.95, 0.12, 0.62), vec3<f32>(0.12, 0.72, 0.95), height01);
+    let glow = pow(line, 1.5) * 2.6;
+    var col = base * 0.08 + base * glow;
+    return mix(col, vec3<f32>(0.30, 0.06, 0.42), fog);
+}
+
+fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
+    if (style == 1) {
+        let sun_dir = normalize(vec3<f32>(0.0, 0.05, -1.0));
+        let d = distance(rd, sun_dir);
+        let disc = smoothstep(0.30, 0.285, d);
+        var c = vec3<f32>(3.2, 0.5, 0.08) * disc;
+        c = c + vec3<f32>(1.0, 0.2, 0.04) * smoothstep(0.62, 0.0, d) * 0.22;
+        return c;
+    } else if (style == 2) {
+        let up = clamp(rd.y, 0.0, 1.0);
+        let wave = sin(rd.x * 6.0 + rd.y * 3.0) * 0.5 + 0.5;
+        let aurora_color = mix(vec3<f32>(0.1, 0.8, 0.55), vec3<f32>(0.5, 0.2, 0.95), sin(rd.x * 4.0) * 0.5 + 0.5);
+        var c = aurora_color * wave * smoothstep(0.18, 0.85, up) * 0.6;
+        let moon_dir = normalize(vec3<f32>(0.0, 0.16, -1.0));
+        let dm = distance(rd, moon_dir);
+        c = c + vec3<f32>(0.8, 0.85, 1.0) * smoothstep(0.16, 0.15, dm) * 1.6;
+        return c;
+    }
     let sun_dir = normalize(vec3<f32>(0.0, 0.07, -1.0));
-    let delta = distance(rd, sun_dir);
-    let disc = smoothstep(0.36, 0.345, delta);
+    let d = distance(rd, sun_dir);
+    let disc = smoothstep(0.36, 0.345, d);
     let band = rd.y - sun_dir.y;
     let stripes = step(0.45, fract(band * 90.0));
     let cut = select(1.0, stripes, band < 0.0);
     let sun_color = mix(vec3<f32>(1.0, 0.2, 0.5), vec3<f32>(1.0, 0.78, 0.3), smoothstep(-0.04, 0.1, rd.y));
-    var color = sun_color * disc * cut * 2.6;
-    color = color + vec3<f32>(1.0, 0.3, 0.55) * smoothstep(0.58, 0.0, delta) * 0.14;
-
-    return color;
+    var c = sun_color * disc * cut * 2.6;
+    c = c + vec3<f32>(1.0, 0.3, 0.55) * smoothstep(0.58, 0.0, d) * 0.14;
+    return c;
 }
 
 @fragment
 fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let time = u.camera.w;
     let scroll = time * 6.0;
+    let style = i32(u.extra.x);
     let ro = u.camera.xyz;
     let far = u.inv_view_proj * vec4<f32>(in.ndc, 0.0, 1.0);
     let world = far.xyz / far.w;
@@ -116,7 +182,7 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
         t = max((ro.y - (GROUND_Y + MAX_HEIGHT)) / -rd.y, 0.0);
         for (var i = 0; i < 220; i = i + 1) {
             let pos = ro + rd * t;
-            let height = GROUND_Y + terrain(vec2<f32>(pos.x, -pos.z + scroll));
+            let height = GROUND_Y + terrain(vec2<f32>(pos.x, -pos.z + scroll), style);
             if (pos.y < height) {
                 hit = true;
                 hit_pos = pos;
@@ -130,21 +196,9 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
     if (hit) {
-        let coord = vec2<f32>(hit_pos.x, -hit_pos.z + scroll) * 0.5;
-        let derivative = fwidth(coord);
-        let grid = abs(fract(coord - 0.5) - 0.5) / max(derivative, vec2<f32>(0.0015));
-        let line = 1.0 - min(min(grid.x, grid.y), 1.0);
-        let height01 = clamp((hit_pos.y - GROUND_Y) / MAX_HEIGHT, 0.0, 1.0);
-        let magenta = vec3<f32>(0.95, 0.12, 0.62);
-        let cyan = vec3<f32>(0.12, 0.72, 0.95);
-        let base = mix(magenta, cyan, height01);
-        let glow = pow(line, 1.5) * 2.6;
-        color = base * 0.08 + base * glow;
-        let dist = length(hit_pos.xz - ro.xz);
-        let fog = smoothstep(70.0, 340.0, dist);
-        color = mix(color, vec3<f32>(0.30, 0.06, 0.42), fog);
+        color = surface(hit_pos, ro, style, scroll);
     } else {
-        color = sky(rd);
+        color = sky(rd, style);
     }
 
     return vec4<f32>(color, 1.0);
@@ -281,7 +335,11 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         Vec<nightshade::render::wgpu::rendergraph::SubGraphRunCommand<'r>>,
         nightshade::render::wgpu::rendergraph::RenderGraphError,
     > {
-        if !context.is_pass_enabled() || !self.shared.lock().unwrap().enabled {
+        let (enabled, style) = {
+            let state = self.shared.lock().unwrap();
+            (state.enabled, state.style)
+        };
+        if !context.is_pass_enabled() || !enabled {
             return Ok(context.into_sub_graph_commands());
         }
 
@@ -295,6 +353,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         let uniforms = GpuUniforms {
             inv_view_proj: mat_to_array(&inverse),
             camera: [position.x, position.y, position.z, time],
+            extra: [style as f32, 0.0, 0.0, 0.0],
         };
         context
             .queue

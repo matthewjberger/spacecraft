@@ -1,4 +1,4 @@
-use crate::ecs::{GameMode, TemplateWorld};
+use crate::ecs::{GameMode, PickupKind, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
 
@@ -85,7 +85,13 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.ring_boost -= delta;
     }
     let ring_boost = RING_BOOST_GAIN * (game.ring_boost / RING_BOOST_TIME).clamp(0.0, 1.0);
-    let target_speed = 1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN + ring_boost;
+    let nitrous = if game.effect == Some(PickupKind::Nitrous) {
+        NITROUS_GAIN
+    } else {
+        0.0
+    };
+    let target_speed =
+        1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN + ring_boost + nitrous;
     game.speed_scale = approach(game.speed_scale, target_speed, SPEED_RESPONSE * delta);
 
     game.recoil = approach(game.recoil, 0.0, RECOIL_DECAY * delta);
@@ -136,7 +142,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         if let Some(&thruster) = game.corner_thrusters.get(slot)
             && let Some(emitter) = world.core.get_particle_emitter_mut(thruster)
         {
-            emitter.position = port;
+            emitter.position =
+                port + nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, -0.4, 0.0));
             emitter.direction = exhaust_dir;
             emitter.spawn_rate = corner_rate;
         }
@@ -202,8 +209,11 @@ fn read_input(world: &mut World) -> InputFrame {
             frame.steer_x += stick_x * scaled;
             frame.steer_y += stick_y * scaled;
         }
-        if gamepad.is_pressed(gilrs::Button::LeftTrigger2) {
+        if gamepad.is_pressed(gilrs::Button::RightTrigger2) {
             frame.boost = 1.0;
+        }
+        if gamepad.is_pressed(gilrs::Button::LeftTrigger2) {
+            frame.brake = 1.0;
         }
     }
     frame.steer_x = frame.steer_x.clamp(-1.0, 1.0);

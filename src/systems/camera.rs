@@ -18,7 +18,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let fov_pop = game.cam_fov_pop;
     let steer_lead = -game.roll / MAX_BANK;
 
-    if matches!(mode, GameMode::Title | GameMode::Settings) {
+    if matches!(
+        mode,
+        GameMode::Title | GameMode::Settings | GameMode::LevelSelect
+    ) {
         let orbit = game.menu_orbit;
         let focus = Vec3::new(0.0, BASE_HEIGHT + 0.4, ship.z - 5.5);
         let (radius, height) = if mode == GameMode::Settings {

@@ -81,7 +81,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         }
     }
 
-    let ship = load_ship(world);
+    let (ship, ally_entities) = load_fleet(world);
     if let Some(entity) = ship {
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.scale = Vec3::new(SHIP_SCALE, SHIP_SCALE, SHIP_SCALE);
@@ -104,6 +104,21 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.camera = Some(camera);
     game.cutscene_camera = Some(cutscene_camera);
     game.ship = ship;
+    game.allies = ally_entities
+        .into_iter()
+        .enumerate()
+        .map(|(index, entity)| {
+            let slot = if index % 2 == 0 { -1.0 } else { 1.0 };
+            crate::ecs::AllyShip {
+                entity,
+                position: Vec3::new(slot * 8.0, BASE_HEIGHT, 240.0),
+                velocity: Vec3::zeros(),
+                timer: 0.0,
+                phase: 0,
+                slot,
+            }
+        })
+        .collect();
     game.exhaust = Some(exhaust);
     game.corner_thrusters = corner_thrusters;
     game.starfield = Some(starfield);
@@ -124,16 +139,35 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     backdrop::spawn_backdrop(world, game);
 }
 
-fn load_ship(world: &mut World) -> Option<Entity> {
-    let mut result = import_gltf_from_bytes(SHIP_BYTES).ok()?;
+fn load_fleet(world: &mut World) -> (Option<Entity>, Vec<Entity>) {
+    let Ok(mut result) = import_gltf_from_bytes(SHIP_BYTES) else {
+        return (None, Vec::new());
+    };
     nightshade::ecs::loading::queue_gltf_load(world, &mut result);
-    let prefab = result.prefabs.first()?;
-    Some(spawn_prefab_with_animations(
+    let Some(prefab) = result.prefabs.first() else {
+        return (None, Vec::new());
+    };
+    let player = spawn_prefab_with_animations(
         world,
         prefab,
         &result.animations,
         Vec3::new(0.0, BASE_HEIGHT, 0.0),
-    ))
+    );
+    let mut allies = Vec::new();
+    for _ in 0..2 {
+        let ally = spawn_prefab_with_animations(
+            world,
+            prefab,
+            &result.animations,
+            Vec3::new(0.0, BASE_HEIGHT, 240.0),
+        );
+        if let Some(transform) = world.core.get_local_transform_mut(ally) {
+            transform.scale = Vec3::zeros();
+        }
+        mark_local_transform_dirty(world, ally);
+        allies.push(ally);
+    }
+    (Some(player), allies)
 }
 
 pub fn shine_ship(game_world: &mut TemplateWorld, world: &mut World) {

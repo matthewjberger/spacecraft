@@ -1,4 +1,5 @@
 pub mod abilities;
+pub mod ally;
 pub mod asteroid_mesh;
 pub mod atmosphere;
 pub mod backdrop;
@@ -27,6 +28,7 @@ pub mod setup;
 pub mod shield;
 pub mod shop;
 pub mod spawn;
+pub mod structures;
 pub mod synthwave;
 pub mod tuning;
 pub mod weapons;

@@ -1,7 +1,7 @@
 use crate::content::{Beat, EnemyKind, SECTORS};
 use crate::ecs::{GameState, SceneryKind, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::{boss, comms, enemies, pickups, scenery};
+use crate::systems::{boss, comms, enemies, pickups, scenery, structures};
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -53,6 +53,14 @@ fn enter_beat(world: &mut World, game: &mut GameState, sector_index: usize, beat
         Beat::Belt { .. } => {
             game.belt_accumulator = 0.0;
             comms::belt(game);
+        }
+        Beat::Derelicts { length, count } => {
+            for _ in 0..*count {
+                let x = random_range(&mut game.random_state, -12.0, 12.0);
+                let y = BASE_HEIGHT + random_range(&mut game.random_state, -8.0, 8.0);
+                let z = -COURSE_AHEAD - random_range(&mut game.random_state, 10.0, *length);
+                structures::spawn_derelict(world, game, Vec3::new(x, y, z));
+            }
         }
         Beat::Rings { count } => scenery::spawn_rings(world, game, *count),
         Beat::Wave { groups } => {
@@ -134,6 +142,7 @@ fn beat_complete(game: &GameState, beat: &Beat) -> bool {
     match beat {
         Beat::Field { length, .. } => game.beat_distance >= *length + PATTERN_GAP,
         Beat::Belt { length, .. } => game.beat_distance >= *length + PATTERN_GAP,
+        Beat::Derelicts { length, .. } => game.beat_distance >= *length + PATTERN_GAP,
         Beat::Rings { count } => game.beat_distance >= *count as f32 * RING_SPACING + PATTERN_GAP,
         Beat::Breather { length } => game.beat_distance >= *length,
         Beat::Wave { .. } => game.enemies.is_empty(),

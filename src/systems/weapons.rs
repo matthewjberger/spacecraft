@@ -154,14 +154,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 }
 
 fn read_fire_input(world: &mut World) -> bool {
-    let mut firing = world
-        .resources
-        .input
-        .keyboard
-        .is_key_pressed(KeyCode::Space);
+    let mut firing = {
+        let keyboard = &world.resources.input.keyboard;
+        keyboard.is_key_pressed(KeyCode::Space) || keyboard.is_key_pressed(KeyCode::KeyX)
+    };
     if let Some(gamepad) = query_active_gamepad(world)
-        && (gamepad.is_pressed(gilrs::Button::RightTrigger2)
-            || gamepad.is_pressed(gilrs::Button::South))
+        && gamepad.is_pressed(gilrs::Button::South)
     {
         firing = true;
     }

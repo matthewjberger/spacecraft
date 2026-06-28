@@ -191,6 +191,10 @@ pub enum Beat {
         length: f32,
         density: usize,
     },
+    Derelicts {
+        length: f32,
+        count: usize,
+    },
     Rings {
         count: usize,
     },
@@ -311,21 +315,25 @@ pub const SECTORS: &[Sector] = &[
         briefing: "WREN: Scout nodes swarm the Verge — the corridor's closing.\nTALON: On your wing, Ranger. Mind the rocks and the crossfire.\nWREN: Punch through to the Harvester and put it down.",
         debrief: "WREN: Harvester's scrap. The corridor's holding, barely.\nTALON: It was stripping hulls for mass. Our hulls, Wren.\nWREN: Re-arm at the cache. The Maw runs deeper and meaner.",
         beats: &[
-            Beat::Breather { length: 130.0 },
+            Beat::Breather { length: 120.0 },
             Beat::Belt {
                 length: 300.0,
                 density: 52,
             },
-            Beat::Rings { count: 5 },
             Beat::Wave {
                 groups: &[(EnemyKind::Drone, 4), (EnemyKind::Fighter, 2)],
             },
+            Beat::Rings { count: 5 },
             Beat::Field {
                 length: 200.0,
                 count: 32,
             },
             Beat::Wave {
                 groups: &[(EnemyKind::Fighter, 3), (EnemyKind::Drone, 3)],
+            },
+            Beat::Breather { length: 90.0 },
+            Beat::Wave {
+                groups: &[(EnemyKind::Drone, 5), (EnemyKind::Fighter, 2)],
             },
             Beat::Rings { count: 4 },
             Beat::MiniBoss(BossKind::Harvester),
@@ -338,8 +346,12 @@ pub const SECTORS: &[Sector] = &[
         debrief: "TALON: That signal under the static is a Tesse distress loop. Still live.\nWREN: The Monarch is the old colony core. It never stopped calling.\nWREN: Order stands. End the loop — clean.",
         beats: &[
             Beat::Belt {
-                length: 360.0,
-                density: 64,
+                length: 340.0,
+                density: 60,
+            },
+            Beat::Derelicts {
+                length: 340.0,
+                count: 6,
             },
             Beat::Wave {
                 groups: &[(EnemyKind::Fighter, 4), (EnemyKind::Gunship, 1)],
@@ -356,8 +368,15 @@ pub const SECTORS: &[Sector] = &[
                     (EnemyKind::Fighter, 2),
                 ],
             },
+            Beat::Derelicts {
+                length: 240.0,
+                count: 4,
+            },
             Beat::MiniBoss(BossKind::Harvester),
-            Beat::Breather { length: 120.0 },
+            Beat::Breather { length: 100.0 },
+            Beat::Wave {
+                groups: &[(EnemyKind::Fighter, 3), (EnemyKind::Gunship, 2)],
+            },
             Beat::Boss(BossKind::Warden),
         ],
     },
@@ -378,6 +397,10 @@ pub const SECTORS: &[Sector] = &[
                 length: 260.0,
                 density: 50,
             },
+            Beat::Derelicts {
+                length: 260.0,
+                count: 5,
+            },
             Beat::Wave {
                 groups: &[
                     (EnemyKind::Drone, 6),
@@ -385,8 +408,16 @@ pub const SECTORS: &[Sector] = &[
                     (EnemyKind::Fighter, 2),
                 ],
             },
+            Beat::Rings { count: 6 },
             Beat::MiniBoss(BossKind::Sentinel),
-            Beat::Breather { length: 110.0 },
+            Beat::Breather { length: 90.0 },
+            Beat::Wave {
+                groups: &[(EnemyKind::Weaver, 4), (EnemyKind::Gunship, 3)],
+            },
+            Beat::Field {
+                length: 180.0,
+                count: 28,
+            },
             Beat::Boss(BossKind::Monarch),
         ],
     },

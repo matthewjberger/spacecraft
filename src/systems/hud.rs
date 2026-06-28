@@ -564,11 +564,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 crt_on,
             ),
             GameMode::Paused => pause_overlay(menu_cursor),
+            GameMode::LevelSelect => level_select_overlay(menu_cursor),
             _ => overlay_text(mode, sector_index, score, best_combo),
         };
         let blinkable = matches!(
             mode,
-            GameMode::Title | GameMode::Settings | GameMode::Paused
+            GameMode::Title | GameMode::Settings | GameMode::Paused | GameMode::LevelSelect
         );
         set_text(world, hud.overlay_heading, &heading);
         set_text(world, hud.overlay_body, &body);
@@ -625,8 +626,21 @@ fn overlay_text(
         | GameMode::Shop
         | GameMode::Settings
         | GameMode::Paused
+        | GameMode::LevelSelect
         | GameMode::Cinematic => (String::new(), String::new(), String::new()),
     }
+}
+
+fn level_select_overlay(cursor: usize) -> (String, String, String) {
+    let items: Vec<String> = SECTORS
+        .iter()
+        .map(|sector| format!("{}  —  {}", sector.name, sector.subtitle))
+        .collect();
+    (
+        "SELECT SECTOR".to_string(),
+        menu_body(&items, cursor),
+        "UP / DOWN  SELECT       SPACE  LAUNCH       ESC  BACK".to_string(),
+    )
 }
 
 fn pause_overlay(cursor: usize) -> (String, String, String) {

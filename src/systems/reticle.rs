@@ -33,30 +33,23 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let visible = game.mode == GameMode::Playing;
     let aim = aim_point(game);
     let far = game.reticle_far;
-    let ports = game.blaster_ports;
     let markers = game.reticle_near;
 
-    let depths = [RETICLE_NEAR_Z, RETICLE_MID_Z];
-    let scales = [0.26, 0.4];
+    let ports = game.blaster_ports;
+    let near_z = game.ship_position.z - RETICLE_NEAR_Z;
     for (blaster, &port) in ports.iter().enumerate() {
         let direction = aim - port;
-        for (stage, &depth) in depths.iter().enumerate() {
-            let plane_z = game.ship_position.z - depth;
-            let position = if direction.z.abs() > 0.001 {
-                port + direction * ((plane_z - port.z) / direction.z)
-            } else {
-                Vec3::new(port.x, port.y, plane_z)
-            };
-            place(
-                world,
-                markers[blaster * 2 + stage],
-                position,
-                scales[stage],
-                visible,
-            );
-        }
+        let position = if direction.z.abs() > 0.001 {
+            port + direction * ((near_z - port.z) / direction.z)
+        } else {
+            Vec3::new(port.x, port.y, near_z)
+        };
+        place(world, markers[blaster], position, 0.2, visible);
     }
-    place(world, far, aim, 1.2, visible);
+    for marker in markers.iter().skip(ports.len()) {
+        place(world, *marker, Vec3::zeros(), 0.0, false);
+    }
+    place(world, far, aim, 0.85, visible);
 }
 
 fn place(world: &mut World, entity: Option<Entity>, position: Vec3, scale: f32, visible: bool) {
