@@ -170,6 +170,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::Paused);
             } else if game.shields <= 0 {
                 game.best_score = game.best_score.max(game.score);
+                clear_vfx(world, game);
                 enter_mode(game, GameMode::GameOver);
             } else if game.beat_index >= SECTORS[game.sector].beats.len() {
                 if game.sector + 1 >= SECTORS.len() {
@@ -297,17 +298,37 @@ fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
 }
 
 fn enter_sendoff(world: &mut World, game: &mut GameState) {
+    clear_vfx(world, game);
     game.sendoff_timer = SENDOFF_DURATION;
     game.cinematic_return = GameMode::SectorClear;
     start_cinematic(world, game, cutscene::sendoff_cutscene(game.ship_position));
 }
 
 fn enter_debrief(world: &mut World, game: &mut GameState) {
+    clear_vfx(world, game);
     let (scene, talk) = cutscene::debrief_cutscene(&SECTORS[game.sector], game.ship_position);
     game.debrief_timer = talk;
     game.force_ally_leave = false;
     game.cinematic_return = GameMode::SectorClear;
     start_cinematic(world, game, scene);
+}
+
+fn clear_vfx(world: &mut World, game: &mut GameState) {
+    for projectile in game.projectiles.drain(..) {
+        despawn_recursive_immediate(world, projectile.entity);
+    }
+    for shot in game.enemy_shots.drain(..) {
+        despawn_recursive_immediate(world, shot.entity);
+    }
+    for (entity, _) in game.bursts.drain(..) {
+        despawn_recursive_immediate(world, entity);
+    }
+    for fragment in game.fragments.drain(..) {
+        despawn_recursive_immediate(world, fragment.entity);
+    }
+    for missile in game.missiles.drain(..) {
+        despawn_recursive_immediate(world, missile.entity);
+    }
 }
 
 fn enter_victory(world: &mut World, game: &mut GameState) {

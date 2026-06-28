@@ -14,6 +14,7 @@ const SHIP_BYTES: &[u8] = include_bytes!("../../assets/gltf/Spitfire.glb");
 pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     world.resources.window.title = "Spacecraft".to_string();
     world.resources.render_settings.atmosphere = Atmosphere::Space;
+    capture_procedural_atmosphere_ibl(world, Atmosphere::Space, 0.0);
     world.resources.render_settings.bloom_enabled = true;
     world.resources.render_settings.bloom_intensity = 0.4;
     world.resources.render_settings.bloom_threshold = 1.25;

@@ -13,6 +13,17 @@ fn hull_material() -> Material {
     }
 }
 
+fn building_material() -> Material {
+    Material {
+        base_color: [0.36, 0.4, 0.5, 1.0],
+        emissive_factor: [0.12, 0.14, 0.2],
+        emissive_strength: 1.4,
+        metallic: 0.4,
+        roughness: 0.55,
+        ..Default::default()
+    }
+}
+
 fn window_material(color: [f32; 3], strength: f32) -> Material {
     Material {
         base_color: [0.05, 0.05, 0.07, 1.0],
@@ -131,6 +142,94 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         spin_axis,
         spin_speed: random_range(&mut game.random_state, 0.0, 0.05),
         angle: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
+        drift: Vec3::zeros(),
+    });
+}
+
+pub const BUILDING_BASE: f32 = -7.0;
+
+pub fn spawn_building(world: &mut World, game: &mut GameState, position: Vec3) {
+    let mut parts: Vec<(Entity, Vec3, Vec3)> = Vec::new();
+    let width = random_range(&mut game.random_state, 4.5, 8.5);
+    let depth = random_range(&mut game.random_state, 4.5, 8.5);
+    let height = random_range(&mut game.random_state, 16.0, 34.0);
+    let warm = next_random(&mut game.random_state) < 0.5;
+    let window = if warm {
+        [1.7, 0.8, 0.25]
+    } else {
+        [0.3, 1.0, 1.7]
+    };
+
+    add_part(
+        world,
+        &mut parts,
+        "Cube",
+        Vec3::new(0.0, 0.7, 0.0),
+        Vec3::new(width * 1.2, 1.6, depth * 1.2),
+        building_material(),
+    );
+    add_part(
+        world,
+        &mut parts,
+        "Cube",
+        Vec3::new(0.0, height * 0.5, 0.0),
+        Vec3::new(width, height, depth),
+        building_material(),
+    );
+
+    let strip_h = height * 0.9;
+    for (offset, scale) in [
+        (
+            Vec3::new(width * 0.52, height * 0.5, 0.0),
+            Vec3::new(0.2, strip_h, depth * 0.72),
+        ),
+        (
+            Vec3::new(-width * 0.52, height * 0.5, 0.0),
+            Vec3::new(0.2, strip_h, depth * 0.72),
+        ),
+        (
+            Vec3::new(0.0, height * 0.5, depth * 0.52),
+            Vec3::new(width * 0.72, strip_h, 0.2),
+        ),
+        (
+            Vec3::new(0.0, height * 0.5, -depth * 0.52),
+            Vec3::new(width * 0.72, strip_h, 0.2),
+        ),
+    ] {
+        add_part(
+            world,
+            &mut parts,
+            "Cube",
+            offset,
+            scale,
+            window_material(window, 3.6),
+        );
+    }
+
+    let cap_h = height * random_range(&mut game.random_state, 0.18, 0.34);
+    add_part(
+        world,
+        &mut parts,
+        "Cube",
+        Vec3::new(0.0, height + cap_h * 0.5, 0.0),
+        Vec3::new(width * 0.62, cap_h, depth * 0.62),
+        building_material(),
+    );
+    add_part(
+        world,
+        &mut parts,
+        "Cube",
+        Vec3::new(0.0, height + cap_h + 0.7, 0.0),
+        Vec3::new(0.5, 1.1, 0.5),
+        window_material([1.9, 0.3, 0.2], 3.6),
+    );
+
+    game.structures.push(Structure {
+        parts,
+        position,
+        spin_axis: Vec3::new(0.0, 1.0, 0.0),
+        spin_speed: 0.0,
+        angle: random_range(&mut game.random_state, -0.25, 0.25),
         drift: Vec3::zeros(),
     });
 }

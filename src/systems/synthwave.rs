@@ -144,9 +144,9 @@ fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
     if (style == 1) {
         let sun_dir = normalize(vec3<f32>(0.0, 0.05, -1.0));
         let d = distance(rd, sun_dir);
-        let disc = smoothstep(0.30, 0.285, d);
+        let disc = 1.0 - smoothstep(0.285, 0.30, d);
         var c = vec3<f32>(3.2, 0.5, 0.08) * disc;
-        c = c + vec3<f32>(1.0, 0.2, 0.04) * smoothstep(0.62, 0.0, d) * 0.22;
+        c = c + vec3<f32>(1.0, 0.2, 0.04) * (1.0 - smoothstep(0.0, 0.62, d)) * 0.22;
         return c;
     } else if (style == 2) {
         let up = clamp(rd.y, 0.0, 1.0);
@@ -155,18 +155,18 @@ fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
         var c = aurora_color * wave * smoothstep(0.18, 0.85, up) * 0.6;
         let moon_dir = normalize(vec3<f32>(0.0, 0.16, -1.0));
         let dm = distance(rd, moon_dir);
-        c = c + vec3<f32>(0.8, 0.85, 1.0) * smoothstep(0.16, 0.15, dm) * 1.6;
+        c = c + vec3<f32>(0.8, 0.85, 1.0) * (1.0 - smoothstep(0.15, 0.16, dm)) * 1.6;
         return c;
     }
     let sun_dir = normalize(vec3<f32>(0.0, 0.07, -1.0));
     let d = distance(rd, sun_dir);
-    let disc = smoothstep(0.36, 0.345, d);
+    let disc = 1.0 - smoothstep(0.345, 0.36, d);
     let band = rd.y - sun_dir.y;
     let stripes = step(0.45, fract(band * 90.0));
     let cut = select(1.0, stripes, band < 0.0);
     let sun_color = mix(vec3<f32>(1.0, 0.2, 0.5), vec3<f32>(1.0, 0.78, 0.3), smoothstep(-0.04, 0.1, rd.y));
     var c = sun_color * disc * cut * 2.6;
-    c = c + vec3<f32>(1.0, 0.3, 0.55) * smoothstep(0.58, 0.0, d) * 0.14;
+    c = c + vec3<f32>(1.0, 0.3, 0.55) * (1.0 - smoothstep(0.0, 0.58, d)) * 0.14;
     return c;
 }
 

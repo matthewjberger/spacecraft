@@ -124,7 +124,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
     mark_local_transform_dirty(world, ship);
 
-    update_effects(game, world, position, rotation, game.speed_scale);
+    let flying = matches!(game.mode, GameMode::Playing | GameMode::Cinematic);
+    update_effects(game, world, position, rotation, game.speed_scale, flying);
 }
 
 fn update_effects(
@@ -133,6 +134,7 @@ fn update_effects(
     position: Vec3,
     rotation: nalgebra_glm::Qua<f32>,
     speed_scale: f32,
+    flying: bool,
 ) {
     let exhaust_dir = nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, 0.0, -1.0));
     if let Some(exhaust) = game.exhaust {
@@ -141,7 +143,11 @@ fn update_effects(
         if let Some(emitter) = world.core.get_particle_emitter_mut(exhaust) {
             emitter.position = tail;
             emitter.direction = exhaust_dir;
-            emitter.spawn_rate = 520.0 + speed_scale * 360.0;
+            emitter.spawn_rate = if flying {
+                520.0 + speed_scale * 360.0
+            } else {
+                0.0
+            };
         }
     }
 
@@ -162,7 +168,7 @@ fn update_effects(
             emitter.position =
                 port + nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, -0.4, 0.0));
             emitter.direction = exhaust_dir;
-            emitter.spawn_rate = corner_rate;
+            emitter.spawn_rate = if flying { corner_rate } else { 0.0 };
         }
     }
 
@@ -208,7 +214,7 @@ fn sendoff_step(game: &mut GameState, world: &mut World, ship: Entity, delta: f3
     }
     mark_local_transform_dirty(world, ship);
 
-    update_effects(game, world, position, rotation, game.speed_scale);
+    update_effects(game, world, position, rotation, game.speed_scale, true);
 }
 
 fn smoothstep(value: f32) -> f32 {
