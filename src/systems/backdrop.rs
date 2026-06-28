@@ -91,8 +91,13 @@ pub fn spawn_backdrop(world: &mut World, game: &mut GameState) {
         world.core.remove_components(entity, CASTS_SHADOW);
         let material = Material {
             base_color: [1.0, 1.0, 1.0, 1.0],
-            base_texture: Some(texture_name),
-            emissive_factor: body.emissive,
+            base_texture: Some(texture_name.clone()),
+            emissive_texture: Some(texture_name),
+            emissive_factor: [
+                0.55 + body.emissive[0],
+                0.55 + body.emissive[1],
+                0.6 + body.emissive[2],
+            ],
             unlit: false,
             metallic: 0.0,
             roughness: 0.95,
