@@ -49,6 +49,32 @@ pub fn sector_cutscene(sector: &Sector, ship: Vec3) -> Cutscene {
         .letterbox_out(orbit + settle, hold)
 }
 
+pub fn debrief_cutscene(sector: &Sector, ship: Vec3) -> (Cutscene, f32) {
+    let focus = ship + Vec3::new(0.0, 0.4, 1.5);
+    let shot_a =
+        CutsceneShot::new(ship + Vec3::new(-7.5, 2.8, 9.5), focus).with_field_of_view(48.0);
+    let shot_b = CutsceneShot::new(ship + Vec3::new(6.5, 2.2, 8.5), focus).with_field_of_view(46.0);
+    let chase = chase_shot(ship);
+
+    let mut scene = Cutscene::new(sector.subtitle).letterbox_in(0.0, 0.6);
+    let mut time = 0.8;
+    for line in sector.debrief.split('\n') {
+        let (speaker, text) = split_speaker(line);
+        let duration = 2.0 + text.len() as f32 * 0.045;
+        scene = scene.dialogue(time, duration, speaker, text);
+        time += duration + 0.3;
+    }
+
+    let talk = time.max(1.0);
+    let tail = 2.8;
+    let scene = scene
+        .camera(0.0, talk, EasingFunction::SineInOut, shot_a, shot_b)
+        .handheld(0.0, talk, 0.05, 0.035, 1.2)
+        .camera(talk, tail, EasingFunction::CubicInOut, shot_b, chase)
+        .letterbox_out(talk + tail - 0.6, 0.6);
+    (scene, talk)
+}
+
 pub fn sendoff_cutscene(ship: Vec3) -> Cutscene {
     let focus = ship + Vec3::new(0.0, 0.5, 0.0);
     let shot_a = CutsceneShot::new(ship + Vec3::new(3.6, 1.5, 8.0), focus).with_field_of_view(54.0);

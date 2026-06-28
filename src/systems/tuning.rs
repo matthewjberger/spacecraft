@@ -97,11 +97,11 @@ pub const ENEMY_SCORE: u32 = 5;
 pub const BOSS_SPAWN_Z: f32 = -80.0;
 
 pub const COURSE_AHEAD: f32 = 210.0;
-pub const COURSE_CURVE_MAX_X: f32 = 0.00055;
-pub const COURSE_CURVE_MAX_Y: f32 = 0.0003;
-pub const COURSE_CURVE_RESPONSE: f32 = 0.45;
-pub const COURSE_CURVE_MIN_HOLD: f32 = 3.0;
-pub const COURSE_CURVE_MAX_HOLD: f32 = 7.5;
+pub const COURSE_CURVE_MAX_X: f32 = 0.00125;
+pub const COURSE_CURVE_MAX_Y: f32 = 0.0007;
+pub const COURSE_CURVE_RESPONSE: f32 = 0.55;
+pub const COURSE_CURVE_MIN_HOLD: f32 = 2.6;
+pub const COURSE_CURVE_MAX_HOLD: f32 = 6.0;
 pub const COURSE_CURVE_CAM_BANK: f32 = 320.0;
 pub const COURSE_CURVE_CAM_PITCH: f32 = 380.0;
 pub const COURSE_CURVE_CAM_PAN: f32 = 1000.0;

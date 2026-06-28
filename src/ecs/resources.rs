@@ -1,4 +1,4 @@
-use crate::content::{Behavior, BossKind};
+use crate::content::{Behavior, BossKind, ModKind};
 use nightshade::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -351,6 +351,7 @@ pub struct GameState {
     pub starfield: Option<Entity>,
     pub dais: Option<Entity>,
     pub hangar_parts: Vec<(Entity, Vec3, Vec3)>,
+    pub upgrade_props: Vec<(Entity, ModKind, Vec3, Vec3)>,
     pub reticle_near: [Option<Entity>; 8],
     pub reticle_far: Option<Entity>,
     pub menu_orbit: f32,
@@ -383,7 +384,10 @@ pub struct GameState {
     pub curve_target_x: f32,
     pub curve_target_y: f32,
     pub curve_timer: f32,
+    pub course_time: f32,
     pub sendoff_timer: f32,
+    pub debrief_timer: f32,
+    pub force_ally_leave: bool,
     pub fire_sound_index: u32,
     pub alt_sound_index: u32,
     pub sounds: Vec<Sound>,
@@ -459,6 +463,7 @@ impl Default for GameState {
             starfield: None,
             dais: None,
             hangar_parts: Vec::new(),
+            upgrade_props: Vec::new(),
             reticle_near: [None; 8],
             reticle_far: None,
             menu_orbit: 0.0,
@@ -491,7 +496,10 @@ impl Default for GameState {
             curve_target_x: 0.0,
             curve_target_y: 0.0,
             curve_timer: 0.0,
+            course_time: 0.0,
             sendoff_timer: 0.0,
+            debrief_timer: 0.0,
+            force_ally_leave: false,
             fire_sound_index: 0,
             alt_sound_index: 0,
             sounds: Vec::new(),

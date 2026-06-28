@@ -10,6 +10,7 @@ pub struct SynthState {
     pub style: u32,
     pub curve_x: f32,
     pub curve_y: f32,
+    pub scroll_time: f32,
 }
 
 pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
@@ -21,6 +22,7 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
     state.style = game.sector as u32;
     state.curve_x = game.curve_x;
     state.curve_y = game.curve_y;
+    state.scroll_time = game.course_time;
 }
 
 #[repr(C)]
@@ -345,9 +347,15 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         Vec<nightshade::render::wgpu::rendergraph::SubGraphRunCommand<'r>>,
         nightshade::render::wgpu::rendergraph::RenderGraphError,
     > {
-        let (enabled, style, curve_x, curve_y) = {
+        let (enabled, style, curve_x, curve_y, scroll_time) = {
             let state = self.shared.lock().unwrap();
-            (state.enabled, state.style, state.curve_x, state.curve_y)
+            (
+                state.enabled,
+                state.style,
+                state.curve_x,
+                state.curve_y,
+                state.scroll_time,
+            )
         };
         if !context.is_pass_enabled() || !enabled {
             return Ok(context.into_sub_graph_commands());
@@ -358,11 +366,10 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         };
         let view_proj = matrices.projection * matrices.view;
         let inverse = nalgebra_glm::inverse(&view_proj);
-        let time = context.configs.resources.window.timing.uptime_milliseconds as f32 / 1000.0;
         let position = matrices.camera_position;
         let uniforms = GpuUniforms {
             inv_view_proj: mat_to_array(&inverse),
-            camera: [position.x, position.y, position.z, time],
+            camera: [position.x, position.y, position.z, scroll_time],
             extra: [style as f32, curve_x, curve_y, 0.0],
         };
         context

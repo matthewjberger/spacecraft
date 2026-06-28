@@ -1,4 +1,4 @@
-use crate::ecs::{Backdrop, GameState, Moon, TemplateWorld};
+use crate::ecs::{Backdrop, GameMode, GameState, Moon, TemplateWorld};
 use crate::systems::planet_texture::{self, PlanetStyle};
 use nightshade::prelude::*;
 
@@ -144,6 +144,9 @@ pub fn spawn_backdrop(world: &mut World, game: &mut GameState) {
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
+    if game.mode == GameMode::Paused {
+        return;
+    }
 
     for index in 0..game.backdrop.len() {
         game.backdrop[index].orbit_angle += game.backdrop[index].orbit_speed * delta;

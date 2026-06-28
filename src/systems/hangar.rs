@@ -1,10 +1,111 @@
+use crate::content::ModKind;
 use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::shop;
 use crate::systems::textures::proto_material;
 use nightshade::ecs::mesh::components::{Mesh, Vertex};
 use nightshade::prelude::*;
 
 const DAIS_MESH: &str = "hangar_dais";
+const SHOWCASE_SCALE: f32 = 2.4;
+
+fn showcase_pos() -> Vec3 {
+    Vec3::new(0.0, BASE_HEIGHT + 4.4, -1.0)
+}
+
+pub fn spawn_upgrade_props(world: &mut World) -> Vec<(Entity, ModKind, Vec3, Vec3)> {
+    let mut props: Vec<(Entity, ModKind, Vec3, Vec3)> = Vec::new();
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Hull,
+        "Cube",
+        Vec3::new(0.0, -0.55, 0.1),
+        Vec3::new(1.8, 0.22, 1.4),
+        glow_material([0.35, 0.55, 1.0], 1.6),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Rapid,
+        "Cube",
+        Vec3::new(0.0, -0.02, -1.5),
+        Vec3::new(1.6, 0.16, 0.36),
+        glow_material([1.8, 0.85, 0.2], 2.4),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Seeker,
+        "Cylinder",
+        Vec3::new(0.95, -0.32, 0.15),
+        Vec3::new(0.3, 0.78, 0.3),
+        glow_material([1.4, 0.5, 0.2], 2.2),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Nova,
+        "Sphere",
+        Vec3::new(0.0, 0.82, 0.2),
+        Vec3::new(0.5, 0.5, 0.5),
+        glow_material([0.7, 0.95, 1.8], 2.6),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Aegis,
+        "Cylinder",
+        Vec3::new(0.0, 0.0, 0.1),
+        Vec3::new(2.3, 0.04, 2.3),
+        glow_material([0.25, 0.85, 1.2], 1.4),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Lance,
+        "Cube",
+        Vec3::new(0.0, 0.12, -1.7),
+        Vec3::new(0.18, 0.18, 0.9),
+        glow_material([1.5, 0.3, 1.3], 2.6),
+    );
+    glow_prop(
+        world,
+        &mut props,
+        ModKind::Magnet,
+        "Cylinder",
+        Vec3::new(0.0, -0.28, 1.0),
+        Vec3::new(1.2, 0.12, 1.2),
+        glow_material([0.3, 1.3, 0.55], 2.0),
+    );
+    props
+}
+
+fn glow_material(emissive: [f32; 3], strength: f32) -> Material {
+    Material {
+        base_color: [0.04, 0.04, 0.06, 1.0],
+        emissive_factor: emissive,
+        emissive_strength: strength,
+        metallic: 0.1,
+        roughness: 0.45,
+        ..Default::default()
+    }
+}
+
+fn glow_prop(
+    world: &mut World,
+    props: &mut Vec<(Entity, ModKind, Vec3, Vec3)>,
+    kind: ModKind,
+    mesh: &str,
+    offset: Vec3,
+    scale: Vec3,
+    material: Material,
+) {
+    let entity = spawn_mesh(world, mesh, offset, Vec3::zeros());
+    let name = format!("prop_{}", entity.id);
+    register_material(world, entity, name, material);
+    props.push((entity, kind, offset, scale));
+}
 
 pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
     let mut parts: Vec<(Entity, Vec3, Vec3)> = Vec::new();
@@ -162,11 +263,62 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         mark_local_transform_dirty(world, entity);
     }
 
+    let showcase = game.mode == GameMode::Shop;
+    let rotation =
+        nalgebra_glm::quat_angle_axis(SHIP_BASE_YAW + elapsed * 0.5, &Vec3::new(0.0, 1.0, 0.0))
+            * nalgebra_glm::quat_angle_axis(0.14, &Vec3::new(1.0, 0.0, 0.0));
+
+    if showcase {
+        if let Some(ship) = game.ship {
+            if let Some(transform) = world.core.get_local_transform_mut(ship) {
+                transform.translation = showcase_pos();
+                transform.rotation = rotation;
+                transform.scale = Vec3::new(
+                    SHIP_SCALE * SHOWCASE_SCALE,
+                    SHIP_SCALE * SHOWCASE_SCALE,
+                    SHIP_SCALE * SHOWCASE_SCALE,
+                );
+            }
+            mark_local_transform_dirty(world, ship);
+        }
+        if let Some(exhaust) = game.exhaust
+            && let Some(emitter) = world.core.get_particle_emitter_mut(exhaust)
+        {
+            emitter.spawn_rate = 0.0;
+        }
+        for &thruster in &game.corner_thrusters {
+            if let Some(emitter) = world.core.get_particle_emitter_mut(thruster) {
+                emitter.spawn_rate = 0.0;
+            }
+        }
+    }
+
+    for index in 0..game.upgrade_props.len() {
+        let (entity, kind, offset, scale) = game.upgrade_props[index];
+        let owned = showcase && shop::item_level(&game.mods, kind) > 0;
+        if let Some(transform) = world.core.get_local_transform_mut(entity) {
+            if owned {
+                let world_off = showcase_pos()
+                    + nalgebra_glm::quat_rotate_vec3(&rotation, &(offset * SHOWCASE_SCALE));
+                transform.translation = world_off;
+                transform.rotation = rotation;
+                transform.scale = scale * SHOWCASE_SCALE;
+            } else {
+                transform.scale = Vec3::zeros();
+            }
+        }
+        mark_local_transform_dirty(world, entity);
+    }
+
     let Some(dais) = game.dais else {
         return;
     };
     if let Some(transform) = world.core.get_local_transform_mut(dais) {
-        transform.translation = Vec3::new(0.0, BASE_HEIGHT - 1.2, -1.5);
+        transform.translation = if showcase {
+            showcase_pos() + Vec3::new(0.0, -2.0, 0.0)
+        } else {
+            Vec3::new(0.0, BASE_HEIGHT - 1.2, -1.5)
+        };
         if dais_visible {
             let pulse = 4.7 + (elapsed * 1.5).sin() * 0.15;
             transform.scale = Vec3::new(pulse, pulse, pulse);

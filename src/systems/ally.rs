@@ -16,6 +16,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let elapsed = game.elapsed;
     let active = game.run_mode == ModeKind::Story
         && matches!(game.mode, GameMode::Playing | GameMode::Cinematic);
+    let force_leave = game.force_ally_leave;
 
     let base = nalgebra_glm::quat_angle_axis(SHIP_BASE_YAW, &Vec3::new(0.0, 1.0, 0.0));
     let mut updates: Vec<(Entity, Vec3, f32, bool)> = Vec::new();
@@ -23,7 +24,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     for ally in game.allies.iter_mut() {
         let slot = ally.slot;
         match ally.phase {
-            PHASE_ESCORT if !active => {
+            PHASE_ESCORT if !active || force_leave => {
                 ally.phase = PHASE_LEAVING;
                 ally.velocity = Vec3::new(slot.signum() * 20.0, 7.0, -24.0);
                 ally.timer = 3.0;

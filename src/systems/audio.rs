@@ -84,10 +84,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         return;
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     initialize_audio_system(world);
-    #[cfg(target_arch = "wasm32")]
-    lazy_initialize_audio_system(world);
     build_audio_buses_system(world);
 
     if !game_world.resources.game.audio_loaded {

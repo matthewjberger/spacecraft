@@ -22,6 +22,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let pause = pause_pressed(world);
     let game = &mut game_world.resources.game;
     game.mode_timer += delta;
+    if matches!(game.mode, GameMode::Playing | GameMode::Cinematic) {
+        game.course_time += delta * game.speed_scale;
+    }
     if matches!(
         game.mode,
         GameMode::Title | GameMode::Settings | GameMode::LevelSelect
@@ -153,7 +156,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::Playing);
             }
         }
-        GameMode::Cinematic => {}
+        GameMode::Cinematic => {
+            if game.debrief_timer > 0.0 {
+                game.debrief_timer -= delta;
+                if game.debrief_timer <= 0.0 {
+                    game.force_ally_leave = true;
+                }
+            }
+        }
         GameMode::Playing => {
             if pause {
                 game.menu_cursor = 0;
@@ -164,6 +174,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             } else if game.beat_index >= SECTORS[game.sector].beats.len() {
                 if game.sector + 1 >= SECTORS.len() {
                     enter_victory(world, game);
+                } else if game.run_mode == ModeKind::Story {
+                    enter_debrief(world, game);
                 } else {
                     enter_sendoff(world, game);
                 }
@@ -288,6 +300,14 @@ fn enter_sendoff(world: &mut World, game: &mut GameState) {
     game.sendoff_timer = SENDOFF_DURATION;
     game.cinematic_return = GameMode::SectorClear;
     start_cinematic(world, game, cutscene::sendoff_cutscene(game.ship_position));
+}
+
+fn enter_debrief(world: &mut World, game: &mut GameState) {
+    let (scene, talk) = cutscene::debrief_cutscene(&SECTORS[game.sector], game.ship_position);
+    game.debrief_timer = talk;
+    game.force_ally_leave = false;
+    game.cinematic_return = GameMode::SectorClear;
+    start_cinematic(world, game, scene);
 }
 
 fn enter_victory(world: &mut World, game: &mut GameState) {
@@ -445,6 +465,8 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     game.effect = None;
     game.effect_timer = 0.0;
     game.sendoff_timer = 0.0;
+    game.debrief_timer = 0.0;
+    game.force_ally_leave = false;
     game.nova_charges = 0;
     game.nova_flash = 0.0;
     game.aegis_timer = 0.0;

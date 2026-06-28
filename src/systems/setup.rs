@@ -126,6 +126,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     game.starfield = Some(starfield);
     game.dais = Some(hangar::spawn(world));
     game.hangar_parts = hangar::spawn_room(world);
+    game.upgrade_props = hangar::spawn_upgrade_props(world);
     game.reticle_near = [
         Some(reticle::spawn(world)),
         Some(reticle::spawn(world)),
