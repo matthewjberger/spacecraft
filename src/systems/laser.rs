@@ -144,6 +144,9 @@ fn vaporize_enemies(world: &mut World, game: &mut GameState, nose: Vec3, aim: Ve
         game.bursts.push((burst, 0.0));
         award(game, ENEMY_SCORE);
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
     }
 }
 

@@ -130,6 +130,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let enemy = game.enemies.remove(enemy_index);
         bursts.push((enemy.position, Vec3::new(1.0, 0.45, 0.2), 30));
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
         award(game, ENEMY_SCORE);
         game.sounds.push(Sound::EnemyExplode);
         if game.combo >= 10 && game.combo.is_multiple_of(10) {

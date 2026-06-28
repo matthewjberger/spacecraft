@@ -87,11 +87,23 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let face = nalgebra_glm::quat_angle_axis(std::f32::consts::PI, &Vec3::new(0.0, 1.0, 0.0));
         let roll = nalgebra_glm::quat_angle_axis(bank, &Vec3::new(0.0, 0.0, 1.0));
         let bend = course_bend(game, position);
+        let rotation = roll * face;
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.translation = position + bend;
-            transform.rotation = roll * face;
+            transform.rotation = rotation;
         }
         mark_local_transform_dirty(world, entity);
+
+        if let Some(thruster) = game.enemies[index].thruster {
+            let tail = position
+                + bend
+                + nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, -0.15, -1.2));
+            let dir = nalgebra_glm::quat_rotate_vec3(&rotation, &Vec3::new(0.0, 0.0, -1.0));
+            if let Some(emitter) = world.core.get_particle_emitter_mut(thruster) {
+                emitter.position = tail;
+                emitter.direction = dir;
+            }
+        }
 
         if game.enemies[index].fires {
             game.enemies[index].fire_timer -= delta;
@@ -120,6 +132,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     for index in remove.into_iter().rev() {
         let enemy = game.enemies.remove(index);
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
     }
 
     for (origin, target) in shots {
@@ -149,6 +164,10 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
     } else {
         1.5
     };
+    let thruster_entity = spawn_entities(world, PARTICLE_EMITTER | NAME, 1)[0];
+    world
+        .core
+        .set_particle_emitter(thruster_entity, enemy_thruster(position));
     let diff = difficulty(game);
     game.enemies.push(Enemy {
         entity,
@@ -167,6 +186,7 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
         hold_z: stats.hold_z,
         lock: Vec3::zeros(),
         committed: false,
+        thruster: Some(thruster_entity),
     });
 }
 
@@ -201,6 +221,41 @@ pub fn spawn_enemy_shot(world: &mut World, game: &mut GameState, origin: Vec3, t
         velocity: direction * ENEMY_SHOT_SPEED,
         age: 0.0,
     });
+}
+
+fn enemy_thruster(position: Vec3) -> ParticleEmitter {
+    ParticleEmitter {
+        emitter_type: EmitterType::Fire,
+        shape: EmitterShape::Point,
+        position,
+        direction: Vec3::new(0.0, 0.0, -1.0),
+        spawn_rate: 170.0,
+        burst_count: 0,
+        particle_lifetime_min: 0.18,
+        particle_lifetime_max: 0.36,
+        initial_velocity_min: 0.5,
+        initial_velocity_max: 1.8,
+        velocity_spread: 0.5,
+        gravity: Vec3::zeros(),
+        drag: 0.4,
+        size_start: 0.34,
+        size_end: 0.03,
+        color_gradient: thruster_gradient(),
+        emissive_strength: 3.6,
+        enabled: true,
+        ..Default::default()
+    }
+}
+
+fn thruster_gradient() -> ColorGradient {
+    ColorGradient {
+        colors: vec![
+            (0.0, vec4(0.8, 0.95, 1.0, 1.0)),
+            (0.3, vec4(0.3, 0.6, 1.0, 0.9)),
+            (0.7, vec4(0.1, 0.3, 0.9, 0.5)),
+            (1.0, vec4(0.0, 0.1, 0.4, 0.0)),
+        ],
+    }
 }
 
 fn enemy_shot_gradient() -> ColorGradient {

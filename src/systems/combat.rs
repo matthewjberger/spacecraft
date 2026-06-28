@@ -89,6 +89,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             let enemy = game.enemies.remove(index);
             bursts.push((enemy.position, Vec3::new(1.0, 0.5, 0.2), 32));
             despawn_recursive_immediate(world, enemy.entity);
+            if let Some(thruster) = enemy.thruster {
+                despawn_recursive_immediate(world, thruster);
+            }
             damage = true;
         }
     }

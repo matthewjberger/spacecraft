@@ -440,6 +440,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     for enemy in game.enemies.drain(..) {
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
     }
     for shot in game.enemy_shots.drain(..) {
         despawn_recursive_immediate(world, shot.entity);

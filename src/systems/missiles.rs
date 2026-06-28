@@ -102,6 +102,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         bursts.push((enemy.position, Vec3::new(1.0, 0.5, 0.2), 28));
         award(game, ENEMY_SCORE);
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
     }
 
     remove.sort_unstable();

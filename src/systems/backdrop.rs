@@ -17,7 +17,7 @@ struct Body {
 fn bodies() -> [Body; 4] {
     [
         Body {
-            position: Vec3::new(-320.0, 180.0, -1150.0),
+            position: Vec3::new(-920.0, 180.0, -1150.0),
             spin_speed: 0.03,
             radius: 52.0,
             style: PlanetStyle::Blotchy,
@@ -28,7 +28,7 @@ fn bodies() -> [Body; 4] {
             moons: 1,
         },
         Body {
-            position: Vec3::new(320.0, 180.0, -1150.0),
+            position: Vec3::new(920.0, 180.0, -1150.0),
             spin_speed: 0.025,
             radius: 62.0,
             style: PlanetStyle::Blotchy,
@@ -39,7 +39,7 @@ fn bodies() -> [Body; 4] {
             moons: 1,
         },
         Body {
-            position: Vec3::new(-680.0, 180.0, -1150.0),
+            position: Vec3::new(-1240.0, 180.0, -1150.0),
             spin_speed: 0.02,
             radius: 82.0,
             style: PlanetStyle::Banded,
@@ -50,7 +50,7 @@ fn bodies() -> [Body; 4] {
             moons: 2,
         },
         Body {
-            position: Vec3::new(680.0, 180.0, -1150.0),
+            position: Vec3::new(1240.0, 180.0, -1150.0),
             spin_speed: 0.022,
             radius: 72.0,
             style: PlanetStyle::Banded,

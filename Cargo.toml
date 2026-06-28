@@ -13,7 +13,7 @@ name = "template"
 path = "src/main.rs"
 
 [dependencies]
-nightshade = { version = "0.48.0", features = ["gamepad", "audio"] }
+nightshade = { version = "0.48.0", features = ["gamepad", "audio", "assets"] }
 bytemuck = { version = "1", features = ["derive"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]

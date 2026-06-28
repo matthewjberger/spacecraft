@@ -64,6 +64,9 @@ fn detonate_nova(world: &mut World, game: &mut GameState) {
         game.bursts.push((burst, 0.0));
         award(game, ENEMY_SCORE);
         despawn_recursive_immediate(world, enemy.entity);
+        if let Some(thruster) = enemy.thruster {
+            despawn_recursive_immediate(world, thruster);
+        }
     }
 
     let mut sliced: Vec<usize> = Vec::new();

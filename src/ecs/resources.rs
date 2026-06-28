@@ -103,6 +103,7 @@ pub struct Enemy {
     pub hold_z: f32,
     pub lock: Vec3,
     pub committed: bool,
+    pub thruster: Option<Entity>,
 }
 
 pub struct Boss {
@@ -351,6 +352,7 @@ pub struct GameState {
     pub starfield: Option<Entity>,
     pub dais: Option<Entity>,
     pub hangar_parts: Vec<(Entity, Vec3, Vec3)>,
+    pub hangar_lights: Vec<(Entity, f32)>,
     pub upgrade_props: Vec<(Entity, ModKind, Vec3, Vec3)>,
     pub reticle_near: [Option<Entity>; 8],
     pub reticle_far: Option<Entity>,
@@ -463,6 +465,7 @@ impl Default for GameState {
             starfield: None,
             dais: None,
             hangar_parts: Vec::new(),
+            hangar_lights: Vec::new(),
             upgrade_props: Vec::new(),
             reticle_near: [None; 8],
             reticle_far: None,

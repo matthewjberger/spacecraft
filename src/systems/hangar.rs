@@ -3,8 +3,36 @@ use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::shop;
 use crate::systems::textures::proto_material;
+use nightshade::ecs::light::components::{Light, LightType};
 use nightshade::ecs::mesh::components::{Mesh, Vertex};
 use nightshade::prelude::*;
+
+pub fn spawn_hangar_lights(world: &mut World) -> Vec<(Entity, f32)> {
+    let base = showcase_pos();
+    let specs = [
+        (Vec3::new(6.0, 9.0, 9.0), Vec3::new(1.0, 0.96, 0.88), 30.0),
+        (Vec3::new(-6.5, 3.0, 8.0), Vec3::new(0.6, 0.75, 1.0), 24.0),
+        (Vec3::new(0.0, 5.0, -9.0), Vec3::new(0.85, 0.5, 1.0), 16.0),
+        (Vec3::new(0.0, -3.5, 7.0), Vec3::new(0.8, 0.85, 1.0), 20.0),
+    ];
+    let mut lights = Vec::new();
+    for (offset, color, intensity) in specs {
+        let entity = spawn_light_entity(world, base + offset, "hangar_light");
+        world.core.set_light(
+            entity,
+            Light {
+                light_type: LightType::Point,
+                color,
+                intensity: 0.0,
+                range: 44.0,
+                cast_shadows: false,
+                ..Default::default()
+            },
+        );
+        lights.push((entity, intensity));
+    }
+    lights
+}
 
 const DAIS_MESH: &str = "hangar_dais";
 const SHOWCASE_SCALE: f32 = 2.4;
@@ -117,7 +145,7 @@ pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
         Vec3::new(0.0, base - 2.2, -7.0),
         Vec3::new(34.0, 0.6, 52.0),
         "proto_dark_06",
-        Vec3::new(0.66, 0.72, 0.82),
+        Vec3::new(0.34, 0.37, 0.44),
         9.0,
     );
     add_surface(
@@ -126,7 +154,7 @@ pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
         Vec3::new(0.0, base + 12.0, -7.0),
         Vec3::new(34.0, 0.6, 52.0),
         "proto_dark_03",
-        Vec3::new(0.42, 0.46, 0.58),
+        Vec3::new(0.24, 0.27, 0.35),
         9.0,
     );
     add_surface(
@@ -135,7 +163,7 @@ pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
         Vec3::new(0.0, base + 4.8, -31.0),
         Vec3::new(34.0, 29.0, 0.6),
         "proto_light_01",
-        Vec3::new(0.82, 0.86, 0.96),
+        Vec3::new(0.4, 0.43, 0.52),
         7.0,
     );
     add_surface(
@@ -144,7 +172,7 @@ pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
         Vec3::new(-17.0, base + 4.8, -7.0),
         Vec3::new(0.6, 29.0, 52.0),
         "proto_light_03",
-        Vec3::new(0.74, 0.8, 0.92),
+        Vec3::new(0.37, 0.41, 0.5),
         7.0,
     );
     add_surface(
@@ -153,7 +181,7 @@ pub fn spawn_room(world: &mut World) -> Vec<(Entity, Vec3, Vec3)> {
         Vec3::new(17.0, base + 4.8, -7.0),
         Vec3::new(0.6, 29.0, 52.0),
         "proto_light_03",
-        Vec3::new(0.74, 0.8, 0.92),
+        Vec3::new(0.37, 0.41, 0.5),
         7.0,
     );
 
@@ -308,6 +336,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
         }
         mark_local_transform_dirty(world, entity);
+    }
+
+    for &(entity, on) in &game.hangar_lights {
+        if let Some(light) = world.core.get_light_mut(entity) {
+            light.intensity = if showcase { on } else { 0.0 };
+        }
     }
 
     let Some(dais) = game.dais else {
