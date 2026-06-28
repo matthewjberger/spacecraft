@@ -1,6 +1,6 @@
 use crate::ecs::{PickupKind, Projectile, SceneryKind, Sound, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::pickups;
+use crate::systems::{comms, pickups};
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -132,6 +132,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         despawn_recursive_immediate(world, enemy.entity);
         award(game, ENEMY_SCORE);
         game.sounds.push(Sound::EnemyExplode);
+        if game.combo >= 10 && game.combo.is_multiple_of(10) {
+            comms::kill_streak(game);
+        }
     }
 
     asteroid_hits.sort_unstable();

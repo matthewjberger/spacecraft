@@ -9,6 +9,9 @@ const PHASE_LEAVING: u8 = 2;
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
     let game = &mut game_world.resources.game;
+    if game.mode == GameMode::Paused {
+        return;
+    }
     let ship = game.ship_position;
     let elapsed = game.elapsed;
     let active = game.run_mode == ModeKind::Story

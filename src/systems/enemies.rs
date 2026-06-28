@@ -1,4 +1,4 @@
-use crate::content::EnemyKind;
+use crate::content::{Behavior, EnemyKind};
 use crate::ecs::{Enemy, GameState, Projectile, TemplateWorld};
 use crate::systems::common::*;
 use nightshade::prelude::*;
@@ -13,26 +13,76 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let elapsed = game.elapsed;
 
     let mut remove: Vec<usize> = Vec::new();
-    let mut shots: Vec<Vec3> = Vec::new();
+    let mut shots: Vec<(Vec3, Vec3)> = Vec::new();
 
     for index in 0..game.enemies.len() {
-        game.enemies[index].position.z += game.enemies[index].closing_speed * delta;
-
+        let behavior = game.enemies[index].behavior;
+        let closing = game.enemies[index].closing_speed;
+        let hold_z = game.enemies[index].hold_z;
         let phase = game.enemies[index].sway_phase;
         let amount = game.enemies[index].sway_amount;
         let lane_x = game.enemies[index].lane_x;
         let lane_y = game.enemies[index].lane_y;
-        let target_x = lane_x + (elapsed * 1.7 + phase).sin() * amount + (ship.x - lane_x) * 0.16;
-        let target_y =
-            lane_y + (elapsed * 1.3 + phase).cos() * amount * 0.5 + (ship.y - lane_y) * 0.12;
-        let previous_x = game.enemies[index].position.x;
-        game.enemies[index].position.x = approach(previous_x, target_x, 3.0 * delta);
-        game.enemies[index].position.y =
-            approach(game.enemies[index].position.y, target_y, 3.0 * delta);
+        let previous = game.enemies[index].position;
+        let mut position = previous;
 
-        let position = game.enemies[index].position;
+        match behavior {
+            Behavior::Rusher => {
+                position.z += closing * delta;
+                let target_x =
+                    lane_x + (ship.x - lane_x) * 0.32 + (elapsed * 3.2 + phase).sin() * 0.9;
+                let target_y = lane_y + (ship.y - lane_y) * 0.24;
+                position.x = approach(position.x, target_x, 3.4 * delta);
+                position.y = approach(position.y, target_y, 3.0 * delta);
+            }
+            Behavior::Strafer => {
+                if position.z < hold_z {
+                    position.z += closing * delta;
+                }
+                let target_x = (elapsed * 1.5 + phase).sin() * amount * 3.4 + ship.x * 0.3;
+                let target_y = lane_y + (elapsed * 1.1 + phase).cos() * amount * 1.1;
+                position.x = approach(position.x, target_x, 2.6 * delta);
+                position.y = approach(position.y, target_y, 2.2 * delta);
+            }
+            Behavior::Turret => {
+                if position.z < hold_z {
+                    position.z += closing * delta;
+                }
+                let target_x = lane_x + (elapsed * 0.6 + phase).sin() * 1.4;
+                let target_y = lane_y + (elapsed * 0.5 + phase).cos() * 0.8;
+                position.x = approach(position.x, target_x, 1.6 * delta);
+                position.y = approach(position.y, target_y, 1.4 * delta);
+            }
+            Behavior::Weaver => {
+                position.z += closing * delta;
+                let target_x = lane_x
+                    + (elapsed * 2.4 + phase).sin() * amount * 1.6
+                    + (ship.x - lane_x) * 0.12;
+                let target_y = lane_y + (elapsed * 1.8 + phase).cos() * amount * 0.7;
+                position.x = approach(position.x, target_x, 3.4 * delta);
+                position.y = approach(position.y, target_y, 3.0 * delta);
+            }
+            Behavior::Diver => {
+                if !game.enemies[index].committed {
+                    position.z += closing * delta;
+                    position.x = approach(position.x, ship.x, 1.3 * delta);
+                    position.y = approach(position.y, ship.y, 1.1 * delta);
+                    if position.z >= hold_z {
+                        game.enemies[index].committed = true;
+                        game.enemies[index].lock = ship;
+                    }
+                } else {
+                    position.z += closing * 2.1 * delta;
+                    let lock = game.enemies[index].lock;
+                    position.x = approach(position.x, lock.x, 5.2 * delta);
+                    position.y = approach(position.y, lock.y, 4.6 * delta);
+                }
+            }
+        }
+
+        game.enemies[index].position = position;
         let entity = game.enemies[index].entity;
-        let bank = ((target_x - position.x) * 0.5).clamp(-0.6, 0.6);
+        let bank = (((position.x - previous.x) / delta.max(0.0001)) * 0.05).clamp(-0.7, 0.7);
 
         let face = nalgebra_glm::quat_angle_axis(std::f32::consts::PI, &Vec3::new(0.0, 1.0, 0.0));
         let roll = nalgebra_glm::quat_angle_axis(bank, &Vec3::new(0.0, 0.0, 1.0));
@@ -45,9 +95,20 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
         if game.enemies[index].fires {
             game.enemies[index].fire_timer -= delta;
-            if position.z > -60.0 && position.z < -6.0 && game.enemies[index].fire_timer <= 0.0 {
+            if position.z > -72.0 && position.z < -5.0 && game.enemies[index].fire_timer <= 0.0 {
                 game.enemies[index].fire_timer = game.enemies[index].fire_interval;
-                shots.push(position);
+                match behavior {
+                    Behavior::Turret => {
+                        for offset in [-2.4_f32, 0.0, 2.4] {
+                            shots.push((position, ship + Vec3::new(offset, 0.0, 0.0)));
+                        }
+                    }
+                    Behavior::Weaver => {
+                        let lead = (elapsed * 2.0 + phase).sin() * 3.2;
+                        shots.push((position, ship + Vec3::new(lead, 0.0, 0.0)));
+                    }
+                    _ => shots.push((position, ship)),
+                }
             }
         }
 
@@ -61,8 +122,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         despawn_recursive_immediate(world, enemy.entity);
     }
 
-    for origin in shots {
-        spawn_enemy_shot(world, game, origin, ship);
+    for (origin, target) in shots {
+        spawn_enemy_shot(world, game, origin, target);
     }
 }
 
@@ -102,6 +163,10 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
         sway_phase: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
         sway_amount: random_range(&mut game.random_state, 1.0, 2.6) * stats.sway,
         fire_timer: random_range(&mut game.random_state, 0.5, fire_interval),
+        behavior: stats.behavior,
+        hold_z: stats.hold_z,
+        lock: Vec3::zeros(),
+        committed: false,
     });
 }
 

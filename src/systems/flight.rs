@@ -1,5 +1,6 @@
 use crate::ecs::{GameMode, GameState, PickupKind, TemplateWorld};
 use crate::systems::common::*;
+use crate::systems::comms;
 use nightshade::prelude::*;
 
 #[derive(Default)]
@@ -37,10 +38,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             game.barrel.timer = BARREL_DURATION;
             game.barrel.direction = 1.0;
             game.invuln = game.invuln.max(BARREL_DURATION);
+            comms::roll(game);
         } else if frame.roll_right {
             game.barrel.timer = BARREL_DURATION;
             game.barrel.direction = -1.0;
             game.invuln = game.invuln.max(BARREL_DURATION);
+            comms::roll(game);
         }
     }
     let mut barrel_angle = 0.0;

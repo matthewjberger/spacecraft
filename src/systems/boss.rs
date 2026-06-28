@@ -1,7 +1,7 @@
 use crate::content::BossKind;
 use crate::ecs::{Boss, GameState, PickupKind, Sound, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::enemies;
+use crate::systems::{comms, enemies};
 use nightshade::prelude::*;
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
@@ -15,7 +15,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let elapsed = game.elapsed;
 
     let mut transform_update: Option<(Entity, Vec3, f32)> = None;
-    let mut volley_origin: Option<Vec3> = None;
+    let mut fire_pattern: Option<(u8, Vec3, f32)> = None;
+    let mut phase_changed: Option<u8> = None;
     let mut died = false;
     let mut boss_position = Vec3::zeros();
 
@@ -29,15 +30,42 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 boss.arrived = true;
             }
         }
-        boss.position.x = (elapsed * 0.7).sin() * 6.0;
+
+        let fraction = boss.health as f32 / boss.max_health.max(1) as f32;
+        let next_phase = if fraction > 0.66 {
+            0
+        } else if fraction > 0.33 {
+            1
+        } else {
+            2
+        };
+        if next_phase > boss.phase_index {
+            boss.phase_index = next_phase;
+            boss.firing = 0.0;
+            boss.lunge = 0.0;
+            boss.pattern_timer = 0.4;
+            phase_changed = Some(next_phase);
+        }
+
+        if boss.phase_index >= 2 {
+            boss.lunge += delta * 1.5;
+        }
+        let surge = boss.lunge.sin().max(0.0) * 9.0;
+        let weave = 6.0 + boss.phase_index as f32 * 1.6;
+        boss.position.x = (elapsed * (0.7 + boss.phase_index as f32 * 0.22)).sin() * weave;
         boss.position.y = BASE_HEIGHT + (elapsed * 0.9).cos() * 1.4;
-        transform_update = Some((boss.entity, boss.position, boss.spin));
-        boss_position = boss.position;
+        let render = Vec3::new(boss.position.x, boss.position.y, boss.position.z + surge);
+        transform_update = Some((boss.entity, render, boss.spin));
+        boss_position = render;
+
         if boss.arrived {
-            boss.fire_timer -= delta;
-            if boss.fire_timer <= 0.0 {
-                boss.fire_timer = stats.fire_interval;
-                volley_origin = Some(boss.position);
+            boss.pattern_timer -= delta;
+            if boss.pattern_timer <= 0.0 {
+                let pattern = choose_pattern(boss.phase_index, boss.pattern);
+                boss.pattern = boss.pattern.wrapping_add(1);
+                boss.pattern_timer = stats.fire_interval * pattern_scale(boss.phase_index);
+                boss.spiral_angle += 0.7;
+                fire_pattern = Some((pattern, render, boss.spiral_angle));
             }
         }
         if boss.health <= 0 {
@@ -56,24 +84,24 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         mark_local_transform_dirty(world, entity);
     }
 
-    if let Some(origin) = volley_origin {
-        for shot in 0..stats.volley {
-            let offset = if stats.volley > 1 {
-                shot as f32 / (stats.volley - 1) as f32 - 0.5
-            } else {
-                0.0
-            };
-            let target = ship
-                + Vec3::new(
-                    offset * stats.spread * 2.0,
-                    ((shot % 2) as f32 - 0.5) * 2.4,
-                    0.0,
-                );
-            enemies::spawn_enemy_shot(world, game, origin, target);
+    if let Some((pattern, origin, spiral)) = fire_pattern {
+        match pattern {
+            0 => aimed_volley(world, game, origin, ship, stats.volley, stats.spread),
+            1 => spiral_burst(world, game, origin, ship, stats.volley + 3, spiral),
+            _ => radial_ring(world, game, origin, 9 + stats.volley),
         }
     }
 
-    if stats.escort_interval > 0.0 && game.boss.as_ref().is_some_and(|boss| boss.arrived) {
+    if let Some(phase) = phase_changed {
+        comms::boss_phase(game, kind, phase);
+        game.cam_kick += FIRE_KICK * 5.0;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_LASER);
+        game.shake = game.shake.max(DAMAGE_SHAKE * 0.6);
+    }
+
+    let escort_due =
+        stats.escort_interval > 0.0 && game.boss.as_ref().is_some_and(|boss| boss.arrived);
+    if escort_due {
         game.escort_timer -= delta;
         if game.escort_timer <= 0.0 {
             game.escort_timer = stats.escort_interval;
@@ -113,6 +141,80 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 }
 
+fn choose_pattern(phase: u8, counter: u8) -> u8 {
+    match phase {
+        0 => 0,
+        1 => {
+            if counter.is_multiple_of(2) {
+                0
+            } else {
+                1
+            }
+        }
+        _ => match counter % 3 {
+            0 => 1,
+            1 => 2,
+            _ => 0,
+        },
+    }
+}
+
+fn pattern_scale(phase: u8) -> f32 {
+    match phase {
+        0 => 1.0,
+        1 => 0.8,
+        _ => 0.62,
+    }
+}
+
+fn aimed_volley(
+    world: &mut World,
+    game: &mut GameState,
+    origin: Vec3,
+    ship: Vec3,
+    count: usize,
+    spread: f32,
+) {
+    for shot in 0..count {
+        let offset = if count > 1 {
+            shot as f32 / (count - 1) as f32 - 0.5
+        } else {
+            0.0
+        };
+        let target = ship + Vec3::new(offset * spread * 2.0, ((shot % 2) as f32 - 0.5) * 2.4, 0.0);
+        enemies::spawn_enemy_shot(world, game, origin, target);
+    }
+}
+
+fn spiral_burst(
+    world: &mut World,
+    game: &mut GameState,
+    origin: Vec3,
+    ship: Vec3,
+    count: usize,
+    base: f32,
+) {
+    let step = std::f32::consts::TAU / count as f32;
+    for shot in 0..count {
+        let angle = base + shot as f32 * step;
+        let target = origin + Vec3::new(angle.cos() * 6.0, angle.sin() * 6.0, ship.z - origin.z);
+        enemies::spawn_enemy_shot(world, game, origin, target);
+    }
+}
+
+fn radial_ring(world: &mut World, game: &mut GameState, origin: Vec3, count: usize) {
+    let step = std::f32::consts::TAU / count as f32;
+    for shot in 0..count {
+        let angle = shot as f32 * step;
+        let target = Vec3::new(
+            origin.x + angle.cos() * 9.0,
+            BASE_HEIGHT + angle.sin() * 9.0,
+            0.0,
+        );
+        enemies::spawn_enemy_shot(world, game, origin, target);
+    }
+}
+
 fn run_boss_beam(world: &mut World, game: &mut GameState, delta: f32) {
     ensure_boss_beam(world, game);
     let ship = game.ship_position;
@@ -127,7 +229,7 @@ fn run_boss_beam(world: &mut World, game: &mut GameState, delta: f32) {
         if boss.arrived {
             boss.beam_timer -= delta;
             if boss.beam_timer <= 0.0 {
-                boss.beam_timer = BOSS_BEAM_INTERVAL;
+                boss.beam_timer = BOSS_BEAM_INTERVAL * (1.0 - boss.phase_index as f32 * 0.24);
                 boss.firing = BOSS_BEAM_DURATION + BOSS_BEAM_CHARGE;
                 boss.aim_x = ship.x;
                 boss.aim_y = ship.y;
@@ -241,6 +343,11 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
         firing: 0.0,
         aim_x: 0.0,
         aim_y: 0.0,
+        phase_index: 0,
+        pattern: 0,
+        pattern_timer: 2.0,
+        spiral_angle: 0.0,
+        lunge: 0.0,
     });
     game.escort_timer = stats.escort_interval.max(2.0);
 }

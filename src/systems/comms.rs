@@ -1,3 +1,4 @@
+use crate::content::BossKind;
 use crate::ecs::GameState;
 use crate::systems::common::*;
 
@@ -10,6 +11,61 @@ fn say(game: &mut GameState, lines: &[&str]) {
     let pick = (next_random(&mut game.random_state) * lines.len() as f32) as usize;
     game.comms_line = lines[pick.min(lines.len() - 1)].to_string();
     game.comms_timer = COMMS_DURATION;
+}
+
+fn bark(game: &mut GameState, lines: &[&str]) {
+    if game.comms_timer > 0.0 {
+        return;
+    }
+    say(game, lines);
+}
+
+pub fn boss_phase(game: &mut GameState, kind: BossKind, phase: u8) {
+    if kind == BossKind::Monarch {
+        let line = match phase {
+            1 => "MONARCH: ...home... you carry our voices... why do you... burn us...",
+            _ => "WREN: That's the colony's ghost talking. End the loop, Ranger. Now.",
+        };
+        game.comms_line = line.to_string();
+        game.comms_timer = COMMS_DURATION;
+        return;
+    }
+    let lines: &[&str] = match phase {
+        1 => &[
+            "TALON: It's changing tactics — stay sharp!",
+            "WREN: Armor's splitting. Keep on it.",
+        ],
+        _ => &[
+            "WREN: It's wounded and wild — don't let up!",
+            "TALON: Last push, Ranger. Put it down!",
+        ],
+    };
+    say(game, lines);
+}
+
+pub fn kill_streak(game: &mut GameState) {
+    bark(
+        game,
+        &[
+            "TALON: Beautiful flying, Ranger!",
+            "WREN: That's how you clear a lane.",
+            "TALON: They can't lay a finger on you!",
+        ],
+    );
+}
+
+pub fn wave_clear(game: &mut GameState) {
+    bark(
+        game,
+        &[
+            "WREN: Lane's clear. Keep the corridor moving.",
+            "TALON: Scratch that wing. Next stretch ahead.",
+        ],
+    );
+}
+
+pub fn roll(game: &mut GameState) {
+    bark(game, &["TALON: Nice roll!", "WREN: Good evasion, Ranger."]);
 }
 
 pub fn wave(game: &mut GameState) {

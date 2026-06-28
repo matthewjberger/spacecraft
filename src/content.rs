@@ -6,6 +6,16 @@ pub enum EnemyKind {
     Fighter,
     Gunship,
     Weaver,
+    Lancer,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Behavior {
+    Rusher,
+    Strafer,
+    Turret,
+    Weaver,
+    Diver,
 }
 
 pub struct EnemyStats {
@@ -17,6 +27,8 @@ pub struct EnemyStats {
     pub fires: bool,
     pub fire_interval: f32,
     pub sway: f32,
+    pub behavior: Behavior,
+    pub hold_z: f32,
     pub base_color: [f32; 4],
     pub emissive: [f32; 3],
 }
@@ -29,10 +41,12 @@ impl EnemyKind {
                 scale: 0.8,
                 radius: 1.0,
                 health: 1,
-                closing_speed: 34.0,
+                closing_speed: 40.0,
                 fires: false,
                 fire_interval: 0.0,
                 sway: 1.0,
+                behavior: Behavior::Rusher,
+                hold_z: 0.0,
                 base_color: [0.4, 0.08, 0.08, 1.0],
                 emissive: [1.5, 0.22, 0.16],
             },
@@ -41,10 +55,12 @@ impl EnemyKind {
                 scale: 1.05,
                 radius: 1.2,
                 health: 2,
-                closing_speed: 28.0,
+                closing_speed: 30.0,
                 fires: true,
-                fire_interval: 1.7,
+                fire_interval: 1.6,
                 sway: 1.0,
+                behavior: Behavior::Strafer,
+                hold_z: -42.0,
                 base_color: [0.42, 0.1, 0.1, 1.0],
                 emissive: [1.6, 0.18, 0.12],
             },
@@ -53,10 +69,12 @@ impl EnemyKind {
                 scale: 1.9,
                 radius: 2.0,
                 health: 5,
-                closing_speed: 17.0,
+                closing_speed: 16.0,
                 fires: true,
-                fire_interval: 1.25,
+                fire_interval: 2.0,
                 sway: 0.7,
+                behavior: Behavior::Turret,
+                hold_z: -60.0,
                 base_color: [0.45, 0.2, 0.06, 1.0],
                 emissive: [1.8, 0.5, 0.06],
             },
@@ -69,8 +87,24 @@ impl EnemyKind {
                 fires: true,
                 fire_interval: 1.9,
                 sway: 2.6,
+                behavior: Behavior::Weaver,
+                hold_z: -36.0,
                 base_color: [0.42, 0.1, 0.34, 1.0],
                 emissive: [1.6, 0.2, 0.85],
+            },
+            EnemyKind::Lancer => EnemyStats {
+                mesh: enemy_mesh::FIGHTER_MESH,
+                scale: 1.1,
+                radius: 1.1,
+                health: 2,
+                closing_speed: 30.0,
+                fires: false,
+                fire_interval: 0.0,
+                sway: 1.0,
+                behavior: Behavior::Diver,
+                hold_z: -52.0,
+                base_color: [0.5, 0.34, 0.05, 1.0],
+                emissive: [2.0, 1.1, 0.1],
             },
         }
     }
@@ -325,7 +359,7 @@ pub const SECTORS: &[Sector] = &[
                 density: 52,
             },
             Beat::Wave {
-                groups: &[(EnemyKind::Drone, 4), (EnemyKind::Fighter, 2)],
+                groups: &[(EnemyKind::Drone, 5), (EnemyKind::Fighter, 2)],
             },
             Beat::Rings { count: 5 },
             Beat::Field {
@@ -335,9 +369,13 @@ pub const SECTORS: &[Sector] = &[
             Beat::Wave {
                 groups: &[(EnemyKind::Fighter, 3), (EnemyKind::Drone, 3)],
             },
-            Beat::Breather { length: 90.0 },
+            Beat::Breather { length: 80.0 },
             Beat::Wave {
-                groups: &[(EnemyKind::Drone, 5), (EnemyKind::Fighter, 2)],
+                groups: &[
+                    (EnemyKind::Drone, 4),
+                    (EnemyKind::Fighter, 2),
+                    (EnemyKind::Lancer, 1),
+                ],
             },
             Beat::Rings { count: 4 },
             Beat::MiniBoss(BossKind::Harvester),
@@ -369,7 +407,7 @@ pub const SECTORS: &[Sector] = &[
                 groups: &[
                     (EnemyKind::Drone, 4),
                     (EnemyKind::Weaver, 3),
-                    (EnemyKind::Fighter, 2),
+                    (EnemyKind::Lancer, 2),
                 ],
             },
             Beat::Derelicts {
@@ -379,7 +417,11 @@ pub const SECTORS: &[Sector] = &[
             Beat::MiniBoss(BossKind::Harvester),
             Beat::Breather { length: 100.0 },
             Beat::Wave {
-                groups: &[(EnemyKind::Fighter, 3), (EnemyKind::Gunship, 2)],
+                groups: &[
+                    (EnemyKind::Fighter, 3),
+                    (EnemyKind::Gunship, 2),
+                    (EnemyKind::Lancer, 2),
+                ],
             },
             Beat::Boss(BossKind::Warden),
         ],
@@ -407,16 +449,20 @@ pub const SECTORS: &[Sector] = &[
             },
             Beat::Wave {
                 groups: &[
-                    (EnemyKind::Drone, 6),
+                    (EnemyKind::Drone, 5),
                     (EnemyKind::Weaver, 4),
-                    (EnemyKind::Fighter, 2),
+                    (EnemyKind::Lancer, 3),
                 ],
             },
             Beat::Rings { count: 6 },
             Beat::MiniBoss(BossKind::Sentinel),
             Beat::Breather { length: 90.0 },
             Beat::Wave {
-                groups: &[(EnemyKind::Weaver, 4), (EnemyKind::Gunship, 3)],
+                groups: &[
+                    (EnemyKind::Weaver, 4),
+                    (EnemyKind::Gunship, 3),
+                    (EnemyKind::Lancer, 2),
+                ],
             },
             Beat::Field {
                 length: 180.0,

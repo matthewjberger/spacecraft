@@ -1,4 +1,4 @@
-use crate::content::BossKind;
+use crate::content::{Behavior, BossKind};
 use nightshade::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -99,6 +99,10 @@ pub struct Enemy {
     pub sway_phase: f32,
     pub sway_amount: f32,
     pub fire_timer: f32,
+    pub behavior: Behavior,
+    pub hold_z: f32,
+    pub lock: Vec3,
+    pub committed: bool,
 }
 
 pub struct Boss {
@@ -115,6 +119,11 @@ pub struct Boss {
     pub firing: f32,
     pub aim_x: f32,
     pub aim_y: f32,
+    pub phase_index: u8,
+    pub pattern: u8,
+    pub pattern_timer: f32,
+    pub spiral_angle: f32,
+    pub lunge: f32,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

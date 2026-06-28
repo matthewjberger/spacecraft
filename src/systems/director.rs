@@ -41,6 +41,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 
     if beat_complete(game, &beats[game.beat_index]) {
+        if matches!(beats[game.beat_index], Beat::Wave { .. }) {
+            comms::wave_clear(game);
+        }
         game.beat_index += 1;
         game.beat_started = false;
     }
