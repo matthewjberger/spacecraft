@@ -96,6 +96,31 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
     }
 
+    if game.invuln <= 0.0 {
+        for structure in &game.structures {
+            if structure.extent.x <= 0.0 {
+                continue;
+            }
+            let center = Vec3::new(
+                structure.position.x,
+                structure.position.y + structure.center_y,
+                structure.position.z,
+            );
+            if (ship.x - center.x).abs() < structure.extent.x + PLAYER_HIT_RADIUS
+                && (ship.y - center.y).abs() < structure.extent.y + PLAYER_HIT_RADIUS
+                && (ship.z - center.z).abs() < structure.extent.z + 1.0
+            {
+                bursts.push((
+                    Vec3::new(ship.x, ship.y, ship.z - 1.5),
+                    Vec3::new(0.7, 0.85, 1.0),
+                    36,
+                ));
+                damage = true;
+                break;
+            }
+        }
+    }
+
     if damage && game.invuln <= 0.0 && !barrier {
         game.shields -= 1;
         game.invuln = DAMAGE_INVULN;

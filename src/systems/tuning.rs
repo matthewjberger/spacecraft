@@ -23,7 +23,7 @@ pub const CAMERA_KICK_DECAY: f32 = 7.0;
 pub const FOV_POP_DECAY: f32 = 5.0;
 
 pub const FIRE_KICK: f32 = 0.04;
-pub const DAMAGE_KICK: f32 = 0.5;
+pub const DAMAGE_KICK: f32 = 0.85;
 pub const LASER_KICK: f32 = 0.35;
 pub const NOVA_KICK: f32 = 0.6;
 pub const FOV_POP_LASER: f32 = 5.0;
@@ -152,5 +152,5 @@ pub const BOSS_BEAM_CHARGE: f32 = 0.75;
 pub const BOSS_BEAM_RADIUS: f32 = 1.9;
 
 pub const DAMAGE_INVULN: f32 = 1.1;
-pub const DAMAGE_FLASH_TIME: f32 = 0.35;
-pub const DAMAGE_SHAKE: f32 = 0.9;
+pub const DAMAGE_FLASH_TIME: f32 = 0.5;
+pub const DAMAGE_SHAKE: f32 = 1.5;

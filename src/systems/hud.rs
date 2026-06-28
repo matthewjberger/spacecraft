@@ -174,7 +174,7 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         tree.add_node()
             .window(Ab(vec2(0.0, 0.0)), Rl(vec2(100.0, 100.0)), Anchor::TopLeft)
             .with_rect(0.0, 0.0, vec4(0.0, 0.0, 0.0, 0.0))
-            .color_raw::<UiBase>(vec4(0.9, 0.1, 0.12, 0.28))
+            .color_raw::<UiBase>(vec4(1.0, 0.12, 0.12, 0.52))
             .with_visible(false)
             .entity()
     };

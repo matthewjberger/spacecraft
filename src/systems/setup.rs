@@ -119,9 +119,20 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
                 timer: 0.0,
                 phase: 0,
                 slot,
+                thruster: None,
+                corner_thrusters: Vec::new(),
             }
         })
         .collect();
+    for index in 0..game.allies.len() {
+        game.allies[index].thruster = Some(spawn_exhaust(world));
+        game.allies[index].corner_thrusters = vec![
+            spawn_corner_thruster(world),
+            spawn_corner_thruster(world),
+            spawn_corner_thruster(world),
+            spawn_corner_thruster(world),
+        ];
+    }
     game.exhaust = Some(exhaust);
     game.corner_thrusters = corner_thrusters;
     game.starfield = Some(starfield);

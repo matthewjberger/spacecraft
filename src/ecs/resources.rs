@@ -217,6 +217,8 @@ pub struct AllyShip {
     pub timer: f32,
     pub phase: u8,
     pub slot: f32,
+    pub thruster: Option<Entity>,
+    pub corner_thrusters: Vec<Entity>,
 }
 
 pub struct Structure {
@@ -226,6 +228,8 @@ pub struct Structure {
     pub spin_speed: f32,
     pub angle: f32,
     pub drift: Vec3,
+    pub extent: Vec3,
+    pub center_y: f32,
 }
 
 pub struct Backdrop {

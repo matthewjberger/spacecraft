@@ -143,6 +143,8 @@ pub fn spawn_derelict(world: &mut World, game: &mut GameState, position: Vec3) {
         spin_speed: random_range(&mut game.random_state, 0.0, 0.05),
         angle: random_range(&mut game.random_state, 0.0, std::f32::consts::TAU),
         drift: Vec3::zeros(),
+        extent: Vec3::new(width * 0.7, height * 0.7, length * 0.5),
+        center_y: 0.0,
     });
 }
 
@@ -231,6 +233,8 @@ pub fn spawn_building(world: &mut World, game: &mut GameState, position: Vec3) {
         spin_speed: 0.0,
         angle: random_range(&mut game.random_state, -0.25, 0.25),
         drift: Vec3::zeros(),
+        extent: Vec3::new(width * 0.6, height * 0.55, depth * 0.6),
+        center_y: height * 0.5,
     });
 }
 
