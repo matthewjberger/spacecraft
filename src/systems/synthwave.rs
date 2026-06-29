@@ -29,20 +29,22 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<SynthState>>) {
 #[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
 struct GpuUniforms {
     inv_view_proj: [[f32; 4]; 4],
+    view_proj: [[f32; 4]; 4],
     camera: [f32; 4],
     extra: [f32; 4],
 }
 
 const HDR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba16Float;
-const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 
 const SHADER: &str = r#"
 struct Uniforms {
     inv_view_proj: mat4x4<f32>,
+    view_proj: mat4x4<f32>,
     camera: vec4<f32>,
     extra: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
+@group(0) @binding(1) var depth_tex: texture_depth_2d;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -140,6 +142,15 @@ fn surface(hit_pos: vec3<f32>, ro: vec3<f32>, style: i32, scroll: f32) -> vec3<f
     return mix(col, vec3<f32>(0.30, 0.06, 0.42), fog);
 }
 
+fn ground_fog(style: i32) -> vec3<f32> {
+    if (style == 1) {
+        return vec3<f32>(0.24, 0.05, 0.03);
+    } else if (style == 2) {
+        return vec3<f32>(0.12, 0.1, 0.32);
+    }
+    return vec3<f32>(0.30, 0.06, 0.42);
+}
+
 fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
     if (style == 1) {
         let sun_dir = normalize(vec3<f32>(0.0, 0.05, -1.0));
@@ -179,13 +190,16 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world = far.xyz / far.w;
     let rd = normalize(world - ro);
 
+    let scene_depth = textureLoad(depth_tex, vec2<i32>(in.position.xy), 0);
+    let has_geometry = scene_depth > 0.0;
+
     var color: vec3<f32>;
     var t = 0.0;
     var hit = false;
     var hit_pos = vec3<f32>(0.0);
     if (rd.y < -0.001) {
         t = max((ro.y - (GROUND_Y + MAX_HEIGHT)) / -rd.y, 0.0);
-        for (var i = 0; i < 220; i = i + 1) {
+        for (var i = 0; i < 320; i = i + 1) {
             let pos = ro + rd * t;
             let depth = max(0.0, -pos.z);
             let bx = u.extra.y * depth * depth;
@@ -204,15 +218,31 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     }
 
     if (hit) {
+        let clip = u.view_proj * vec4<f32>(hit_pos, 1.0);
+        let terrain_depth = clip.z / clip.w;
+        if (has_geometry && terrain_depth <= scene_depth) {
+            return vec4<f32>(0.0);
+        }
         let hd = max(0.0, -hit_pos.z);
         let hbx = u.extra.y * hd * hd;
         let hby = u.extra.z * hd * hd;
         color = surface(vec3<f32>(hit_pos.x - hbx, hit_pos.y - hby, hit_pos.z), ro, style, scroll);
-    } else {
-        color = sky(rd, style);
+        let alpha = select(0.0, 1.0, has_geometry);
+        return vec4<f32>(color, alpha);
     }
 
-    return vec4<f32>(color, 1.0);
+    if (rd.y < -0.001) {
+        if (has_geometry) {
+            return vec4<f32>(0.0);
+        }
+        return vec4<f32>(ground_fog(style), 0.0);
+    }
+
+    if (has_geometry) {
+        return vec4<f32>(0.0);
+    }
+    color = sky(rd, style);
+    return vec4<f32>(color, 0.0);
 }
 "#;
 
@@ -220,23 +250,35 @@ pub struct SynthwavePass {
     shared: Arc<Mutex<SynthState>>,
     pipeline: wgpu::RenderPipeline,
     uniform_buffer: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
+    bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl SynthwavePass {
     pub fn new(device: &wgpu::Device, shared: Arc<Mutex<SynthState>>) -> Self {
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("synth_bgl"),
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
                 },
-                count: None,
-            }],
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Depth,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+            ],
         });
 
         let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -244,15 +286,6 @@ impl SynthwavePass {
             size: std::mem::size_of::<GpuUniforms>() as u64,
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
-        });
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("synth_bg"),
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
         });
 
         let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -280,13 +313,7 @@ impl SynthwavePass {
                 cull_mode: None,
                 ..Default::default()
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: DEPTH_FORMAT,
-                depth_write_enabled: Some(false),
-                depth_compare: Some(wgpu::CompareFunction::GreaterEqual),
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
-            }),
+            depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             fragment: Some(wgpu::FragmentState {
                 module: &shader_module,
@@ -296,13 +323,13 @@ impl SynthwavePass {
                     blend: Some(wgpu::BlendState {
                         color: wgpu::BlendComponent {
                             src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Max,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                            operation: wgpu::BlendOperation::Add,
                         },
                         alpha: wgpu::BlendComponent {
                             src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Max,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                            operation: wgpu::BlendOperation::Add,
                         },
                     }),
                     write_mask: wgpu::ColorWrites::ALL,
@@ -317,7 +344,7 @@ impl SynthwavePass {
             shared,
             pipeline,
             uniform_buffer,
-            bind_group,
+            bind_group_layout,
         }
     }
 }
@@ -368,6 +395,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
         let position = matrices.camera_position;
         let uniforms = GpuUniforms {
             inv_view_proj: mat_to_array(&inverse),
+            view_proj: mat_to_array(&view_proj),
             camera: [position.x, position.y, position.z, scroll_time],
             extra: [style as f32, curve_x, curve_y, 0.0],
         };
@@ -375,8 +403,25 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
             .queue
             .write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
 
-        let (color_view, load_op, store_op) = context.get_color_attachment("hdr")?;
         let depth_view = context.get_texture_view("depth")?;
+        let bind_group = context
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("synth_bg"),
+                layout: &self.bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: self.uniform_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(depth_view),
+                    },
+                ],
+            });
+
+        let (color_view, load_op, store_op) = context.get_color_attachment("hdr")?;
         let mut render_pass = context
             .encoder
             .begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -390,20 +435,13 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
                     },
                     depth_slice: None,
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: depth_view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
+                depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
                 multiview_mask: None,
             });
         render_pass.set_pipeline(&self.pipeline);
-        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.set_bind_group(0, &bind_group, &[]);
         render_pass.draw(0..3, 0..1);
         drop(render_pass);
 
