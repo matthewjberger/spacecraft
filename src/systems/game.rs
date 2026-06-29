@@ -172,7 +172,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 game.best_score = game.best_score.max(game.score);
                 clear_vfx(world, game);
                 enter_mode(game, GameMode::GameOver);
-            } else if game.beat_index >= SECTORS[game.sector].beats.len() {
+            } else if game.level_done {
                 if game.sector + 1 >= SECTORS.len() {
                     enter_victory(world, game);
                 } else if game.run_mode == ModeKind::Story {
@@ -352,7 +352,9 @@ fn start_cinematic(world: &mut World, game: &mut GameState, scene: nightshade::p
 
 fn begin_sector(world: &mut World, game: &mut GameState) {
     clear_world(world, game);
-    game.beat_index = 0;
+    game.level = build_level(game);
+    game.current_node = game.level.start;
+    game.level_done = false;
     game.beat_started = false;
     game.beat_distance = 0.0;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
@@ -382,10 +384,24 @@ fn to_title(world: &mut World, game: &mut GameState) {
     game.loop_count = 0;
     game.max_shields = 4;
     game.shields = 4;
-    game.beat_index = 0;
+    game.level = crate::level::LevelGraph::default();
+    game.current_node = 0;
+    game.level_done = false;
     game.beat_started = false;
     game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
     game.speed_scale = 1.0;
+}
+
+fn build_level(game: &GameState) -> crate::level::LevelGraph {
+    if game.run_mode == ModeKind::Endless {
+        let seed = game.random_state
+            ^ (game.sector as u64 + 1).wrapping_mul(0x9E37_79B9_7F4A_7C15)
+            ^ ((game.loop_count as u64 + 1) << 21);
+        let tier = game.sector as u32 + game.loop_count * 3;
+        crate::level::generate(seed, difficulty(game), crate::level::boss_for(tier))
+    } else {
+        crate::level::LevelGraph::from_sector(&SECTORS[game.sector])
+    }
 }
 
 fn nav_up(world: &World) -> bool {

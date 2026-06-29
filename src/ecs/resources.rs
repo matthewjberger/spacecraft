@@ -1,4 +1,5 @@
 use crate::content::{Behavior, BossKind, ModKind};
+use crate::level::LevelGraph;
 use nightshade::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -367,7 +368,9 @@ pub struct GameState {
     pub reticle_near: [Option<Entity>; 8],
     pub reticle_far: Option<Entity>,
     pub menu_orbit: f32,
-    pub beat_index: usize,
+    pub level: LevelGraph,
+    pub current_node: usize,
+    pub level_done: bool,
     pub beat_started: bool,
     pub beat_distance: f32,
     pub belt_accumulator: f32,
@@ -485,7 +488,9 @@ impl Default for GameState {
             reticle_near: [None; 8],
             reticle_far: None,
             menu_orbit: 0.0,
-            beat_index: 0,
+            level: LevelGraph::default(),
+            current_node: 0,
+            level_done: false,
             beat_started: false,
             beat_distance: 0.0,
             belt_accumulator: 0.0,

@@ -362,7 +362,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let shields = game.shields.max(0) as f32;
     let max_shields = game.max_shields.max(1) as f32;
     let speed_scale = game.speed_scale;
-    let beat_index = game.beat_index;
+    let current_node = game.current_node;
+    let node_total = game.level.nodes.len().max(1) as f32;
     let mode_timer = game.mode_timer;
     let damage_flash = game.damage_flash;
     let boss = game.boss.as_ref().map(|boss| {
@@ -535,11 +536,10 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             hud.thrust_bar,
             ((speed_scale - 0.5) / 1.4).clamp(0.0, 1.0),
         );
-        let beat_total = SECTORS[sector_index].beats.len().max(1) as f32;
         set_bar(
             world,
             hud.approach_bar,
-            (beat_index as f32 / beat_total).clamp(0.0, 1.0),
+            (current_node as f32 / node_total).clamp(0.0, 1.0),
         );
 
         if let Some((name, health, max_health)) = boss {

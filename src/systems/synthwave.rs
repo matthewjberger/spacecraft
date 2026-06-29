@@ -236,7 +236,7 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     if (has_geometry) {
         return vec4<f32>(0.0);
     }
-    color = sky(rd, style) * smoothstep(-0.005, 0.012, rd.y);
+    color = sky(rd, style) * smoothstep(-0.28, -0.04, rd.y);
     return vec4<f32>(color, 0.0);
 }
 "#;
