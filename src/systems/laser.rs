@@ -71,6 +71,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         let radius = LASER_SLICE_RADIUS + lance * 0.5;
         slice_asteroids(world, game, nose, aim_dir, radius);
         vaporize_enemies(world, game, nose, aim_dir, radius);
+        burn_boss(game, nose, aim_dir, radius, lance, delta);
+    } else {
+        game.lance_boss_accum = 0.0;
     }
 
     update_fragments(world, game, delta);
@@ -126,6 +129,28 @@ fn slice_asteroids(world: &mut World, game: &mut GameState, nose: Vec3, aim: Vec
         crate::systems::pickups::maybe_drop(world, game, item.position);
         award(game, 2);
         despawn_recursive_immediate(world, item.entity);
+    }
+}
+
+fn burn_boss(game: &mut GameState, nose: Vec3, aim: Vec3, radius: f32, lance: f32, delta: f32) {
+    let Some((position, body)) = game
+        .boss
+        .as_ref()
+        .map(|boss| (boss.position, boss.kind.stats().radius))
+    else {
+        game.lance_boss_accum = 0.0;
+        return;
+    };
+    if !ray_hits(nose, aim, position, radius + body) {
+        return;
+    }
+    game.lance_boss_accum += (LANCE_BOSS_DPS + lance * 6.0) * delta;
+    let whole = game.lance_boss_accum.floor();
+    if whole >= 1.0 {
+        game.lance_boss_accum -= whole;
+        if let Some(boss) = game.boss.as_mut() {
+            boss.health -= whole as i32;
+        }
     }
 }
 

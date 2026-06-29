@@ -31,6 +31,8 @@ pub fn spawn_belt_rock(world: &mut World, game: &mut GameState) {
 }
 
 pub fn spawn_rings(world: &mut World, game: &mut GameState, count: usize) {
+    game.ring_set_total = count as u32;
+    game.ring_set_hits = 0;
     let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
     let amplitude_x = 6.0 + next_random(&mut game.random_state) * 3.0;
     let amplitude_y = 3.4 + next_random(&mut game.random_state) * 1.8;
@@ -39,12 +41,18 @@ pub fn spawn_rings(world: &mut World, game: &mut GameState, count: usize) {
         let x = (phase_step * 0.9 + phase).sin() * amplitude_x;
         let y = (phase_step * 0.6 + phase * 1.3).sin() * amplitude_y;
         let z = -COURSE_AHEAD - phase_step * RING_SPACING;
-        let scenery = spawn_ring(world, game, Vec3::new(x, BASE_HEIGHT + y, z));
+        let last = step + 1 == count;
+        let scenery = spawn_ring(world, game, Vec3::new(x, BASE_HEIGHT + y, z), last);
         game.scenery.push(scenery);
     }
 }
 
-fn spawn_ring(world: &mut World, game: &mut GameState, position: Vec3) -> Scenery {
+fn spawn_ring(
+    world: &mut World,
+    game: &mut GameState,
+    position: Vec3,
+    last_in_set: bool,
+) -> Scenery {
     let entity = spawn_entities(world, NAME, 1)[0];
     let phase = next_random(&mut game.random_state) * std::f32::consts::TAU;
     Scenery {
@@ -60,6 +68,7 @@ fn spawn_ring(world: &mut World, game: &mut GameState, position: Vec3) -> Scener
         collect_timer: 0.0,
         pulse_phase: phase,
         material_name: String::new(),
+        last_in_set,
     }
 }
 
@@ -113,6 +122,7 @@ fn spawn_asteroid(
         collect_timer: 0.0,
         pulse_phase: 0.0,
         material_name: String::new(),
+        last_in_set: false,
     }
 }
 
@@ -144,9 +154,23 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 if planar < radius {
                     award(game, 1);
                     game.ring_boost = RING_BOOST_TIME;
+                    game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_PICKUP);
+                    game.ring_set_hits += 1;
                     game.scenery[index].collected = true;
                     game.sounds.push(Sound::Ring);
-                    bursts.push((position, Vec3::new(0.4, 0.9, 1.0), 30));
+                    let last = game.scenery[index].last_in_set;
+                    let color = if last {
+                        Vec3::new(0.4, 1.0, 0.5)
+                    } else {
+                        Vec3::new(0.4, 0.9, 1.0)
+                    };
+                    bursts.push((position, color, 30));
+                    if last && game.ring_set_hits >= game.ring_set_total {
+                        game.ring_set_boost = RING_SET_BOOST_TIME;
+                        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_DAMAGE);
+                        game.sounds.push(Sound::Nitrous);
+                        bursts.push((position, Vec3::new(0.4, 1.0, 0.5), 70));
+                    }
                 }
             }
             if game.scenery[index].collected {

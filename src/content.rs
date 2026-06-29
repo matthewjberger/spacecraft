@@ -334,8 +334,8 @@ pub const SHOP_ITEMS: &[ShopItem] = &[
         name: "FIELD REPAIR",
         desc: "refill shields now",
         kind: ModKind::Repair,
-        base_cost: 20,
-        cost_step: 0,
+        base_cost: 15,
+        cost_step: 14,
         max_level: 9,
     },
 ];

@@ -236,6 +236,10 @@ fn run_boss_beam(world: &mut World, game: &mut GameState, delta: f32) {
             }
             if boss.firing > 0.0 {
                 boss.firing -= delta;
+                if boss.firing > BOSS_BEAM_DURATION {
+                    boss.aim_x = approach(boss.aim_x, ship.x, BOSS_BEAM_TRACK * delta);
+                    boss.aim_y = approach(boss.aim_y, ship.y, BOSS_BEAM_TRACK * delta);
+                }
             }
         }
         origin = boss.position;
@@ -328,7 +332,7 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: BossKind) {
         false,
     );
     let scaled_health =
-        ((stats.health as f32) * (1.0 + difficulty(game) as f32 * 0.4)).round() as i32;
+        ((stats.health as f32) * (1.0 + difficulty(game) as f32 * 0.25)).round() as i32;
     game.boss = Some(Boss {
         entity,
         kind,

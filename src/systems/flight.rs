@@ -92,14 +92,21 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.ring_boost > 0.0 {
         game.ring_boost -= delta;
     }
+    if game.ring_set_boost > 0.0 {
+        game.ring_set_boost -= delta;
+    }
     let ring_boost = RING_BOOST_GAIN * (game.ring_boost / RING_BOOST_TIME).clamp(0.0, 1.0);
+    let ring_set_boost =
+        RING_SET_GAIN * (game.ring_set_boost / RING_SET_BOOST_TIME).clamp(0.0, 1.0);
     let nitrous = if game.effect == Some(PickupKind::Nitrous) {
         NITROUS_GAIN
     } else {
         0.0
     };
-    let target_speed =
-        1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN + ring_boost + nitrous;
+    let target_speed = 1.0 + frame.boost * BOOST_GAIN - frame.brake * BRAKE_GAIN
+        + ring_boost
+        + ring_set_boost
+        + nitrous;
     game.speed_scale = approach(game.speed_scale, target_speed, SPEED_RESPONSE * delta);
 
     game.recoil = approach(game.recoil, 0.0, RECOIL_DECAY * delta);

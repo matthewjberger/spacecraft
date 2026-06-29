@@ -19,9 +19,17 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if game.nova_flash > 0.0 {
         game.nova_flash -= delta;
     }
+    if game.mods.nova_max > 0 && game.nova_charges < game.mods.nova_max {
+        game.nova_recharge -= delta;
+        if game.nova_recharge <= 0.0 {
+            game.nova_charges += 1;
+            game.nova_recharge = NOVA_RECHARGE_TIME;
+        }
+    }
 
     if nova_pressed(world) && game.mods.nova_max > 0 && game.nova_charges > 0 {
         game.nova_charges -= 1;
+        game.nova_recharge = NOVA_RECHARGE_TIME;
         detonate_nova(world, game);
     }
 

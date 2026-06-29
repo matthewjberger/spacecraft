@@ -13,7 +13,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
     let overdrive = game.effect == Some(PickupKind::Overdrive);
     let spread = game.effect == Some(PickupKind::Spread);
-    let damage_amount = 1;
+    let damage_amount = 1 + game.mods.rapid as i32 / 2;
     let base_interval = FIRE_INTERVAL * 0.82_f32.powi(game.mods.rapid as i32);
 
     game.fire_cooldown -= delta;
@@ -46,6 +46,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             game.bursts.push((flash, 0.0));
         }
         game.cam_kick += FIRE_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_FIRE);
         game.recoil += RECOIL_IMPULSE;
         game.sounds
             .push(if spread { Sound::FireAlt } else { Sound::Fire });
@@ -135,6 +136,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
         award(game, ENEMY_SCORE);
         game.sounds.push(Sound::EnemyExplode);
+        game.cam_kick += KILL_KICK;
+        game.cam_fov_pop = game.cam_fov_pop.max(KILL_FOV_POP);
+        game.shake = game.shake.max(KILL_SHAKE);
+        if game.combo >= KILL_STREAK_THRESHOLD && game.combo.is_multiple_of(5) {
+            game.hitstop = game.hitstop.max(KILL_HITSTOP);
+        }
         if game.combo >= 10 && game.combo.is_multiple_of(10) {
             comms::kill_streak(game);
         }

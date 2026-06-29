@@ -1,5 +1,5 @@
 use crate::ecs::{Sound, TemplateWorld};
-use crate::systems::common::next_random;
+use crate::systems::common::{combo_multiplier, next_random};
 use nightshade::prelude::*;
 
 const FIRE_CLIPS: &[(&str, &[u8])] = &[
@@ -120,11 +120,15 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             }
             other => profile(other),
         };
-        let rate = if pitched {
+        let mut rate = if pitched {
             0.94 + next_random(&mut game_world.resources.game.random_state) * 0.12
         } else {
             1.0
         };
+        if matches!(sound, Sound::Fire | Sound::FireAlt) {
+            let tier = combo_multiplier(game_world.resources.game.combo).saturating_sub(1);
+            rate += tier as f32 * 0.03;
+        }
         let reverb_send = match bus {
             AudioBus::Sfx => Some(-2.5),
             AudioBus::Ui => Some(-14.0),

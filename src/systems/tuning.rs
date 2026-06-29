@@ -1,4 +1,4 @@
-pub const COMBO_WINDOW: f32 = 2.6;
+pub const COMBO_WINDOW: f32 = 3.6;
 
 pub const SHIP_SCALE: f32 = 0.42;
 pub const SHIP_BASE_YAW: f32 = std::f32::consts::PI;
@@ -22,12 +22,21 @@ pub const CAMERA_LEAD: f32 = 0.6;
 pub const CAMERA_KICK_DECAY: f32 = 7.0;
 pub const FOV_POP_DECAY: f32 = 5.0;
 
-pub const FIRE_KICK: f32 = 0.04;
+pub const FIRE_KICK: f32 = 0.1;
 pub const DAMAGE_KICK: f32 = 0.85;
 pub const LASER_KICK: f32 = 0.35;
 pub const NOVA_KICK: f32 = 0.6;
 pub const FOV_POP_LASER: f32 = 5.0;
 pub const FOV_POP_DAMAGE: f32 = 7.0;
+pub const FOV_POP_FIRE: f32 = 1.4;
+pub const FOV_POP_PICKUP: f32 = 4.0;
+pub const FOV_POP_COMBO: f32 = 3.5;
+
+pub const KILL_KICK: f32 = 0.12;
+pub const KILL_FOV_POP: f32 = 2.5;
+pub const KILL_SHAKE: f32 = 0.32;
+pub const KILL_HITSTOP: f32 = 0.03;
+pub const KILL_STREAK_THRESHOLD: u32 = 8;
 
 pub const RECOIL_IMPULSE: f32 = 0.09;
 pub const RECOIL_DECAY: f32 = 14.0;
@@ -66,8 +75,10 @@ pub const RING_PULSE_AMOUNT: f32 = 0.07;
 pub const RING_PULSE_SPEED: f32 = 1.7;
 pub const RING_COLLECT_TIME: f32 = 0.45;
 pub const RING_GROW: f32 = 1.8;
-pub const RING_BOOST_TIME: f32 = 1.5;
-pub const RING_BOOST_GAIN: f32 = 0.8;
+pub const RING_BOOST_TIME: f32 = 1.6;
+pub const RING_BOOST_GAIN: f32 = 1.1;
+pub const RING_SET_BOOST_TIME: f32 = 3.2;
+pub const RING_SET_GAIN: f32 = 1.9;
 pub const PATTERN_GAP: f32 = 30.0;
 pub const BELT_MAX_ROCKS: usize = 165;
 pub const ASTEROID_FIELD_X: f32 = 46.0;
@@ -131,6 +142,8 @@ pub const NOVA_RADIUS: f32 = 24.0;
 pub const NOVA_RANGE_Z: f32 = 165.0;
 pub const NOVA_FLASH_TIME: f32 = 0.32;
 pub const NOVA_BOSS_DAMAGE: i32 = 12;
+pub const NOVA_RECHARGE_TIME: f32 = 22.0;
+pub const LANCE_BOSS_DPS: f32 = 16.0;
 pub const AEGIS_DURATION: f32 = 2.6;
 pub const AEGIS_COOLDOWN: f32 = 7.5;
 
@@ -150,6 +163,7 @@ pub const BOSS_BEAM_INTERVAL: f32 = 5.5;
 pub const BOSS_BEAM_DURATION: f32 = 1.4;
 pub const BOSS_BEAM_CHARGE: f32 = 0.75;
 pub const BOSS_BEAM_RADIUS: f32 = 1.9;
+pub const BOSS_BEAM_TRACK: f32 = 3.0;
 
 pub const DAMAGE_INVULN: f32 = 1.1;
 pub const DAMAGE_FLASH_TIME: f32 = 0.5;

@@ -203,6 +203,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         game.effect = Some(kind);
         game.effect_duration = kind.duration();
         game.effect_timer = kind.duration();
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_PICKUP);
         game.sounds.push(if kind == PickupKind::Nitrous {
             Sound::Nitrous
         } else {

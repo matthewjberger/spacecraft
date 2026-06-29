@@ -9,16 +9,22 @@ pub fn combo_multiplier(combo: u32) -> u32 {
 }
 
 pub fn award(game: &mut GameState, base: u32) {
+    let previous_multiplier = combo_multiplier(game.combo);
     game.combo += 1;
     game.best_combo = game.best_combo.max(game.combo);
     game.combo_timer = COMBO_WINDOW;
-    game.score += base * combo_multiplier(game.combo);
+    let multiplier = combo_multiplier(game.combo);
+    game.score += base * multiplier;
     game.credits += base;
     game.score_flash = 0.3;
+    if multiplier > previous_multiplier {
+        game.score_flash = 0.5;
+        game.cam_fov_pop = game.cam_fov_pop.max(FOV_POP_COMBO);
+    }
 }
 
 pub fn difficulty(game: &GameState) -> u32 {
-    game.loop_count + if game.hard_mode { 1 } else { 0 }
+    game.loop_count * 2 + game.sector as u32 + if game.hard_mode { 2 } else { 0 }
 }
 
 pub fn aim_lead(game: &GameState) -> (f32, f32) {

@@ -22,6 +22,10 @@ pub fn maxed(game: &GameState, item: &ShopItem) -> bool {
 }
 
 pub fn current_cost(game: &GameState, item: &ShopItem) -> u32 {
+    if item.kind == ModKind::Repair {
+        let missing = (game.max_shields - game.shields).max(0) as u32;
+        return item.base_cost + missing.saturating_sub(1) * item.cost_step;
+    }
     item.base_cost + item_level(&game.mods, item.kind) as u32 * item.cost_step
 }
 

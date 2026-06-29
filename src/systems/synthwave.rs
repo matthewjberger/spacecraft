@@ -149,15 +149,6 @@ fn foreground(bg: vec3<f32>) -> vec3<f32> {
     return bg * mask;
 }
 
-fn ground_fog(style: i32) -> vec3<f32> {
-    if (style == 1) {
-        return vec3<f32>(0.24, 0.05, 0.03);
-    } else if (style == 2) {
-        return vec3<f32>(0.12, 0.1, 0.32);
-    }
-    return vec3<f32>(0.30, 0.06, 0.42);
-}
-
 fn sky(rd: vec3<f32>, style: i32) -> vec3<f32> {
     if (style == 1) {
         let sun_dir = normalize(vec3<f32>(0.0, 0.05, -1.0));
@@ -242,17 +233,10 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
         return vec4<f32>(color + fg, 1.0);
     }
 
-    if (rd.y < -0.001) {
-        if (has_geometry) {
-            return vec4<f32>(0.0);
-        }
-        return vec4<f32>(ground_fog(style) + fg, 1.0);
-    }
-
     if (has_geometry) {
         return vec4<f32>(0.0);
     }
-    color = sky(rd, style);
+    color = sky(rd, style) * smoothstep(-0.005, 0.012, rd.y);
     return vec4<f32>(color, 0.0);
 }
 "#;

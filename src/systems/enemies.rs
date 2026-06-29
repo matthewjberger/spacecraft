@@ -73,6 +73,9 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                     }
                 } else {
                     position.z += closing * 2.1 * delta;
+                    if position.z < ship.z - 18.0 {
+                        game.enemies[index].lock = ship;
+                    }
                     let lock = game.enemies[index].lock;
                     position.x = approach(position.x, lock.x, 5.2 * delta);
                     position.y = approach(position.y, lock.y, 4.6 * delta);
@@ -159,16 +162,17 @@ pub fn spawn(world: &mut World, game: &mut GameState, kind: EnemyKind, position:
         false,
         false,
     );
-    let fire_interval = if stats.fire_interval > 0.0 {
+    let diff = difficulty(game);
+    let base_interval = if stats.fire_interval > 0.0 {
         stats.fire_interval
     } else {
         1.5
     };
+    let fire_interval = base_interval / (1.0 + diff as f32 * 0.12);
     let thruster_entity = spawn_entities(world, PARTICLE_EMITTER | NAME, 1)[0];
     world
         .core
         .set_particle_emitter(thruster_entity, enemy_thruster(position));
-    let diff = difficulty(game);
     game.enemies.push(Enemy {
         entity,
         position,

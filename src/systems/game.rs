@@ -364,6 +364,8 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.curve_target_y = 0.0;
     game.curve_timer = 0.0;
     game.nova_charges = game.mods.nova_max;
+    game.nova_recharge = NOVA_RECHARGE_TIME;
+    game.lance_boss_accum = 0.0;
     game.aegis_cooldown = 0.0;
     game.aegis_timer = 0.0;
     game.combo = 0;
@@ -489,6 +491,9 @@ fn clear_world(world: &mut World, game: &mut GameState) {
     }
     game.effect = None;
     game.effect_timer = 0.0;
+    game.ring_set_boost = 0.0;
+    game.ring_set_hits = 0;
+    game.ring_set_total = 0;
     game.sendoff_timer = 0.0;
     game.debrief_timer = 0.0;
     game.force_ally_leave = false;

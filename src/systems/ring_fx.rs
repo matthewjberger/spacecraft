@@ -43,10 +43,12 @@ pub fn sync(game: &GameState, shared: &Arc<Mutex<RingState>>) {
             [0.0, 0.0, scale, 0.0],
             [position.x, position.y, position.z, 1.0],
         ];
-        instances.push(RingInstance {
-            model,
-            color: [0.5, 0.95, 1.0, fade],
-        });
+        let tint = if scenery.last_in_set {
+            [0.35, 1.0, 0.45, fade]
+        } else {
+            [0.5, 0.95, 1.0, fade]
+        };
+        instances.push(RingInstance { model, color: tint });
     }
     let mut state = shared.lock().unwrap();
     state.instances = instances;
