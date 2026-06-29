@@ -1,7 +1,6 @@
-use crate::content::{ModKind, SECTORS, SHOP_ITEMS, TAGLINE};
-use crate::ecs::{GameMode, GameState, TemplateWorld};
+use crate::content::{SECTORS, TAGLINE};
+use crate::ecs::{GameMode, TemplateWorld};
 use crate::systems::common::*;
-use crate::systems::shop;
 use nightshade::prelude::*;
 
 pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
@@ -99,44 +98,6 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
         22.0,
         vec4(1.0, 0.95, 0.6, 1.0),
         40.0,
-    );
-
-    let shop_panel = window_panel(
-        world,
-        root,
-        Rl(vec2(50.0, 50.0)),
-        Ab(vec2(780.0, 520.0)),
-        Anchor::Center,
-        vec4(1.0, 0.85, 0.4, 0.7),
-        vec4(0.04, 0.05, 0.1, 0.88),
-    );
-    centered_line(
-        world,
-        shop_panel,
-        "OUTFITTING",
-        30.0,
-        vec4(1.0, 0.9, 0.5, 1.0),
-        40.0,
-    );
-    let shop_credits = centered_line(
-        world,
-        shop_panel,
-        "CREDITS  0",
-        20.0,
-        vec4(0.7, 1.0, 0.7, 1.0),
-        28.0,
-    );
-    let mut shop_lines: [Option<Entity>; 8] = [None; 8];
-    for slot in shop_lines.iter_mut().take(SHOP_ITEMS.len()) {
-        *slot = Some(text_line(world, shop_panel, "", 17.0, dim, 26.0));
-    }
-    let shop_prompt = centered_line(
-        world,
-        shop_panel,
-        "UP / DOWN  SELECT      ENTER  BUY      SPACE  LAUNCH",
-        15.0,
-        vec4(1.0, 0.95, 0.6, 1.0),
-        30.0,
     );
 
     let ability_panel = window_panel(
@@ -259,10 +220,6 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.overlay_body = Some(overlay_body);
     hud.overlay_prompt = Some(overlay_prompt);
     hud.damage_flash = Some(damage_flash);
-    hud.shop_panel = Some(shop_panel);
-    hud.shop_credits = Some(shop_credits);
-    hud.shop_lines = shop_lines;
-    hud.shop_prompt = Some(shop_prompt);
     hud.ability_panel = Some(ability_panel);
     hud.lance_label = Some(lance_label);
     hud.lance_bar = Some(lance_bar);
@@ -382,11 +339,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             game.effect_duration.max(0.01),
         )
     });
-    let shop_data = if mode == GameMode::Shop {
-        Some((game.credits, shop_lines(game)))
-    } else {
-        None
-    };
     let mods = game.mods;
     let laser_cooldown = game.laser_cooldown;
     let nova_charges = game.nova_charges;
@@ -411,16 +363,14 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let hud = game.hud;
 
     let playing = mode == GameMode::Playing;
-    let shopping = mode == GameMode::Shop;
     let has_ability = mods.lance > 0 || mods.nova_max > 0 || mods.aegis > 0;
 
     set_visible(world, hud.gameplay_panel, playing);
     set_visible(
         world,
         hud.overlay_panel,
-        !playing && !shopping && mode != GameMode::Cinematic,
+        !playing && mode != GameMode::Cinematic,
     );
-    set_visible(world, hud.shop_panel, shopping);
     let low_shield_warn = shields <= 1.0 && (mode_timer * 3.0).sin() > 0.0;
     set_visible(
         world,
@@ -495,14 +445,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         }
     }
 
-    if let Some((credits, lines)) = shop_data {
-        set_text(world, hud.shop_credits, &format!("CREDITS  {credits}"));
-        for (index, (text, color)) in lines.into_iter().enumerate() {
-            set_text(world, hud.shop_lines[index], &text);
-            tint_node(world, hud.shop_lines[index], color);
-        }
-    }
-
     if playing {
         let sector = &SECTORS[sector_index];
         let sector_text = if loop_count > 0 {
@@ -552,7 +494,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             set_bar(world, hud.pickup_bar, (timer / duration).clamp(0.0, 1.0));
             tint_bar(world, hud.pickup_bar, color);
         }
-    } else if !shopping {
+    } else {
         let blink = (mode_timer * 1.6).fract() < 0.62;
         let (heading, body, prompt) = match mode {
             GameMode::Title => title_overlay(menu_cursor, best_score),
@@ -625,7 +567,6 @@ fn overlay_text(
             "SPACE  —  PRESS ON".to_string(),
         ),
         GameMode::Playing
-        | GameMode::Shop
         | GameMode::Settings
         | GameMode::Paused
         | GameMode::LevelSelect
@@ -712,47 +653,6 @@ fn settings_overlay(
         menu_body(&items, cursor),
         "UP / DOWN  SELECT       SPACE  TOGGLE".to_string(),
     )
-}
-
-fn shop_lines(game: &GameState) -> Vec<(String, Vec4)> {
-    SHOP_ITEMS
-        .iter()
-        .enumerate()
-        .map(|(index, item)| {
-            let level = shop::item_level(&game.mods, item.kind);
-            let cost = shop::current_cost(game, item);
-            let selected = index == game.shop_cursor;
-            let marker = if selected { ">" } else { " " };
-            let status = if shop::maxed(game, item) {
-                "MAX".to_string()
-            } else {
-                format!("{cost}c")
-            };
-            let level_text = if item.kind == ModKind::Repair {
-                String::new()
-            } else {
-                format!("Lv {level}/{}", item.max_level)
-            };
-            let text = format!(
-                "{marker} {})  {}   {}   {}   {}",
-                index + 1,
-                item.name,
-                item.desc,
-                level_text,
-                status
-            );
-            let color = if selected {
-                vec4(1.0, 0.95, 0.6, 1.0)
-            } else if shop::can_buy(game, item) {
-                vec4(0.65, 1.0, 0.7, 1.0)
-            } else if shop::maxed(game, item) {
-                vec4(0.5, 0.7, 0.85, 0.7)
-            } else {
-                vec4(0.9, 0.6, 0.5, 0.75)
-            };
-            (text, color)
-        })
-        .collect()
 }
 
 fn ready_color(ready: bool) -> Vec4 {

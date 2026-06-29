@@ -15,7 +15,6 @@ pub fn award(game: &mut GameState, base: u32) {
     game.combo_timer = COMBO_WINDOW;
     let multiplier = combo_multiplier(game.combo);
     game.score += base * multiplier;
-    game.credits += base;
     game.score_flash = 0.3;
     if multiplier > previous_multiplier {
         game.score_flash = 0.5;

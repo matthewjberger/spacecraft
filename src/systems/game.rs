@@ -1,20 +1,8 @@
-use crate::content::{SECTORS, SHOP_ITEMS, STARTING_CREDITS};
+use crate::content::SECTORS;
 use crate::ecs::{GameMode, GameState, ModeKind, ShipMods, Sound, TemplateWorld};
 use crate::systems::common::*;
 use crate::systems::cutscene;
-use crate::systems::shop;
 use nightshade::prelude::*;
-
-const DIGIT_KEYS: [KeyCode; 8] = [
-    KeyCode::Digit1,
-    KeyCode::Digit2,
-    KeyCode::Digit3,
-    KeyCode::Digit4,
-    KeyCode::Digit5,
-    KeyCode::Digit6,
-    KeyCode::Digit7,
-    KeyCode::Digit8,
-];
 
 pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let delta = world.resources.window.timing.delta_time;
@@ -51,9 +39,8 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     }
 
     let pre_mode = game.mode;
-    let pre_cursor = (game.menu_cursor, game.shop_cursor, game.settings_cursor);
+    let pre_cursor = (game.menu_cursor, game.settings_cursor);
     let confirm_sound = match game.mode {
-        GameMode::Shop => buy_pressed(world) || launch_pressed(world),
         GameMode::Title
         | GameMode::Settings
         | GameMode::LevelSelect
@@ -132,25 +119,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
                 enter_mode(game, GameMode::Title);
             }
         }
-        GameMode::Shop => {
-            if nav_up(world) {
-                game.shop_cursor = game.shop_cursor.saturating_sub(1);
-            }
-            if nav_down(world) {
-                game.shop_cursor = (game.shop_cursor + 1).min(SHOP_ITEMS.len() - 1);
-            }
-            if buy_pressed(world) {
-                shop::buy(game, game.shop_cursor);
-            }
-            for (index, key) in DIGIT_KEYS.iter().enumerate().take(SHOP_ITEMS.len()) {
-                if world.resources.input.keyboard.just_pressed(*key) {
-                    shop::buy(game, index);
-                }
-            }
-            if launch_pressed(world) {
-                enter_briefing(world, game, game.sector);
-            }
-        }
         GameMode::Briefing => {
             if advance {
                 enter_mode(game, GameMode::Playing);
@@ -205,7 +173,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if advance {
                 let next = game.sector + 1;
                 if next < SECTORS.len() {
-                    enter_shop(world, game, next);
+                    enter_briefing(world, game, next);
                 } else {
                     enter_mode(game, GameMode::Victory);
                 }
@@ -220,7 +188,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if advance {
                 if game.run_mode == ModeKind::Endless {
                     game.loop_count += 1;
-                    enter_shop(world, game, 0);
+                    enter_briefing(world, game, 0);
                 } else {
                     to_title(world, game);
                 }
@@ -233,9 +201,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     } else if confirm_sound {
         game.sounds.push(Sound::UiConfirm);
     }
-    if game.mode == pre_mode
-        && (game.menu_cursor, game.shop_cursor, game.settings_cursor) != pre_cursor
-    {
+    if game.mode == pre_mode && (game.menu_cursor, game.settings_cursor) != pre_cursor {
         game.sounds.push(Sound::UiMove);
     }
     if game.mode == GameMode::Victory && pre_mode != GameMode::Victory {
@@ -265,21 +231,23 @@ fn start_game(world: &mut World, game: &mut GameState, mode: ModeKind, start_sec
     game.run_mode = mode;
     game.score = 0;
     game.best_combo = 0;
-    game.credits = STARTING_CREDITS + if mode == ModeKind::Arcade { 40 } else { 0 };
-    game.mods = ShipMods::default();
+    game.mods = full_mods();
     game.loop_count = 0;
-    game.max_shields = 4;
-    game.shields = 4;
-    enter_shop(world, game, start_sector);
+    game.max_shields = 4 + game.mods.hull as i32;
+    game.shields = game.max_shields;
+    enter_briefing(world, game, start_sector);
 }
 
-fn enter_shop(world: &mut World, game: &mut GameState, sector: usize) {
-    clear_world(world, game);
-    game.sector = sector;
-    game.shop_cursor = 0;
-    game.ship_position = Vec3::new(0.0, BASE_HEIGHT, 0.0);
-    game.speed_scale = 1.0;
-    enter_mode(game, GameMode::Shop);
+fn full_mods() -> ShipMods {
+    ShipMods {
+        hull: 3,
+        rapid: 3,
+        magnet: 3,
+        seeker: 3,
+        lance: 3,
+        nova_max: 4,
+        aegis: 3,
+    }
 }
 
 fn enter_briefing(world: &mut World, game: &mut GameState, sector: usize) {
@@ -377,7 +345,6 @@ fn to_title(world: &mut World, game: &mut GameState) {
     enter_mode(game, GameMode::Title);
     game.sector = 0;
     game.score = 0;
-    game.credits = 0;
     game.mods = ShipMods::default();
     game.loop_count = 0;
     game.max_shields = 4;
@@ -422,24 +389,6 @@ fn nav_down(world: &World) -> bool {
             .input
             .gamepad
             .just_pressed(gilrs::Button::DPadDown)
-}
-
-fn buy_pressed(world: &World) -> bool {
-    world.resources.input.keyboard.just_pressed(KeyCode::Enter)
-        || world
-            .resources
-            .input
-            .gamepad
-            .just_pressed(gilrs::Button::South)
-}
-
-fn launch_pressed(world: &World) -> bool {
-    world.resources.input.keyboard.just_pressed(KeyCode::Space)
-        || world
-            .resources
-            .input
-            .gamepad
-            .just_pressed(gilrs::Button::Start)
 }
 
 fn pause_pressed(world: &World) -> bool {

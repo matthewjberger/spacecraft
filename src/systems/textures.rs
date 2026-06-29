@@ -1,5 +1,4 @@
 use nightshade::ecs::loading::load_texture_pack_from_image_bytes;
-use nightshade::ecs::material::components::{Material, TextureTransform};
 use nightshade::prelude::*;
 use nightshade::render::wgpu::texture_cache::{SamplerSettings, TextureUsage};
 
@@ -37,17 +36,4 @@ pub fn load(world: &mut World) {
         TextureUsage::Color,
         SamplerSettings::DEFAULT,
     );
-}
-
-pub fn proto_material(texture: &str, tint: Vec3, tiling: f32) -> Material {
-    Material {
-        base_color: [tint.x, tint.y, tint.z, 1.0],
-        base_texture: Some(texture.to_string()),
-        base_texture_transform: TextureTransform {
-            scale: [tiling, tiling],
-            ..Default::default()
-        },
-        unlit: true,
-        ..Default::default()
-    }
 }
