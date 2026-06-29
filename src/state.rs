@@ -45,9 +45,25 @@ impl State for Spacecraft {
             .slot("hdr", resources.scene_color)
             .add();
 
+        let scene_copy = render_graph_add_color_texture(graph, "synth_scene_copy")
+            .format(wgpu::TextureFormat::Rgba16Float)
+            .size(
+                resources.surface_width.max(1),
+                resources.surface_height.max(1),
+            )
+            .usage(wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING)
+            .transient();
+
+        let scene_copy_pass = synthwave::SceneCopyPass::new(device);
+        let _ = render_graph_pass(graph, Box::new(scene_copy_pass))
+            .read("input", resources.scene_color)
+            .write("output", scene_copy)
+            .add();
+
         let synth_pass = synthwave::SynthwavePass::new(device, self.synth.clone());
         let _ = render_graph_pass(graph, Box::new(synth_pass))
             .read("depth", resources.depth)
+            .read("scene_copy", scene_copy)
             .slot("hdr", resources.scene_color)
             .add();
 

@@ -45,6 +45,7 @@ struct Uniforms {
 };
 @group(0) @binding(0) var<uniform> u: Uniforms;
 @group(0) @binding(1) var depth_tex: texture_depth_2d;
+@group(0) @binding(2) var scene_copy: texture_2d<f32>;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -142,6 +143,12 @@ fn surface(hit_pos: vec3<f32>, ro: vec3<f32>, style: i32, scroll: f32) -> vec3<f
     return mix(col, vec3<f32>(0.30, 0.06, 0.42), fog);
 }
 
+fn foreground(bg: vec3<f32>) -> vec3<f32> {
+    let lum = max(bg.r, max(bg.g, bg.b));
+    let mask = smoothstep(1.2, 2.6, lum);
+    return bg * mask;
+}
+
 fn ground_fog(style: i32) -> vec3<f32> {
     if (style == 1) {
         return vec3<f32>(0.24, 0.05, 0.03);
@@ -190,8 +197,10 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let world = far.xyz / far.w;
     let rd = normalize(world - ro);
 
-    let scene_depth = textureLoad(depth_tex, vec2<i32>(in.position.xy), 0);
+    let pixel = vec2<i32>(in.position.xy);
+    let scene_depth = textureLoad(depth_tex, pixel, 0);
     let has_geometry = scene_depth > 0.0;
+    let fg = foreground(textureLoad(scene_copy, pixel, 0).rgb);
 
     var color: vec3<f32>;
     var t = 0.0;
@@ -227,15 +236,17 @@ fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
         let hbx = u.extra.y * hd * hd;
         let hby = u.extra.z * hd * hd;
         color = surface(vec3<f32>(hit_pos.x - hbx, hit_pos.y - hby, hit_pos.z), ro, style, scroll);
-        let alpha = select(0.0, 1.0, has_geometry);
-        return vec4<f32>(color, alpha);
+        if (has_geometry) {
+            return vec4<f32>(color, 1.0);
+        }
+        return vec4<f32>(color + fg, 1.0);
     }
 
     if (rd.y < -0.001) {
         if (has_geometry) {
             return vec4<f32>(0.0);
         }
-        return vec4<f32>(ground_fog(style), 0.0);
+        return vec4<f32>(ground_fog(style) + fg, 1.0);
     }
 
     if (has_geometry) {
@@ -273,6 +284,16 @@ impl SynthwavePass {
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
                         sample_type: wgpu::TextureSampleType::Depth,
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 2,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
                         view_dimension: wgpu::TextureViewDimension::D2,
                         multisampled: false,
                     },
@@ -355,7 +376,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
     }
 
     fn reads(&self) -> Vec<&str> {
-        vec!["depth"]
+        vec!["depth", "scene_copy"]
     }
 
     fn writes(&self) -> Vec<&str> {
@@ -404,6 +425,7 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
             .write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[uniforms]));
 
         let depth_view = context.get_texture_view("depth")?;
+        let scene_copy_view = context.get_texture_view("scene_copy")?;
         let bind_group = context
             .device
             .create_bind_group(&wgpu::BindGroupDescriptor {
@@ -417,6 +439,10 @@ impl nightshade::render::wgpu::rendergraph::PassNode<World> for SynthwavePass {
                     wgpu::BindGroupEntry {
                         binding: 1,
                         resource: wgpu::BindingResource::TextureView(depth_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(scene_copy_view),
                     },
                 ],
             });
@@ -457,4 +483,159 @@ fn mat_to_array(matrix: &nalgebra_glm::Mat4) -> [[f32; 4]; 4] {
         [slice[8], slice[9], slice[10], slice[11]],
         [slice[12], slice[13], slice[14], slice[15]],
     ]
+}
+
+const COPY_SHADER: &str = r#"
+@group(0) @binding(0) var src_tex: texture_2d<f32>;
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+};
+
+@vertex
+fn vertex_main(@builtin(vertex_index) vertex_index: u32) -> VertexOutput {
+    var out: VertexOutput;
+    let x = f32((vertex_index & 1u) << 1u);
+    let y = f32((vertex_index & 2u));
+    out.position = vec4<f32>(x * 2.0 - 1.0, y * 2.0 - 1.0, 0.0, 1.0);
+    return out;
+}
+
+@fragment
+fn fragment_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    return textureLoad(src_tex, vec2<i32>(in.position.xy), 0);
+}
+"#;
+
+pub struct SceneCopyPass {
+    pipeline: wgpu::RenderPipeline,
+    bind_group_layout: wgpu::BindGroupLayout,
+}
+
+impl SceneCopyPass {
+    pub fn new(device: &wgpu::Device) -> Self {
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("scene_copy_bgl"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                count: None,
+            }],
+        });
+
+        let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("scene_copy_shader"),
+            source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(COPY_SHADER)),
+        });
+
+        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("scene_copy_layout"),
+            bind_group_layouts: &[Some(&bind_group_layout)],
+            immediate_size: 0,
+        });
+
+        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("scene_copy_pipeline"),
+            layout: Some(&pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader_module,
+                entry_point: Some("vertex_main"),
+                buffers: &[],
+                compilation_options: Default::default(),
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                cull_mode: None,
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            fragment: Some(wgpu::FragmentState {
+                module: &shader_module,
+                entry_point: Some("fragment_main"),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: HDR_FORMAT,
+                    blend: None,
+                    write_mask: wgpu::ColorWrites::ALL,
+                })],
+                compilation_options: Default::default(),
+            }),
+            multiview_mask: None,
+            cache: None,
+        });
+
+        Self {
+            pipeline,
+            bind_group_layout,
+        }
+    }
+}
+
+impl nightshade::render::wgpu::rendergraph::PassNode<World> for SceneCopyPass {
+    fn name(&self) -> &str {
+        "synth_scene_copy_pass"
+    }
+
+    fn reads(&self) -> Vec<&str> {
+        vec!["input"]
+    }
+
+    fn writes(&self) -> Vec<&str> {
+        vec!["output"]
+    }
+
+    fn execute<'r, 'e>(
+        &mut self,
+        context: nightshade::render::wgpu::rendergraph::PassExecutionContext<'r, 'e, World>,
+    ) -> Result<
+        Vec<nightshade::render::wgpu::rendergraph::SubGraphRunCommand<'r>>,
+        nightshade::render::wgpu::rendergraph::RenderGraphError,
+    > {
+        if !context.is_pass_enabled() {
+            return Ok(context.into_sub_graph_commands());
+        }
+
+        let input_view = context.get_texture_view("input")?;
+        let bind_group = context
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("scene_copy_bind_group"),
+                layout: &self.bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(input_view),
+                }],
+            });
+
+        let (color_view, _, store_op) = context.get_color_attachment("output")?;
+        let mut render_pass = context
+            .encoder
+            .begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("synth_scene_copy_pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: color_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: store_op,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
+            });
+        render_pass.set_pipeline(&self.pipeline);
+        render_pass.set_bind_group(0, &bind_group, &[]);
+        render_pass.draw(0..3, 0..1);
+        drop(render_pass);
+
+        Ok(context.into_sub_graph_commands())
+    }
 }
