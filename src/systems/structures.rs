@@ -252,6 +252,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
         let position = game.structures[index].position;
         let bend = course_bend(game, position);
+        let grow = stream_in(game, position);
         let rotation = nalgebra_glm::quat_angle_axis(
             game.structures[index].angle,
             &game.structures[index].spin_axis,
@@ -261,7 +262,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if let Some(transform) = world.core.get_local_transform_mut(*entity) {
                 transform.translation = world_pos;
                 transform.rotation = rotation;
-                transform.scale = *scale;
+                transform.scale = *scale * grow;
             }
             mark_local_transform_dirty(world, *entity);
         }

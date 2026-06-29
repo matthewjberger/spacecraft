@@ -63,6 +63,7 @@ fn spawn_ring(
         spin_speed: 0.0,
         angle: 0.0,
         radius: RING_RADIUS,
+        scale: Vec3::zeros(),
         resolved: false,
         collected: false,
         collect_timer: 0.0,
@@ -117,6 +118,7 @@ fn spawn_asteroid(
         spin_speed: random_range(&mut game.random_state, 0.3, 1.4),
         angle: 0.0,
         radius: base,
+        scale,
         resolved: false,
         collected: false,
         collect_timer: 0.0,
@@ -181,9 +183,12 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
         let rotation = nalgebra_glm::quat_angle_axis(angle, &axis);
         let bend = course_bend(game, position);
+        let grow = stream_in(game, position);
+        let scale = game.scenery[index].scale;
         if let Some(transform) = world.core.get_local_transform_mut(entity) {
             transform.translation = position + bend;
             transform.rotation = rotation;
+            transform.scale = scale * grow;
         }
         mark_local_transform_dirty(world, entity);
     }

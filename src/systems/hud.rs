@@ -162,14 +162,13 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
             .with_visible(false)
             .entity()
     };
-    let comms_avatar = {
+    {
         let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
         tree.add_node()
             .window(Ab(vec2(12.0, 12.0)), Ab(vec2(68.0, 68.0)), Anchor::TopLeft)
             .with_rect(2.0, 1.0, vec4(0.5, 0.95, 1.0, 1.0))
-            .color_raw::<UiBase>(vec4(0.07, 0.16, 0.27, 1.0))
-            .entity()
-    };
+            .color_raw::<UiBase>(vec4(0.07, 0.16, 0.27, 1.0));
+    }
     let comms_initial = {
         let mut tree = UiTreeBuilder::from_parent(world, comms_panel);
         tree.add_node()
@@ -228,7 +227,6 @@ pub fn build(game_world: &mut TemplateWorld, world: &mut World) {
     hud.aegis_bar = Some(aegis_bar);
     hud.nova_flash = Some(nova_flash);
     hud.comms_panel = Some(comms_panel);
-    hud.comms_avatar = Some(comms_avatar);
     hud.comms_initial = Some(comms_initial);
     hud.comms_name = Some(comms_name);
     hud.comms_text = Some(comms_text);
@@ -539,14 +537,6 @@ fn overlay_text(
             TAGLINE.to_string(),
             "PRESS SPACE TO LAUNCH".to_string(),
         ),
-        GameMode::Briefing => {
-            let sector = &SECTORS[sector_index];
-            (
-                format!("{}  —  {}", sector.name, sector.subtitle),
-                sector.briefing.to_string(),
-                "SPACE  —  ENGAGE".to_string(),
-            )
-        }
         GameMode::SectorClear => (
             "SECTOR CLEAR".to_string(),
             format!("{}\n\nSCORE  {score}", SECTORS[sector_index].debrief),

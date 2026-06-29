@@ -52,7 +52,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
 
 fn advance_node(game: &mut GameState) {
     let edges = game.level.nodes[game.current_node].edges.clone();
-    match select_next(&edges, game.combo, game.shields, &mut game.random_state) {
+    match select_next(&edges, game.combo, &mut game.random_state) {
         Some(target) => {
             game.current_node = target;
             game.beat_started = false;

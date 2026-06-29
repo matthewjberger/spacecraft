@@ -44,7 +44,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
         GameMode::Title
         | GameMode::Settings
         | GameMode::LevelSelect
-        | GameMode::Briefing
         | GameMode::Paused
         | GameMode::SectorClear
         | GameMode::GameOver
@@ -117,11 +116,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
             if pause {
                 game.menu_cursor = 1;
                 enter_mode(game, GameMode::Title);
-            }
-        }
-        GameMode::Briefing => {
-            if advance {
-                enter_mode(game, GameMode::Playing);
             }
         }
         GameMode::Cinematic => {

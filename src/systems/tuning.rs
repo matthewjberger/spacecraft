@@ -69,6 +69,8 @@ pub const BOOST_FOV_DEGREES: f32 = 18.0;
 
 pub const RAIL_SPEED: f32 = 38.0;
 pub const SCENERY_DESPAWN_Z: f32 = 16.0;
+pub const STREAM_IN_FAR: f32 = 205.0;
+pub const STREAM_IN_NEAR: f32 = 135.0;
 pub const RING_RADIUS: f32 = 3.6;
 pub const RING_SPACING: f32 = 34.0;
 pub const RING_PULSE_AMOUNT: f32 = 0.07;

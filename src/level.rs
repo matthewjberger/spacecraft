@@ -48,17 +48,13 @@ impl Segment {
 pub enum EdgeGate {
     Always,
     ComboAtLeast(u32),
-    ShieldsAtLeast(i32),
-    ShieldsBelow(i32),
 }
 
 impl EdgeGate {
-    fn passes(self, combo: u32, shields: i32) -> bool {
+    fn passes(self, combo: u32) -> bool {
         match self {
             EdgeGate::Always => true,
             EdgeGate::ComboAtLeast(value) => combo >= value,
-            EdgeGate::ShieldsAtLeast(value) => shields >= value,
-            EdgeGate::ShieldsBelow(value) => shields < value,
         }
     }
 }
@@ -123,17 +119,17 @@ impl LevelGraph {
 
 /// Choose the next node leaving `edges`: filter by gate, then weighted random.
 /// Returns `None` at a terminal node (level complete).
-pub fn select_next(edges: &[Edge], combo: u32, shields: i32, rng: &mut u64) -> Option<usize> {
+pub fn select_next(edges: &[Edge], combo: u32, rng: &mut u64) -> Option<usize> {
     let total: f32 = edges
         .iter()
-        .filter(|edge| edge.gate.passes(combo, shields))
+        .filter(|edge| edge.gate.passes(combo))
         .map(|edge| edge.weight)
         .sum();
     if total <= 0.0 {
         return None;
     }
     let mut roll = next_random(rng) * total;
-    for edge in edges.iter().filter(|edge| edge.gate.passes(combo, shields)) {
+    for edge in edges.iter().filter(|edge| edge.gate.passes(combo)) {
         roll -= edge.weight;
         if roll <= 0.0 {
             return Some(edge.target);
@@ -142,7 +138,7 @@ pub fn select_next(edges: &[Edge], combo: u32, shields: i32, rng: &mut u64) -> O
     edges
         .iter()
         .rev()
-        .find(|edge| edge.gate.passes(combo, shields))
+        .find(|edge| edge.gate.passes(combo))
         .map(|edge| edge.target)
 }
 

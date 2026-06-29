@@ -43,6 +43,13 @@ pub fn approach(current: f32, target: f32, rate: f32) -> f32 {
     current + (target - current) * rate.clamp(0.0, 1.0)
 }
 
+pub fn stream_in(game: &GameState, position: Vec3) -> f32 {
+    let depth = (game.ship_position.z - position.z).max(0.0);
+    let span = (STREAM_IN_FAR - STREAM_IN_NEAR).max(0.001);
+    let amount = ((STREAM_IN_FAR - depth) / span).clamp(0.0, 1.0);
+    amount * amount * (3.0 - 2.0 * amount)
+}
+
 pub fn course_bend(game: &GameState, position: Vec3) -> Vec3 {
     let depth = (game.ship_position.z - position.z).max(0.0);
     let factor = depth * depth;
