@@ -1,5 +1,7 @@
 # Spacecraft
 
+![Spacecraft](docs/hero.png)
+
 An on-rails space shooter built with the [Nightshade](https://github.com/matthewjberger/nightshade) game engine.
 
 Fly a Spitfire through deep space on a rail: steer across the play field, bank and

@@ -18,7 +18,6 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     let fov_pop = game.cam_fov_pop;
     let steer_lead = -game.roll / MAX_BANK;
     let curve_x = game.curve_x;
-    let curve_y = game.curve_y;
 
     if matches!(
         mode,
@@ -69,10 +68,7 @@ pub fn update(game_world: &mut TemplateWorld, world: &mut World) {
     if let Some(transform) = world.core.get_local_transform_mut(camera) {
         transform.translation =
             approach_vec3(transform.translation, target, CAMERA_RESPONSE * delta);
-        let pitch = nalgebra_glm::quat_angle_axis(
-            CAMERA_PITCH + curve_y * COURSE_CURVE_CAM_PITCH,
-            &Vec3::new(1.0, 0.0, 0.0),
-        );
+        let pitch = nalgebra_glm::quat_angle_axis(CAMERA_PITCH, &Vec3::new(1.0, 0.0, 0.0));
         let roll_quat = nalgebra_glm::quat_angle_axis(
             roll * CAMERA_ROLL + curve_x * COURSE_CURVE_CAM_BANK,
             &Vec3::new(0.0, 0.0, 1.0),

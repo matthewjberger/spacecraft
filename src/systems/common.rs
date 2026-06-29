@@ -47,7 +47,7 @@ pub fn approach(current: f32, target: f32, rate: f32) -> f32 {
 pub fn course_bend(game: &GameState, position: Vec3) -> Vec3 {
     let depth = (game.ship_position.z - position.z).max(0.0);
     let factor = depth * depth;
-    Vec3::new(game.curve_x * factor, game.curve_y * factor, 0.0)
+    Vec3::new(game.curve_x * factor, 0.0, 0.0)
 }
 
 pub fn approach_vec3(current: Vec3, target: Vec3, rate: f32) -> Vec3 {

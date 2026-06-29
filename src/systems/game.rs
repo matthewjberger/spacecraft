@@ -361,9 +361,7 @@ fn begin_sector(world: &mut World, game: &mut GameState) {
     game.speed_scale = 1.0;
     game.course_time = 0.0;
     game.curve_x = 0.0;
-    game.curve_y = 0.0;
     game.curve_target_x = 0.0;
-    game.curve_target_y = 0.0;
     game.curve_timer = 0.0;
     game.nova_charges = game.mods.nova_max;
     game.nova_recharge = NOVA_RECHARGE_TIME;

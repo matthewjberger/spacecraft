@@ -72,25 +72,14 @@ fn update_course_curve(game: &mut GameState, delta: f32) {
         let roll = next_random(&mut game.random_state);
         if roll < 0.2 {
             game.curve_target_x = 0.0;
-            game.curve_target_y = 0.0;
         } else if roll < 0.58 {
             game.curve_target_x = random_range(
                 &mut game.random_state,
                 -COURSE_CURVE_MAX_X * 0.45,
                 COURSE_CURVE_MAX_X * 0.45,
             );
-            game.curve_target_y = random_range(
-                &mut game.random_state,
-                -COURSE_CURVE_MAX_Y * 0.5,
-                COURSE_CURVE_MAX_Y * 0.5,
-            );
         } else {
             let sign_x = if next_random(&mut game.random_state) < 0.5 {
-                -1.0
-            } else {
-                1.0
-            };
-            let sign_y = if next_random(&mut game.random_state) < 0.5 {
                 -1.0
             } else {
                 1.0
@@ -101,22 +90,11 @@ fn update_course_curve(game: &mut GameState, delta: f32) {
                     COURSE_CURVE_MAX_X * 0.72,
                     COURSE_CURVE_MAX_X,
                 );
-            game.curve_target_y = sign_y
-                * random_range(
-                    &mut game.random_state,
-                    COURSE_CURVE_MAX_Y * 0.4,
-                    COURSE_CURVE_MAX_Y,
-                );
         }
     }
     game.curve_x = approach(
         game.curve_x,
         game.curve_target_x,
-        COURSE_CURVE_RESPONSE * delta,
-    );
-    game.curve_y = approach(
-        game.curve_y,
-        game.curve_target_y,
         COURSE_CURVE_RESPONSE * delta,
     );
 }
